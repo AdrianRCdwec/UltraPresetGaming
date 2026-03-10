@@ -102,4 +102,34 @@ Relaciones:
 
 ## Estructura del repositorio
 
+[...]
 
+---
+
+## Instalación y ejecución
+
+### Requisitos
+- Python 3.10+ (recomendado 3.11)
+- pip
+- (Opcional) Node.js si se usan herramientas de build, si no, no hace falta.
+
+### 1) Backend (Django)
+Desde la carpeta `backend/`:
+
+1. Crear y activar entorno virtual:
+   - Windows (PowerShell):
+     ```bash
+     python -m venv venv
+     .\venv\Scripts\Activate.ps1
+     ```
+   - Windows (CMD):
+     ```bash
+     python -m venv venv
+     .\venv\Scripts\activate.bat
+     ```
+
+2. Instalar dependencias:
+   ```bash
+   pip install -r requirements.txt
+   python manage.py makemigrations
+   python manage.py migrate
