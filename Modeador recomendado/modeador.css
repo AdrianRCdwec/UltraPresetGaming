@@ -1,0 +1,295 @@
+/*  =========================================================
+                      PÁGINA GENERAL
+    ========================================================= */
+
+/* Página (main) */
+.mods-page{
+    width: min(1150px, 92%);
+    margin: 26px auto 70px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    color: #101828;
+}
+
+
+/*  =========================================================
+              GRID PRINCIPAL (TARJETAS DE JUEGOS)
+    ========================================================= */
+
+/* Grid de juegos (tarjetas) */
+.mods-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 14px;
+}
+
+/* Evita overflow horizontal en pantallas pequeñas */
+.mods-grid{
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+}
+
+
+/*  =========================================================
+                      TARJETA DE JUEGO
+    ========================================================= */
+
+/* Tarjeta de juego */
+.game{
+    background: #ffffff;
+    border: 1px solid rgba(16, 24, 40, 0.10);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 22px rgba(16, 24, 40, 0.07);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.game:hover{
+    transform: translateY(-2px);
+    border-color: rgba(44, 101, 238, 0.22);
+    box-shadow: 0 16px 34px rgba(16, 24, 40, 0.10);
+}
+
+
+/*  =========================================================
+            PARTE SUPERIOR (IMAGEN + INFO + TAGS)
+    ========================================================= */
+
+/* Parte superior: imagen + info */
+.game-top{
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 14px;
+    padding: 14px;
+    border-bottom: 1px solid rgba(16, 24, 40, 0.08);
+    background: linear-gradient(180deg, #ffffff, #fbfcff);
+}
+
+/* Contenedor imagen */
+.game-img{
+    width: 120px;
+    height: 90px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(44, 101, 238, 0.16);
+    background: #f2f5ff;
+}
+
+/* Imagen del juego */
+.game-img img{
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    display: block;
+}
+
+/* Evita imágenes estiradas (mejor aspecto) */
+.game-img img{
+  object-fit: cover;
+}
+
+
+/*  =========================================================
+                      TÍTULO / SUBTÍTULO
+    ========================================================= */
+
+.game-title h2{
+    margin: 0 0 6px 0;
+    font-size: 20px;
+}
+
+/* Títulos largos: que no revienten la tarjeta */
+.game-title h2{
+  overflow-wrap: anywhere;
+}
+/* El título Baja cuando sale de la tarjeta (contenedor) */
+
+.game-title p{
+    margin: 0;
+    color: #667085;
+    font-size: 14px;
+}
+
+
+/*  =========================================================
+                              TAGS
+    ========================================================= */
+
+.game-tags{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.tag{
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.tag-safe{
+    background: rgba(44, 101, 238, 0.10);
+    border-color: rgba(44, 101, 238, 0.22);
+    color: #1d49b3;
+}
+
+.tag-count{
+    background: rgba(152, 20, 241, 0.10);
+    border-color: rgba(152, 20, 241, 0.22);
+    color: #6a14ad;
+}
+
+
+/*  =========================================================
+                LISTA DE MODEADORES / LAUNCHERS
+    ========================================================= */
+
+/* Lista de modeadores */
+.launchers{
+    list-style: none;
+    padding: 14px;
+    margin: 0;
+    display: grid;
+    gap: 10px;
+}
+
+/* Item launcher */
+.launcher{
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(44, 101, 238, 0.14);
+    background: #ffffff;
+}
+
+/* Texto launcher */
+.launcher-text{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.launcher-name{
+    font-weight: 900;
+    color: #101828;
+}
+
+.launcher-desc{
+    font-size: 13px;
+    color: #667085;
+}
+
+
+/*  =========================================================
+                      BOTÓN “ABRIR”
+    ========================================================= */
+
+/* Botón de acceso rápido */
+.launcher-go{
+    text-decoration: none;
+    font-weight: 900;
+    padding: 10px 14px;
+    border-radius: 12px;
+    color: #ffffff;
+    background: #2c65ee;
+    border: 1px solid rgba(44, 101, 238, 0.25);
+    box-shadow: rgba(45, 35, 66, 0.18) 0 2px 4px,
+                rgba(45, 35, 66, 0.12) 0 7px 13px -3px,
+                #2c65ee 0 -3px 0 inset;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.launcher-go:hover{
+    transform: translateY(-2px);
+    box-shadow: rgba(45, 35, 66, 0.26) 0 4px 10px,
+                rgba(45, 35, 66, 0.14) 0 10px 18px -6px,
+                #2c65ee 0 -3px 0 inset;
+}
+
+.launcher-go:active{
+    transform: translateY(1px);
+}
+
+
+/*  =========================================================
+                          RESPONSIVE
+    ========================================================= */
+
+/* <=1050px (medianas) */
+@media (max-width: 1050px){
+  .mods-page{
+    margin: 18px auto 50px;
+  }
+
+  .mods-grid{
+    gap: 12px;
+  }
+
+  .game-top{
+    grid-template-columns: 110px 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .game-img{
+    width: 110px;
+    height: 82px;
+  }
+
+  .launchers{
+    padding: 12px;
+  }
+}
+
+/* <=610px (pequeñas) */
+@media (max-width: 610px){
+  .mods-page{
+    width: min(520px, 92%);
+    margin: 16px auto 40px;
+  }
+
+  .mods-grid{
+    grid-template-columns: 1fr; /* 1 columna en pequeñas */
+  }
+
+  .game-top{
+    grid-template-columns: 92px 1fr;
+  }
+
+  .game-img{
+    width: 92px;
+    height: 70px;
+  }
+
+  .game-title h2{
+    font-size: 18px;
+  }
+
+  .launcher{
+    grid-template-columns: 1fr; /* texto arriba, botón abajo */
+    gap: 10px;
+  }
+
+  .launcher-go{
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* <=420px (enanas) */
+@media (max-width: 420px){
+  .game-tags{
+    gap: 6px;
+  }
+
+  .tag{
+    padding: 5px 9px;
+  }
+}

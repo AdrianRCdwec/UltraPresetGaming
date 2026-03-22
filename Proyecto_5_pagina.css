@@ -1,0 +1,228 @@
+/*  =========================================================
+                PRIMERA SECCIÓN: INTRO
+    ========================================================= */
+
+.intro{
+  position: relative;
+  height: 600px; 
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Imagen de portada */
+.Portada{
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; 
+  object-fit: cover; 
+}
+
+/* Contenedor de texto centrado dentro de la intro */
+.intro div{
+  color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: left;
+  z-index: 1;
+}
+
+.intro div h1 {
+  margin-bottom: 10px;
+}
+
+
+/*  =========================================================
+                SEGUNDA SECCIÓN: RECOMENDACIÓN
+    ========================================================= */
+
+.recomend {
+  background-color: #eaf0fd;
+  padding: 80px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grid principal (imagen + texto) */
+.recomend-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 60px;
+}
+
+
+/*  -------------------------
+      IMAGEN (recomendación)
+    ------------------------- */
+
+.recomend-img {
+  display: flex;
+  justify-content: center;
+}
+
+.recomend-img img {
+  width: 320px;
+  max-width: 100%;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+}
+
+
+/*  -------------------------
+      TEXTO (recomendación)
+    ------------------------- */
+
+.recomend-text h2 span {
+  border-bottom: 4px dotted #2c65ee;
+  padding-bottom: 5px;
+}
+
+.recomend-text h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+.recomend-text p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+
+/*  =========================================================
+                TERCERA SECCIÓN: NOTICIAS
+    ========================================================= */
+
+.noticias {
+  padding: 60px 40px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  background-color: #fff;
+}
+
+/* Card noticia */
+.noticia {
+  text-align: center;
+}
+
+/* Link “card completa” */
+.NotiLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* Imagen noticia */
+.noticia .NotiLink img {
+  width: 100%;
+  border-radius: 20px;
+  margin-bottom: 15px;
+}
+
+/* Título noticia */
+.noticia .NotiLink h3 {
+  border-bottom: 4px #2c65ee dotted;
+  color: #6a2fd8;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+/* Animaciones hover */
+.NotiLink img, .NotiLink h3 {
+  transition: transform ease 0.3s;
+}
+
+.NotiLink img:hover {
+  transform: scale(1.05);
+}
+
+.NotiLink h3:hover {
+  transform: scale(1.05);
+}
+
+/* Texto noticia */
+.noticia p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+/*  =========================================================
+                          RESPONSIVE
+    ========================================================= */
+
+
+/*  -------------------------
+    Medianas pantallas (<= 980px)
+    ------------------------- */
+@media (max-width: 980px){
+  /* Intro */
+  .intro{
+    height: 520px;
+  }
+
+  /* Recomendación */
+  .recomend{
+    padding: 60px 20px;
+  }
+
+  .recomend-wrapper{
+    grid-template-columns: 1fr;
+    gap: 26px;
+    text-align: center;
+  }
+
+  .recomend-img{
+    order: -1;
+  }
+
+  .recomend-text h2{
+    font-size: 30px;
+  }
+
+  /* Noticias: 2 columnas */
+  .noticias{
+    grid-template-columns: repeat(2, 1fr);
+    padding: 40px 20px;
+    gap: 22px;
+  }
+}
+
+
+/*  -------------------------
+    Pequeñas pantallas (<= 620px)
+    ------------------------- */
+@media (max-width: 620px){
+  /* Intro */
+  .intro{
+    height: 460px;
+  }
+
+  .intro div{
+    text-align: left;
+  }
+
+  /* Recomendación */
+  .recomend-img img{
+    width: 260px;
+    padding: 20px;
+  }
+
+  /* Noticias: 1 columna */
+  .noticias{
+    grid-template-columns: 1fr;
+  }
+
+  .noticia .NotiLink h3{
+    font-size: 15px;
+  }
+}

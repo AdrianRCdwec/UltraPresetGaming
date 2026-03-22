@@ -1,0 +1,392 @@
+/*  =========================================================
+                    FILA DE COMPONENTE
+    ========================================================= */
+
+/* Fila componente */
+.hw-item{
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 18px 40px;
+}
+
+
+/*  =========================================================
+                    COLUMNA IZQUIERDA: ICONO
+    ========================================================= */
+
+/* Izquierda: icono */
+.hw-media{
+  width: 190px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hw-icon{
+  width: 120px;
+  height: auto;
+  display: block;
+}
+
+
+/*  =========================================================
+          COLUMNA DERECHA: TARJETA (clicable)
+    ========================================================= */
+
+/* Derecha: tarjeta */
+.hw-card{
+  flex: 1;
+  background: #eaf0fd;
+  border-radius: 4px;
+  min-height: 110px;
+  padding: 16px 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Texto principal (kicker) */
+.hw-kicker{
+  font-size: 20px;
+  font-weight: 500;
+  margin-right: auto;
+}
+
+/* Botón a la derecha */
+.hw-btn{
+  margin-left: auto;
+  background: #9814f1;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+/*  =========================================================
+                        PANEL LATERAL
+    ========================================================= */
+
+/* Hacemos la tarjeta clicable */
+.hw-card{
+  cursor: pointer;
+}
+
+/* Link de la imagen */
+.hw-media-link{
+  display: inline-flex;
+}
+
+/* Ocultar los radios */
+.sp-radio{
+  display: none;
+}
+
+/* Panel lateral derecho */
+.sidepanel{
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 360px;
+  max-width: 92vw;
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid rgba(16, 24, 40, 0.12);
+  box-shadow: -18px 0 40px rgba(16, 24, 40, 0.18);
+  transform: translateX(110%);
+  transition: transform 0.2s ease;
+  z-index: 1000;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+/* Overlay (fondo oscuro) */
+.overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 24, 40, 0.40);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 999;
+}
+
+
+/*  =========================================================
+        REGLAS DE APERTURA (cuando un radio está checked)
+    ========================================================= */
+#panel-procesador:checked ~ .sidepanel,
+#panel-placa:checked ~ .sidepanel,
+#panel-ram:checked ~ .sidepanel,
+#panel-caja:checked ~ .sidepanel,
+#panel-aire:checked ~ .sidepanel,
+#panel-liquida:checked ~ .sidepanel,
+#panel-gpu:checked ~ .sidepanel,
+#panel-psu:checked ~ .sidepanel,
+#panel-disco:checked ~ .sidepanel,
+#panel-monitor:checked ~ .sidepanel{
+  transform: translateX(0);
+}
+
+#panel-procesador:checked ~ .overlay,
+#panel-placa:checked ~ .overlay,
+#panel-ram:checked ~ .overlay,
+#panel-caja:checked ~ .overlay,
+#panel-aire:checked ~ .overlay,
+#panel-liquida:checked ~ .overlay,
+#panel-gpu:checked ~ .overlay,
+#panel-psu:checked ~ .overlay,
+#panel-disco:checked ~ .overlay,
+#panel-monitor:checked ~ .overlay{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+
+/*  =========================================================
+          CABECERA DEL PANEL (título + botón cerrar)
+    ========================================================= */
+.sidepanel-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+.sidepanel-title{
+  margin: 0;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+/* Botón cerrar */
+.sidepanel-close{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(44, 101, 238, 0.18);
+  background: rgba(44, 101, 238, 0.06);
+  color: #1d49b3;
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sidepanel-close:hover{
+  background: rgba(152, 20, 241, 0.10);
+  border-color: rgba(152, 20, 241, 0.22);
+  color: #6a14ad;
+}
+
+
+/*  =========================================================
+                      BUSCADOR (panel)
+    ========================================================= */
+.sidepanel-search input{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 24, 40, 0.14);
+  outline: none;
+  font-family: "Inter", Arial, sans-serif;
+}
+
+.sidepanel-search input:focus{
+  border-color: rgba(44, 101, 238, 0.35);
+  box-shadow: 0 0 0 4px rgba(44, 101, 238, 0.12);
+}
+
+
+/*  =========================================================
+            GRID DE COMPONENTES (cards placeholder)
+    ========================================================= */
+.sidepanel-grid{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  overflow: auto;
+  padding: 12px 2px 28px;
+}
+
+.component-card{
+  border: 1px solid rgba(44, 101, 238, 0.14);
+  border-radius: 14px;
+  background: #eaf0fd;
+  padding: 10px;
+  text-align: center;
+}
+
+/* Imagen dentro de card */
+.component-card img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+.component-card p{
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #101828;
+}
+
+
+/*  =========================================================
+                  THUMB (contenedor imagen)
+    ========================================================= */
+.component-thumb{
+  width: 100%;
+  height: 110px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(16, 24, 40, 0.08);
+}
+
+/*  =========================================================
+                  TÍTULO DINÁMICO DEL PANEL
+    ========================================================= */
+.sidepanel-title{
+  margin: 0;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+/* Oculta todos los títulos por defecto */
+.sidepanel-title span{
+  display: none;
+}
+
+/* Si está cerrado, enseña el título por defecto */
+#panel-close:checked ~ .sidepanel .sidepanel-title .t-default{
+  display: inline;
+}
+
+/* Si está abierto por una sección, muestra su título */
+#panel-procesador:checked ~ .sidepanel .sidepanel-title .t-procesador,
+#panel-placa:checked ~ .sidepanel .sidepanel-title .t-placa,
+#panel-ram:checked ~ .sidepanel .sidepanel-title .t-ram,
+#panel-caja:checked ~ .sidepanel .sidepanel-title .t-caja,
+#panel-aire:checked ~ .sidepanel .sidepanel-title .t-aire,
+#panel-liquida:checked ~ .sidepanel .sidepanel-title .t-liquida,
+#panel-gpu:checked ~ .sidepanel .sidepanel-title .t-gpu,
+#panel-psu:checked ~ .sidepanel .sidepanel-title .t-psu,
+#panel-disco:checked ~ .sidepanel .sidepanel-title .t-disco,
+#panel-monitor:checked ~ .sidepanel .sidepanel-title .t-monitor { 
+  display: inline; 
+}
+
+
+/*  =========================================================
+              HOVERS / TRANSICIONES
+    ========================================================= */
+.hw-media-link, .hw-card, .component-card {
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.hw-media-link:hover, .hw-card:hover, .component-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.20);
+  background-color: #e3ebff;
+}
+
+
+/*  =========================================================
+              RESPONSIVE: Montador Hardware
+    ========================================================= */
+
+/* <=1050px: más aire y menos padding */
+@media (max-width: 1050px){
+  .hw-item{
+    padding: 14px 18px;
+    gap: 18px;
+  }
+
+  .hw-media{
+    width: 150px;
+  }
+
+  .hw-icon{
+    width: 100px;
+  }
+
+  .hw-kicker{
+    font-size: 18px;
+  }
+}
+
+/* <=610px: apilar (icono arriba, tarjeta abajo) */
+@media (max-width: 610px){
+  .hw-item{
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .hw-media{
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .hw-icon{
+    width: 78px;
+  }
+
+  .hw-card{
+    min-height: auto;
+    border-radius: 12px;
+    padding: 14px;
+    width: 90%;
+  }
+
+  .hw-kicker{
+    font-size: 16px;
+    margin-left: 50%;
+    transform: translate(-50%);
+  }
+}
+
+/* Panel más cómodo en pequeñas */
+@media (max-width: 610px){
+  .sidepanel{
+    width: min(520px, 100vw);
+    max-width: 100vw;
+    border-left: 0;
+    border-top-left-radius: 18px;
+    border-bottom-left-radius: 18px;
+  }
+
+  .sidepanel-grid{
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Pantalla enana */
+@media (max-width: 420px){
+  .sidepanel{
+    padding: 12px;
+  }
+
+  .sidepanel-close{
+    width: 38px;
+    height: 38px;
+  }
+}

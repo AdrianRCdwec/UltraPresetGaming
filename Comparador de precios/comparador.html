@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UltraPresetGaming</title>
+
+    <!-- Icono -->
+    <link rel="icon" type="image/x-icon" href="../images/Logo pag web.ico">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../Base.css" type="text/css">
+    <link rel="stylesheet" href="comparador.css" type="text/css">
+
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+    <!-- ========================= -->
+    <!--           HEADER          -->
+    <!-- ========================= -->
+    <header>
+      <!-- Logo -->
+      <a class="logo" href="../Proyecto_5_pagina.html">
+        <img src="../images/Logo_Comparador_Absoluto.png" alt="Logotipo" title="Inicio" width="150" height="auto">
+      </a>
+
+      <!-- BOTÓN HAMBURGUESA (pantalla pequeña) -->
+      <input type="checkbox" id="nav-toggle" class="nav-toggle">
+      <label for="nav-toggle" class="nav-burger" aria-label="Abrir menú">
+        <img class="nav-burger-icon" src="../images/menu.svg" alt="">
+      </label>
+
+      <!-- Navegación principal -->
+      <nav>
+        <a href="../Montador de hardware/Montador_hardware.html">Hardware</a>
+        <a href="../Compra de videojuegos/compra_videojuegos.html">Videojuegos</a>
+        <a class="activo" href="../Comparador de precios/comparador.html">Precios</a>
+        <a href="../Modeador recomendado/modeador.html">Mods</a>
+        <a href="../Novedades/novedades.html">Novedades</a>
+      </nav>
+
+      <!-- Botón de inicio de sesión -->
+      <a class="sesion" href="../Login/login.html">Iniciar Sesión</a>
+
+      <!-- Overlay para cerrar al clicar fuera -->
+      <label for="nav-toggle" class="nav-overlay" aria-label="Cerrar menú"></label>
+    </header>
+
+    <!-- ========================= -->
+    <!--          CUERPO           -->
+    <!-- ========================= -->
+    <div class="cuerpo">
+
+      <!-- ============================ -->
+      <!--   OFERTAS (selector tienda)  -->
+      <!-- ============================ -->
+      <section class="hw-item">
+
+        <!-- Lado izquierdo: icono + botón eliminar + label -->
+        <div class="hw-media">
+          <button class="hw-remove" type="button" aria-label="Eliminar componente">
+            <span class="hw-icon-wrap">
+              <img src="../images/procesador.png" alt="Procesador" class="hw-icon">
+              <img src="../images/eliminar.png" alt="Eliminar" class="hw-x">
+            </span>
+          </button>
+          <p class="hw-label">Procesador</p>
+        </div>
+
+        <!-- Lado der: grid de tiendas (radios + labels) -->
+        <div class="offers-grid" aria-label="Tiendas y precios">
+
+          <!-- Oferta 1 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-amazon">
+          <label class="offer" for="cpu-amazon" title="Amazon">
+            <img class="offer-logo" src="../images/amazon.jpg" alt="Amazon">
+            <span class="offer-price">134,99 €</span>
+          </label>
+
+          <!-- Oferta 2 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-pcg-1">
+          <label class="offer" for="cpu-pcg-1" title="PcG">
+            <img class="offer-logo" src="../images/pcg.jpg" alt="PcG">
+            <span class="offer-price">144,99 €</span>
+          </label>
+
+          <!-- Oferta 3 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-pcg-2">
+          <label class="offer" for="cpu-pcg-2" title="PcG">
+            <img class="offer-logo" src="../images/pcg.jpg" alt="PcG">
+            <span class="offer-price">155,74 €</span>
+          </label>
+
+          <!-- Oferta 4 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-pcg-3">
+          <label class="offer" for="cpu-pcg-3" title="PcG">
+            <img class="offer-logo" src="../images/pcg.jpg" alt="PcG">
+            <span class="offer-price">180,99 €</span>
+          </label>
+
+          <!-- Oferta 5 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-pcg-4">
+          <label class="offer" for="cpu-pcg-4" title="PcG">
+            <img class="offer-logo" src="../images/pcg.jpg" alt="PcG">
+            <span class="offer-price">199,99 €</span>
+          </label>
+
+          <!-- Oferta 6 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-otro">
+          <label class="offer" for="cpu-otro" title="Otro">
+            <img class="offer-logo" src="../images/pcg.jpg" alt="Otro">
+            <span class="offer-price">210,00 €</span>
+          </label>
+
+          <!-- Oferta 7 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-x">
+          <label class="offer" for="cpu-x" title="Tienda X">
+            <img class="offer-logo" src="../images/pcg.jpg" alt="Tienda X">
+            <span class="offer-price">220,00 €</span>
+          </label>
+
+          <!-- Oferta 8 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-y">
+          <label class="offer" for="cpu-y" title="Tienda Y">
+            <img class="offer-logo" src="../images/pcg.jpg" alt="Tienda Y">
+            <span class="offer-price">230,00 €</span>
+          </label>
+
+          <!-- Oferta 9 -->
+          <input class="offer-radio" type="radio" name="cpu-store" id="cpu-z">
+          <label class="offer" for="cpu-z" title="Tienda Z">
+            <img class="offer-logo" src="../images/pcg.jpg" alt="Tienda Z">
+            <span class="offer-price">240,00 €</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- ========================= -->
+      <!--     RESUMEN / CHECKOUT    -->
+      <!-- ========================= -->
+      <section class="checkout">
+
+        <!-- Línea resumen (producto) -->
+        <div class="checkout-item">
+          <img class="checkout-img" src="../images/procesador.png" alt="Procesador">
+          <div class="checkout-info">
+            <p class="checkout-name">Procesador</p>
+            <p class="checkout-sub">25% rebaja</p>
+          </div>
+          <p class="checkout-price">134,99 €</p>
+        </div>
+
+        <!-- Total + botones -->
+        <div class="checkout-total">
+          <p class="linea">Precio oficial: <strong>179,99 €</strong></p>
+          <p class="linea">Ahorro total: <strong class="checkout-price">- 45,00 €</strong></p>
+
+          <p class="total">TOTAL: 134,99 €</p>
+
+          <a class="btn btn-primary" href="#">SIGUIENTE &gt;</a>
+          <a class="btn btn-secondary" href="../Montador de hardware/Montador_hardware.html">&lt; Seguir comprando</a>
+        </div>
+      </section>
+    </div>
+    <!-- ========================= -->
+    <!--           FOOTER          -->
+    <!-- ========================= -->
+    <footer class="footer">
+      <!-- Footer: columna 1 -->
+      <div class="footer-section">
+        <h3>¿Quiénes somos?</h3>
+        <a href="#">¿Quiénes somos?</a>
+        <a href="#">Sobre UltraPresetGaming</a>
+        <a href="tel:+34604024297" aria-label="Llamar a +34 604 02 42 97">+34 604 02 42 97</a>
+        <a href="mailto:arodriguezc24@fpcoruna.afundacionacion.org">arodriguezc24@fpcoruna.afundacion.org</a>
+      </div>
+
+      <!-- Footer: columna 2 -->
+      <div class="footer-section">
+        <h3>¿Por qué aquí?</h3>
+        <a href="#">¿Cómo pagar?</a>
+        <a href="#">¿Cómo es el pago?</a>
+        <br>
+        <select id="moneda">
+          <option>Euros (€)</option>
+          <option>USD ($)</option>
+          <option>Libra (£)</option>
+        </select>
+      </div>
+
+      <!-- Footer: columna 3 -->
+      <div class="footer-section">
+        <h3>Comunidad</h3>
+        <div class="social">
+          <a class="social-link" href="https://www.instagram.com/olamohcib/" target="_blank">
+            <img src="../images/instagram.svg" alt="Instagram">
+          </a>
+          <a class="social-link" href="https://www.youtube.com/@olaMohciB" target="_blank">
+            <img src="../images/youtube.svg" alt="YouTube">
+          </a>
+          <a class="social-link" href="https://x.com/olamohciB" target="_blank">
+            <img src="../images/x.svg" alt="X">
+          </a>
+          <a class="social-link" href="https://www.tiktok.com/@olamohcib?is_from_webapp=1&sender_device=pc" target="_blank">
+            <img src="../images/tiktok.svg" alt="TikTok">
+          </a>
+        </div>
+
+        <!-- Donación -->
+        <a class="donate-link" href="https://www.paypal.com/donate/?hosted_button_id=BJYUR9G3XUYUE" target="_blank">
+          <button class="start blue centrar" role="button">Donación</button>
+        </a>
+      </div>
+    </footer>
+  </body>
+</html>

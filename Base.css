@@ -1,0 +1,480 @@
+/*  =========================================================
+                        RESET + BASE GLOBAL
+    ========================================================= */
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0; 
+    font-family: "Inter", Arial, sans-serif;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Wrapper principal (para empujar footer abajo) */
+.cuerpo {
+    flex: 1;
+    padding: 20px 0;
+}
+
+
+/*  =========================================================
+                        CABECERA (HEADER)
+    ========================================================= */
+header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;  
+    align-items: center;
+    padding: 10px 40px;
+    position: sticky;
+    z-index: 100;
+    box-shadow: 0.8px 4px 4px 0.8px #888;
+    top: 0;
+    background-color: white;
+}
+
+/* Nav principal (desktop) */
+header nav {
+    display: flex;
+    gap: 35px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Tamaño general de imágenes del header */
+header img {
+    width: 150px;
+    height: auto;
+}
+
+/* Logo: hover */
+header .logo img {
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+header .logo img:hover {
+    transform: scale(1.08);
+    filter: drop-shadow(0 6px 12px rgba(44, 101, 238, 0.4));
+}
+
+/* Links del nav */
+nav a {
+    text-decoration: none;
+    color: black;
+    font-size: 16px;
+    font-weight: 500;
+    padding : 10px 15px;
+    text-align: center;
+}
+
+/* Hover links (excepto activo) */
+nav a:hover:not(.activo) {
+    color: white;
+    background-color: #9814f1;
+    border-radius: 20px;
+}
+
+/* Estado activo */
+nav a.activo{
+    color: white;
+    background-color: #9814f1;
+    border-radius: 20px;
+}
+
+/* Botón sesión */
+header .sesion {
+    margin-left: auto;
+    padding: 8px 16px;
+    color: black;
+    text-decoration: none;
+    border-radius: 999px;
+    border: 1px solid rgba(16,24,40,.12);
+    background: #fff;
+}
+
+header .sesion:hover {
+    background-color: #9814f1;
+    color: white;
+    border-radius: 20px;
+}
+
+
+/*  =========================================================
+        BOTONES (COMPONENTE .start + VARIANTE .blue)
+    ========================================================= */
+.start {
+    align-items: center;
+    appearance: none;
+    background-color: #9814f1;
+    border-radius: 25px;
+    border-width: 0;
+    box-shadow:
+        rgba(45, 35, 66, 0.2) 0 2px 4px,
+        rgba(45, 35, 66, 0.15) 0 7px 13px -3px,
+        #9814f1 0 -3px 0 inset;
+    cursor: pointer;
+    display: inline-flex;
+    height: 48px;
+    justify-content: center;
+    overflow: hidden;
+    padding-left: 16px;
+    padding-right: 16px;
+    position: relative;
+    text-decoration: none;
+    transition:
+        box-shadow 0.15s,
+        transform 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+    font-size: 18px;
+    margin: 20px 20px 20px 0;
+    color: white;
+}
+
+/* Estados botón */
+.start:focus {
+    box-shadow:
+        #9814f1 0 0 0 1.5px inset,
+        rgba(45, 35, 66, 0.4) 0 2px 4px,
+        rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
+        #9814f1 0 -3px 0 inset;
+}
+
+.start:hover {
+    box-shadow:
+        rgba(45, 35, 66, 0.3) 0 4px 8px,
+        rgba(45, 35, 66, 0.2) 0 7px 13px -3px,
+        #9814f1 0 -3px 0 inset;
+    transform: translateY(-2px);
+}
+
+.start:active {
+    box-shadow: #9814f1 0 3px 7px inset;
+    transform: translateY(2px);
+}
+
+/* Variante azul */
+.blue {
+    background-color: #2c65ee;
+    box-shadow:
+        rgba(45, 35, 66, 0.2) 0 2px 4px,
+        rgba(45, 35, 66, 0.15) 0 7px 13px -3px,
+        #2c65ee 0 -3px 0 inset;
+}
+
+.blue:focus {
+    box-shadow:
+        #2c65ee 0 0 0 1.5px inset,
+        rgba(45, 35, 66, 0.4) 0 2px 4px,
+        rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
+        #2c65ee 0 -3px 0 inset;
+}
+
+.blue:hover {
+    box-shadow:
+        rgba(45, 35, 66, 0.3) 0 4px 8px,
+        rgba(45, 35, 66, 0.2) 0 7px 13px -3px,
+        #2c65ee 0 -3px 0 inset;
+}
+
+.blue:active {
+    box-shadow: #2c65ee 0 3px 7px inset;
+}
+
+
+/*  =========================================================
+                    PIE DE PÁGINA (FOOTER)
+    ========================================================= */
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    background-color: #eaf0fd;
+    padding: 20px;
+    color: black;
+    text-align: center;
+    gap: 10px;
+}
+
+/* Columnas del footer */
+.footer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.footer-section h3 {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* Links footer */
+.footer-section a {
+    color: #2c65ee;
+    text-decoration: none;
+}
+
+.footer-section a:hover {
+    text-decoration: underline;
+}
+
+/* Select moneda */
+.footer-section select {
+    margin-top: 5px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #888;
+    background-color: white;
+}
+
+#moneda:hover {
+    border: 1px solid black;
+}
+
+
+/*  =========================================================
+                    UTILIDADES (helpers)
+    ========================================================= */
+.banner{
+    width: 100%;
+    height: auto;
+}
+
+.centrar {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Redes sociales */
+.social{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;      
+    flex-wrap: wrap;
+}
+
+.social-link{
+    width: 54px;
+    height: 54px;
+    border: 1px solid black;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.social-link:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px rgba(16, 24, 40, 0.14);
+}
+
+.social-link img{
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    display: block;
+}
+
+.donate-link{
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+
+/*  =========================================================
+                    NAV RESPONSIVE
+                    Desktop: >1050px
+                    Mediana: 610px–1050px
+                Pequeña: <610px (hamburguesa)
+    ========================================================= */
+
+
+/* --- Elementos extra del header --- */
+.nav-toggle{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Botón hamburguesa (solo móvil) */
+.nav-burger{
+    display: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(16,24,40,.12);
+    background: #fff;
+    cursor: pointer;
+
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+/* Overlay (cierra al clicar fuera) */
+.nav-overlay {
+    display: none;
+}
+
+
+/*  =========================================================
+                    MEDIANA (610px–1050px)
+                Header en grid, sin hamburguesa
+    ========================================================= */
+@media (max-width: 1050px) and (min-width: 611px){
+    header{
+        padding: 10px 18px;
+        gap: 12px;
+
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+    }
+
+    header nav{
+        justify-content: center;
+        margin-left: 0;
+        margin-right: 0;
+
+        flex-wrap: wrap;
+        gap: 12px 14px;
+    }
+
+    nav a{
+        padding: 9px 12px;
+        font-size: 15px;
+    }
+
+    header .sesion{
+        margin-left: 0;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(16,24,40,.12);
+        background: #fff;
+        text-align: center;
+    }
+}
+
+
+/*  =========================================================
+                    Pantalla pequeña (<610px)
+    ========================================================= */
+@media (max-width: 610px){
+    header{
+        padding: 10px 14px;
+        gap: 10px;
+
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+    }
+
+    /* Menú oculto por defecto */
+    header nav{
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        top: calc(100% + 10px);
+
+        background: #fff;
+        border: 1px solid rgba(16,24,40,.12);
+        border-radius: 16px;
+        box-shadow: 0 18px 40px rgba(16,24,40,.14);
+        padding: 10px;
+
+        display: grid;
+        gap: 8px;
+
+        transform: translateY(-6px);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform .16s ease, opacity .16s ease;
+    }
+
+    /* Links en columna */
+    header nav a{
+        display: block;
+        padding: 12px 12px;
+        border-radius: 12px;
+    }
+
+    /* Mostrar hamburguesa */
+    .nav-burger{
+        display: inline-flex;
+    }
+
+    /* Overlay */
+    .nav-overlay{
+        position: fixed;
+        inset: 0;
+        background: rgba(16,24,40,.35);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .16s ease;
+        z-index: 90;
+    }
+
+    header{
+        z-index: 100;
+    }
+
+    header nav{
+        z-index: 101;
+    }
+
+    /* Abrir menú al hacer check */
+    #nav-toggle:checked ~ nav{
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #nav-toggle:checked ~ .nav-overlay{
+        display: block;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Animación “hamburguesa a X” (si fueran spans) */
+    #nav-toggle:checked + .nav-burger span:nth-child(1){
+        transform: translateY(7px) rotate(45deg);
+    }
+    #nav-toggle:checked + .nav-burger span:nth-child(2){
+        opacity: 0;
+    }
+    #nav-toggle:checked + .nav-burger span:nth-child(3){
+        transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* Sesión compacta */
+    header .sesion{
+        margin-left: 0;
+        padding: 8px 10px;
+        font-size: 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(16,24,40,.12);
+        background: #fff;
+    }
+}
+
+
+/*  =========================================================
+                ICONO SVG HAMBURGUESA (img)
+    ========================================================= */
+.nav-burger-icon{
+    width: 22px;
+    height: 22px;
+    display: block;
+    object-fit: contain;
+}

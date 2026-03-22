@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>UltraPresetGaming</title>
+
+        <!-- Icono -->
+        <link rel="icon" type="image/x-icon" href="images/Logo pag web.ico">
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="Proyecto_5_pagina.css" type="text/css"> 
+        <link rel="stylesheet" href="Base.css" type="text/css"> 
+
+        <!-- Fuentes -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    </head>
+
+    <body>
+        <!-- ========================= -->
+        <!--         HEADER            -->
+        <!-- ========================= -->
+        <header>
+            <!-- Logo -->
+            <a class="logo" href="./Proyecto_5_pagina.html"><img src="./images/Logo_Comparador_Absoluto.png" alt="Logotipo" title="Inicio" width="150px" height="auto"></a>
+
+            <!-- BOTÓN HAMBURGUESA (pantalla pequeña) -->
+            <input type="checkbox" id="nav-toggle" class="nav-toggle">
+            <label for="nav-toggle" class="nav-burger" aria-label="Abrir menú">
+                <img class="nav-burger-icon" src="./images/menu.svg" alt="">
+            </label>
+
+            <!-- Navegación principal -->
+            <nav>  
+                <a href="Montador de hardware/Montador_hardware.html">Hardware</a>
+                <a href="Compra de videojuegos/compra_videojuegos.html">Videojuegos</a>
+                <a href="Comparador de precios/comparador.html">Precios</a>
+                <a href="Modeador recomendado/modeador.html">Mods</a>
+                <a href="Novedades/novedades.html">Novedades</a>
+            </nav>
+
+            <!-- Botón de inicio de sesión -->
+            <a class="sesion" href="Login/login.html">Iniciar Sesión</a>
+
+            <!-- Overlay para cerrar al clicar fuera -->
+            <label for="nav-toggle" class="nav-overlay" aria-label="Cerrar menú"></label>
+        </header>
+
+        <!-- ========================= -->
+        <!--       CUERPO              -->
+        <!-- ========================= -->
+        <div class="cuerpo">
+
+            <!-- ---------- INTRO ---------- -->
+            <section class="intro">
+                <!-- Imagen portada -->
+                <img class="Portada" src="./images/Portada.png" alt="Ordenadores gaming">
+
+                <!-- 1ª SECCIÓN -->
+                <div>
+                    <h1>Comparar precios</h1>
+                    <p>Esta es la página web que todo gamer desea, busca los mejores precios de tus componentes y videojuegos favoritos, con recomendaciones y las últimas noticias del momento</p>
+                    <a href="./Montador de hardware/Montador_hardware.html">
+                        <button class="start" role="button">Quiero empezar</button>
+                    </a>
+                </div>
+            </section>
+
+            <!-- ------ RECOMENDACIÓN ------ -->
+            <section class="recomend">
+                <div class="recomend-wrapper">
+                
+                    <!-- Columna imagen -->
+                    <div class="recomend-img">
+                        <img src="./images/Logos de modeadores.png" alt="Logos de modeadores">
+                    </div>
+
+                    <!-- Columna texto -->
+                    <div class="recomend-text">
+                        <h2>
+                            <span>Recomendación </span>de modeadores
+                        </h2>
+
+                        <p>
+                            Cuando un juego te gusta tanto que quieres tener una experiencia nueva jugando al mismo juego, 
+                            lo mejor siempre es ampliar el contenido.
+                            <br><br>
+                            Aquí te recomendamos los mejores sitios para coger los mods para tus juegos preferidos.
+                        </p>
+
+                        <!-- Botón -->
+                        <a href="./Modeador recomendado/modeador.html">
+                            <button class="start blue">Más información</button>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- -------- NOTICIAS --------- -->
+            <section class="noticias">
+
+                <!-- Noticia 1 -->
+                <article class="noticia">
+                    <a class="NotiLink" href="./Novedades/novedades.html">
+                        <img src="./images/Snapdragon.jpeg" alt="Imagen novedad">
+                        <h3>Qualcomm Snapdragon 8 Elite Gen 5</h3>
+                    </a>
+                    <p>
+                        El Snapdragon 8 Elite Gen 5 llega como la propuesta mas ambiciosa de Qualcomm, con ajustes dinámicos de potencia y un enfoque en rendimiento sostenido que marcara a muchos de los próximos buques insignia.
+                    </p>
+                </article>
+
+                <!-- Noticia 2 -->
+                <article class="noticia">
+                    <a class="NotiLink" href="./Novedades/novedades.html">
+                        <img src="./images/NVIDIA.jpeg" alt="Imagen novedad">
+                        <h3>NVIDIA tiene el control de los chips más potentes de IA</h3>
+                    </a>
+                    <p>
+                        OpenAl quiere dar un golpe sobre la mesa en la carrera por dominar la inteligencia artificial. A principios de septiembre conocíamos que "un misterioso cliente" hizo una inversión en Broadcom de 10.000 millones de dólares para el diseño de chips de IA.
+                    </p>
+                </article>
+
+                <!-- Noticia 3 -->
+                <article class="noticia">
+                    <a class="NotiLink" href="./Novedades/novedades.html">
+                        <img src="./images/GTA_VI.jpeg" alt="Imagen novedad">
+                        <h3>GTA 6 romperá todos los récords</h3>
+                    </a>
+                    <p>
+                        Mucho se esta hablando sobre las posibles repercusiones en la industria del videojuego de la compra de Electronic Arts. En menor escala, EA también cambió la industria en 2004 cuando pago 68 millones de dólares para adquirir al estudio britanico Criterion.
+                    </p>
+                </article>
+            </section>
+        </div>
+
+        <!-- ========================= -->
+        <!--          FOOTER           -->
+        <!-- ========================= -->
+        <footer class="footer">
+
+            <!-- Footer: columna 1 -->
+            <div class="footer-section">
+                <h3>¿Quiénes somos?</h3>
+                <a href="#">¿Quiénes somos?</a>
+                <a href="#">Sobre UltraPresetGaming</a>
+                <a href="tel:+34604024297" aria-label="Llamar a +34 604 02 42 97">+34 604 02 42 97</a>
+                <a href="mailto:arodriguezc24@fpcoruna.afundacion.org">arodriguezc24@fpcoruna.afundacion.org</a>
+            </div>
+            
+            <!-- Footer: columna 2 -->
+            <div class="footer-section">
+                <h3>¿Por qué aquí?</h3>
+                <a href="#">¿Cómo pagar?</a>
+                <a href="#">¿Cómo es el pago?</a>
+                <br>
+
+                <!-- Selector moneda -->
+                <select id="moneda">
+                    <option>Euros (€)</option>
+                    <option>USD ($)</option>
+                    <option>Libra (£)</option>
+                </select>
+            </div>
+
+            <!-- Footer: columna 3 -->
+            <div class="footer-section">
+                <h3>Comunidad</h3>
+
+                <!-- Redes sociales -->
+                <div class="social">
+                <a class="social-link" href="https://www.instagram.com/olamohcib/" target="_blank">
+                    <img src="./images/instagram.svg" alt="Instagram">
+                </a>
+                <a class="social-link" href="https://www.youtube.com/@olaMohciB" target="_blank">
+                    <img src="./images/youtube.svg" alt="YouTube">
+                </a>
+                <a class="social-link" href="https://x.com/olaMohciB" target="_blank">
+                    <img src="./images/x.svg" alt="X">
+                </a>
+                <a class="social-link" href="https://www.tiktok.com/@olamohcib?is_from_webapp=1&sender_device=pc" target="_blank">
+                    <img src="./images/tiktok.svg" alt="TikTok">
+                </a>
+                </div>
+
+                <!-- Donación -->
+                <a class="donate-link" href="https://www.paypal.com/donate/?hosted_button_id=BJYUR9G3XUYUE" target="_blank">
+                    <button class="start blue centrar" role="button">Donación</button>
+                </a>
+            </div>
+
+        </footer>
+    </body>
+</html>

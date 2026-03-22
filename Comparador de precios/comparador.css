@@ -1,0 +1,347 @@
+/*  =========================================================
+                            OFERTAS
+    ========================================================= */
+
+.hw-item{
+  display: flex;
+  align-items: flex-start;
+  gap: 26px;
+  padding: 18px 40px;
+}
+
+/* --------- Izquierda: componente (icono + label) --------- */
+.hw-media{
+  width: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.hw-icon{
+  width: 90px;
+  height: auto;
+  display: block;
+}
+
+/* Wrapper clicable del icono (botón eliminar) */
+.hw-remove{
+  border: 0;
+}
+
+/* De momento no es clicakble por falta de JS */
+
+/* Contenedor relativo (para posicionar la X encima) */
+.hw-icon-wrap{
+  position: relative;
+  display: inline-block;
+}
+
+/* Icono X superpuesto (solo aparece en hover) */
+.hw-x{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+
+  opacity: 0;
+  transition: opacity .15s ease;
+  z-index: 2;
+}
+
+/* Mostrar la X al pasar ratón */
+.hw-remove:hover .hw-x {
+  opacity: 1;
+}
+
+/* Texto del componente */
+.hw-label{
+  margin: 0;
+  font-size: 14px;
+  color: #444;
+}
+
+/* --------- Derecha: grid horizontal con scroll --------- */
+.offers-grid{
+  flex: 1;
+  width: 100%;
+  display: grid;
+
+  /* “columna hacia la derecha” (scroll horizontal) */
+  grid-auto-flow: column;
+
+  column-gap: 10px;
+
+  /* Cada tienda: min 120px, se estira si hay espacio */
+  grid-auto-columns: minmax(120px, 1fr);
+
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 6px;
+}
+
+
+/*  =========================================================
+              SELECTOR RADIO (oculto) + LABELS
+    ========================================================= */
+
+/* Radio oculto */
+.offer-radio{
+  display: none;
+}
+
+/* Cada tienda (label clicable) */
+.offer{
+  text-decoration: none;
+  color: inherit;
+
+  display: grid;
+  grid-template-rows: 44px auto;
+  justify-items: center;
+
+  padding: 8px 6px;
+  gap: 10px;
+
+  cursor: pointer;
+  border-radius: 10px;
+
+  transition: box-shadow .15s ease, transform .12s ease, background-color .15s ease;
+}
+
+/* Logo tienda */
+.offer-logo{
+  max-width: 100%;
+  max-height: 44px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Precio tienda */
+.offer-price{
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Hover */
+.offer:hover{
+  transform: translateY(-1.5px);
+}
+
+.offer:hover .offer-price{
+  text-decoration: underline;
+}
+
+/* Estado seleccionado */
+.offer-radio:checked + .offer {
+  box-shadow: 0 0 0 2px rgba(160, 120, 255, .25), 0 10px 25px rgba(160, 120, 255, .10);
+  background-color: #2c65ee;
+  color: white;
+  transform: none;
+  cursor: default;
+}
+
+.offer-radio:checked + .offer .offer-price{
+  text-decoration: none;
+  cursor: default;
+}
+
+
+/*  =========================================================
+            CHECKOUT (resumen + total + botones)
+    ========================================================= */
+.checkout{
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #dcdcdc;
+}
+
+/* Línea producto */
+.checkout-item{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid #e3e3e3;
+}
+
+.checkout-img{
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #eee;
+  padding: 6px;
+}
+
+.checkout-info{
+  flex: 1;
+  text-align: center;
+}
+
+.checkout-name{
+  margin: 0;
+  font-weight: 700;
+}
+
+.checkout-sub{
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #777;
+}
+
+.checkout-price{
+  margin: 0;
+  font-weight: 700;
+  color: #d10000;
+}
+
+/* Bloque total */
+.checkout-total{
+  margin-top: 14px;
+  padding: 22px 14px;
+  border: 1px solid #e3e3e3;
+  text-align: center;
+}
+
+.checkout-total .linea{
+  margin: 6px 0;
+  color: #444;
+  font-size: 14px;
+}
+
+.checkout-total .total{
+  margin: 14px 0 16px;
+  font-size: 28px;
+  letter-spacing: 1px;
+}
+
+
+/*  =========================================================
+                      BOTONES (checkout / resumen)
+    ========================================================= */
+.btn{
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.btn-primary{
+  background: #0a74ff;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background-color: rgb(10, 60, 255);
+}
+
+.btn-secondary{
+  background: #f2f2f2;
+  color: #222;
+  border: 1px solid #ddd;
+}
+
+.btn-secondary:hover {
+  background-color: rgb(231, 229, 229);
+}
+
+
+/*  =========================================================
+                  RESPONSIVE: COMPARADOR
+    ========================================================= */
+
+/* Medianas */
+@media (max-width: 1050px){
+  .hw-item{
+    padding: 16px 18px;
+    gap: 18px;
+  }
+
+  .hw-media{
+    width: 160px;
+  }
+
+  .offers-grid{
+    grid-auto-columns: minmax(110px, 1fr);
+  }
+
+  .checkout{
+    width: min(900px, 92%);
+    padding: 16px;
+  }
+
+  .checkout-total .total{
+    font-size: 24px;
+  }
+}
+
+/* Pequeñas */
+@media (max-width: 610px){
+  /* Ofertas: apilar icono + grid */
+  .hw-item{
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .hw-media{
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+
+  .hw-label{
+    font-size: 15px;
+  }
+
+  /* Grid tiendas: horizontal con scroll */
+  .offers-grid{
+    grid-auto-columns: minmax(160px, 78%);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 10px;
+  }
+
+  /* Checkout: apilar */
+  .checkout-item{
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .checkout-price{
+    margin-top: 8px;
+  }
+
+  .checkout-total{
+    padding: 18px 12px;
+  }
+
+  .checkout-total .total{
+    font-size: 22px;
+  }
+
+  .btn{
+    border-radius: 12px;
+  }
+}
+
+/* Enana */
+@media (max-width: 420px){
+  .offers-grid{
+    grid-auto-columns: minmax(150px, 84%);
+  }
+}

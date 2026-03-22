@@ -1,0 +1,207 @@
+/*  =========================================================
+                        RESET BÁSICO
+    ========================================================= */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", Arial, sans-serif;
+}
+
+
+/*  =========================================================
+                    FONDO + CENTRADO
+    ========================================================= */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #eaf0fd 0%, #d4e4ff 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+
+/*  =========================================================
+                    CONTENEDOR PRINCIPAL
+    ========================================================= */
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 25px;
+    box-shadow: 
+        rgba(45, 35, 66, 0.2) 0 8px 32px,
+        rgba(45, 35, 66, 0.15) 0 16px 40px -12px,
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    padding: 50px;
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
+}
+
+
+/*  =========================================================
+                    CABECERA DEL LOGIN
+    ========================================================= */
+.header-login {
+    margin-bottom: 40px;
+}
+
+.logo-login {
+    width: 120px;
+    height: auto;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease;
+}
+
+.logo-login:hover {
+    transform: scale(1.05);
+}
+
+.header-login h1 {
+    color: #2c65ee;
+    font-size: 28px;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.header-login p {
+    color: #666;
+    font-size: 16px;
+}
+
+
+/*  =========================================================
+                        FORMULARIO
+    ========================================================= */
+.login-form {
+    margin-bottom: 30px;
+}
+
+
+/*  =========================================================
+                            INPUTS
+    ========================================================= */
+.input-group {
+    position: relative;
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 16px 20px 16px 48px;
+    border: 2px solid #e1e5e9;
+    border-radius: 15px;
+    font-size: 16px;
+    background: #f8f9ff;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+/* Estado focus (VER DONDE ESTÁ EL USUARIO) */
+.input-group input:focus {
+    border-color: #9814f1;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(152, 20, 241, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Icono dentro del input */
+.input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(25%);
+    font-size: 18px;
+    color: #9814f1;
+    pointer-events: none;
+    width: 24px;
+    text-align: center;
+    line-height: 1;
+}
+
+
+/*  =========================================================
+                    BOTÓN PRINCIPAL (LOGIN)
+    ========================================================= */
+.btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, #9814f1 0%, #7a12d0 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow:
+        rgba(45, 35, 66, 0.3) 0 4px 14px,
+        rgba(45, 35, 66, 0.2) 0 8px 28px -7px,
+        inset 0 -3px 0 #7a12d0;
+}
+
+.btn-login:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        rgba(45, 35, 66, 0.4) 0 8px 25px,
+        rgba(45, 35, 66, 0.3) 0 12px 40px -9px,
+        inset 0 -3px 0 #7a12d0;
+}
+
+.btn-login:active {
+    transform: translateY(-1px);
+    box-shadow: inset 0 3px 7px rgba(0,0,0,0.2);
+}
+
+
+/*  =========================================================
+                FOOTER DEL LOGIN (LINKS)
+    ========================================================= */
+.footer-login {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.footer-login a {
+    color: #2c65ee;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.footer-login a:hover {
+    color: #9814f1;
+}
+
+/* Link “volver al inicio” */
+.back-home {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+
+/*  =========================================================
+                RESPONSIVE (PEQUEÑAS)
+    ========================================================= */
+@media (max-width: 480px) {
+    .container {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+    
+    .header-login h1 {
+        font-size: 24px;
+    }
+}

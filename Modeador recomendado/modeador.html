@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UltraPresetGaming</title>
+
+    <!-- Icono -->
+    <link rel="icon" type="image/x-icon" href="../images/Logo pag web.ico">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../Base.css" type="text/css"> 
+    <link rel="stylesheet" href="modeador.css" type="text/css"> 
+
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+    <!-- ========================= -->
+    <!--           HEADER          -->
+    <!-- ========================= -->
+    <header>
+      <!-- Logo -->
+      <a class="logo" href="../Proyecto_5_pagina.html">
+        <img src="../images/Logo_Comparador_Absoluto.png" alt="Logotipo" title="Inicio" width="150px" height="auto">
+      </a>
+
+      <!-- BOTÓN HAMBURGUESA (pantalla pequeña) -->
+      <input type="checkbox" id="nav-toggle" class="nav-toggle">
+      <label for="nav-toggle" class="nav-burger" aria-label="Abrir menú">
+        <img class="nav-burger-icon" src="../images/menu.svg" alt="">
+      </label>
+
+      <!-- Navegación principal -->
+      <nav>  
+        <a href="../Montador de hardware/Montador_hardware.html">Hardware</a>
+        <a href="../Compra de videojuegos/compra_videojuegos.html">Videojuegos</a>
+        <a href="../Comparador de precios/comparador.html">Precios</a>
+        <a class="activo" href="../Modeador recomendado/modeador.html">Mods</a>
+        <a href="../Novedades/novedades.html">Novedades</a>
+      </nav>
+
+      <!-- Botón de inicio de sesión -->
+      <a class="sesion" href="../Login/login.html">Iniciar Sesión</a>
+
+      <!-- Overlay para cerrar al clicar fuera -->
+      <label for="nav-toggle" class="nav-overlay" aria-label="Cerrar menú"></label>
+    </header>
+    
+    <!-- ========================= -->
+    <!--        CONTENIDO          -->
+    <!-- ========================= -->
+    <div class="cuerpo">
+
+      <!-- ========================= -->
+      <!--     PÁGINA DE MODS        -->
+      <!-- ========================= -->
+      <main class="mods-page">
+
+        <!-- Grid de juegos -->
+        <section class="mods-grid">
+          
+          <!-- ========================= -->
+          <!--          FC 26            -->
+          <!-- ========================= -->
+          <article class="game">
+            <!-- Cabecera de tarjeta -->
+            <div class="game-top">
+              <div class="game-img">
+                <img src="../images/FC26.png" alt="Portada de FC 26">
+              </div>
+
+              <div class="game-title">
+                <h2>FC 26</h2>
+                <p>Modeadores recomendados</p>
+                <div class="game-tags">
+                  <span class="tag tag-safe">Seguro</span>
+                  <span class="tag tag-count">2 opciones</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de sitios/launchers -->
+            <ul class="launchers">
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">1) Nexus Mods</span>
+                  <span class="launcher-desc">Catálogo grande y comunidad.</span>
+                </div>
+                <a class="launcher-go" href="https://www.nexusmods.com" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">2) FIFA Infinity Mods</span>
+                  <span class="launcher-desc">Mods de comunidad para FIFA/FC.</span>
+                </div>
+                <a class="launcher-go" href="https://dl.fifa-infinity.com" target="_blank" rel="noopener">Abrir</a>
+              </li>
+            </ul>
+          </article>
+
+          <!-- ========================= -->
+          <!--         MINECRAFT         -->
+          <!-- ========================= -->
+          <article class="game">
+            <!-- Cabecera de tarjeta -->
+            <div class="game-top">
+              <div class="game-img">
+                <img src="../images/Minecraft.png" alt="Portada de Minecraft">
+              </div>
+
+              <div class="game-title">
+                <h2>Minecraft</h2>
+                <p>Modeadores recomendados</p>
+                <div class="game-tags">
+                  <span class="tag tag-safe">Seguro</span>
+                  <span class="tag tag-count">7 opciones</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de sitios/launchers -->
+            <ul class="launchers">
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">1) CurseForge</span>
+                  <span class="launcher-desc">Modpacks y mods muy usados.</span>
+                </div>
+                <a class="launcher-go" href="https://www.curseforge.com" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">2) Modrinth</span>
+                  <span class="launcher-desc">Alternativa moderna y ligera.</span>
+                </div>
+                <a class="launcher-go" href="https://modrinth.com" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">3) ZonaCraft</span>
+                  <span class="launcher-desc">Recursos y mods de comunidad.</span>
+                </div>
+                <a class="launcher-go" href="#" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">4) MineCrafteo</span>
+                  <span class="launcher-desc">Recopilación de contenido.</span>
+                </div>
+                <a class="launcher-go" href="#" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">5) MinecraftStorage</span>
+                  <span class="launcher-desc">Descargas y recursos.</span>
+                </div>
+                <a class="launcher-go" href="#" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">6) Planet Minecraft</span>
+                  <span class="launcher-desc">Mapas, skins y datapacks.</span>
+                </div>
+                <a class="launcher-go" href="https://www.planetminecraft.com" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">7) kikonutinomods</span>
+                  <span class="launcher-desc">Contenido de comunidad.</span>
+                </div>
+                <a class="launcher-go" href="#" target="_blank" rel="noopener">Abrir</a>
+              </li>
+            </ul>
+          </article>
+
+          <!-- ========================= -->
+          <!--         SUBNAUTICA        -->
+          <!-- ========================= -->
+          <article class="game">
+            <!-- Cabecera de tarjeta -->
+            <div class="game-top">
+              <div class="game-img">
+                <img src="../images/Subnautica.png" alt="Portada de Subnautica">
+              </div>
+
+              <div class="game-title">
+                <h2>Subnauticaasdfsadfasdgasdadsfgasdfdfgasdvczsdgasfd</h2>
+                <p>Modeadores recomendados</p>
+                <div class="game-tags">
+                  <span class="tag tag-safe">Seguro</span>
+                  <span class="tag tag-count">4 opciones</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de sitios/launchers -->
+            <ul class="launchers">
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">1) Nexus Mods</span>
+                  <span class="launcher-desc">Gran catálogo y comunidad.</span>
+                </div>
+                <a class="launcher-go" href="https://www.nexusmods.com" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">2) Thunderstore</span>
+                  <span class="launcher-desc">Plataforma popular de mods.</span>
+                </div>
+                <a class="launcher-go" href="https://thunderstore.io" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">3) GameSpot</span>
+                  <span class="launcher-desc">Guías y recopilaciones.</span>
+                </div>
+                <a class="launcher-go" href="https://www.gamespot.com" target="_blank" rel="noopener">Abrir</a>
+              </li>
+
+              <li class="launcher">
+                <div class="launcher-text">
+                  <span class="launcher-name">4) FandomSpot</span>
+                  <span class="launcher-desc">Listas y recomendaciones.</span>
+                </div>
+                <a class="launcher-go" href="https://www.fandomspot.com" target="_blank" rel="noopener">Abrir</a>
+              </li>
+            </ul>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <!-- ========================= -->
+    <!--           FOOTER          -->
+    <!-- ========================= -->
+    <footer class="footer">
+      <!-- Footer: columna 1 -->
+      <div class="footer-section">
+        <h3>¿Quiénes somos?</h3>
+          <a href="#">¿Quiénes somos?</a>
+          <a href="#">Sobre UltraPresetGaming</a>
+          <a href="tel:+34604024297" aria-label="Llamar a +34 604 02 42 97">+34 604 02 42 97</a>
+          <a href="mailto:arodriguezc24@fpcoruna.afundacion.org">arodriguezc24@fpcoruna.afundacion.org</a>
+      </div>
+      
+      <!-- Footer: columna 2 -->
+      <div class="footer-section">
+        <h3>¿Por qué aquí?</h3>
+          <a href="#">¿Cómo pagar?</a>
+          <a href="#">¿Cómo es el pago?</a>
+          <br>
+          <select id="moneda">
+            <option>Euros (€)</option>
+            <option>USD ($)</option>
+            <option>Libra (£)</option>
+          </select>
+      </div>
+
+      <!-- Footer: columna 3 -->
+      <div class="footer-section">
+        <h3>Comunidad</h3>
+        <!-- Redes sociales -->
+        <div class="social">
+          <a class="social-link" href="https://www.instagram.com/olamohcib/" target="_blank">
+            <img src="../images/instagram.svg" alt="Instagram">
+          </a>
+          <a class="social-link" href="https://www.youtube.com/@olaMohciB" target="_blank">
+            <img src="../images/youtube.svg" alt="YouTube">
+          </a>
+          <a class="social-link" href="https://x.com/olaMohciB" target="_blank">
+            <img src="../images/x.svg" alt="X">
+          </a>
+          <a class="social-link" href="https://www.tiktok.com/@olamohcib?is_from_webapp=1&sender_device=pc" target="_blank">
+            <img src="../images/tiktok.svg" alt="TikTok">
+          </a>
+        </div>
+
+        <!-- Donación -->
+        <a class="donate-link" href="https://www.paypal.com/donate/?hosted_button_id=BJYUR9G3XUYUE" target="_blank">
+          <button class="start blue centrar" role="button">Donación</button>
+        </a>
+      </div>
+    </footer>
+  </body>
+</html>

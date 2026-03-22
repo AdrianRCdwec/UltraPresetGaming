@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UltraPresetGaming</title>
+
+    <!-- Icono -->
+    <link rel="icon" type="image/x-icon" href="../images/Logo pag web.ico">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="./Montador_hardware.css" type="text/css">
+    <link rel="stylesheet" href="../Base.css" type="text/css">
+
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+    <!-- ========================= -->
+    <!--           HEADER          -->
+    <!-- ========================= -->
+    <header>
+      <!-- Logo -->
+      <a class="logo" href="../Proyecto_5_pagina.html">
+        <img src="../images/Logo_Comparador_Absoluto.png" alt="Logotipo" title="Inicio" width="150px" height="auto">
+      </a>
+
+      <!-- BOTÓN HAMBURGUESA (pantalla pequeña) -->
+      <input type="checkbox" id="nav-toggle" class="nav-toggle">
+      <label for="nav-toggle" class="nav-burger" aria-label="Abrir menú">
+        <img class="nav-burger-icon" src="../images/menu.svg" alt="">
+      </label>
+
+      <!-- Navegación principal -->
+      <nav>
+          <a class="activo" href="../Montador de hardware/Montador_hardware.html">Hardware</a>
+          <a href="../Compra de videojuegos/compra_videojuegos.html">Videojuegos</a>
+          <a href="../Comparador de precios/comparador.html">Precios</a>
+          <a href="../Modeador recomendado/modeador.html">Mods</a>
+          <a href="../Novedades/novedades.html">Novedades</a>
+      </nav>
+
+      <!-- Botón de inicio de sesión -->
+      <a class="sesion" href="../Login/login.html">Iniciar Sesión</a>
+
+      <!-- Overlay para cerrar al clicar fuera -->
+      <label for="nav-toggle" class="nav-overlay" aria-label="Cerrar menú"></label>
+    </header>
+
+    <!-- ========================= -->
+    <!--            MAIN           -->
+    <!-- ========================= -->
+    <main class="hw-wrap">
+
+        <!-- ========================= -->
+        <!--   RADIOS (CONTROL PANEL)  -->
+        <!-- ========================= -->
+
+        <!-- Radio para cerrar el panel -->
+        <input class="sp-radio" type="radio" name="panel" id="panel-close" checked>
+
+        <!-- Radios para abrir el panel (uno por sección) -->
+        <input class="sp-radio" type="radio" name="panel" id="panel-procesador">
+        <input class="sp-radio" type="radio" name="panel" id="panel-placa">
+        <input class="sp-radio" type="radio" name="panel" id="panel-ram">
+        <input class="sp-radio" type="radio" name="panel" id="panel-caja">
+        <input class="sp-radio" type="radio" name="panel" id="panel-aire">
+        <input class="sp-radio" type="radio" name="panel" id="panel-liquida">
+        <input class="sp-radio" type="radio" name="panel" id="panel-gpu">
+        <input class="sp-radio" type="radio" name="panel" id="panel-psu">
+        <input class="sp-radio" type="radio" name="panel" id="panel-disco">
+        <input class="sp-radio" type="radio" name="panel" id="panel-monitor">
+
+        <!-- ========================= -->
+        <!--      PANEL LATERAL        -->
+        <!-- ========================= -->
+        <aside class="sidepanel">
+          <!-- Cabecera panel (título + cerrar) -->
+          <div class="sidepanel-head">
+            <!-- Títulos dinámicos (según radio) -->
+            <div class="sidepanel-title">
+              <span class="t-procesador">Procesadores</span>
+              <span class="t-placa">Placas base</span>
+              <span class="t-ram">Memorias RAM</span>
+              <span class="t-caja">Cajas/Torres</span>
+              <span class="t-aire">Refrigeraciones por aire</span>
+              <span class="t-liquida">Refrigeraciones líquidas</span>
+              <span class="t-gpu">Tarjetas gráficas</span>
+              <span class="t-psu">Fuentes de alimentación</span>
+              <span class="t-disco">Discos duro</span>
+              <span class="t-monitor">Monitores</span>
+            </div>
+
+            <!-- Overlay para cerrar al clicar fuera -->
+            <label class="sidepanel-close" for="panel-close" title="Cerrar">×</label>
+          </div>
+
+          <!--  Buscador (placeholder para futuro JS) -->
+          <!--  <form class="sidepanel-search" role="search">
+                  <input type="search" placeholder="Buscar..." aria-label="Buscar componente">
+                </form>  --><!-- Cuando se mejore la página con JS entonces se podrá poner el form -->
+
+          <!-- Buscador (sin JS, solo UI) -->
+          <div class="sidepanel-search" role="search">
+            <input type="search" name="q" placeholder="Buscar..." aria-label="Buscar componente">
+          </div>
+
+          <!-- Grid componentes (cards) -->
+          <div class="sidepanel-grid">
+            <div class="component-card">
+              <div class="component-thumb">
+                <img src="../images/placeholder.jpg" alt="Componente vacío">
+              </div>
+              <p>Componente</p>
+            </div>
+
+            <div class="component-card">
+              <div class="component-thumb">
+                <img src="../images/placeholder.jpg" alt="Componente vacío">
+              </div>
+              <p>Componente</p>
+            </div>
+
+            <div class="component-card">
+              <div class="component-thumb">
+                <img src="../images/placeholder.jpg" alt="Componente vacío">
+              </div>
+              <p>Componente</p>
+            </div>
+
+            <div class="component-card">
+              <div class="component-thumb">
+                <img src="../images/placeholder.jpg" alt="Componente vacío">
+              </div>
+              <p>Componente</p>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Overlay para cerrar al clicar fuera -->
+        <label class="overlay" for="panel-close" aria-label="Cerrar panel"></label>
+
+      <!-- ========================= -->
+      <!--     CONTENIDO (CUERPO)    -->
+      <!-- ========================= -->
+      <div class="cuerpo">
+
+        <!-- Item: Procesador -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/procesador.png" alt="Procesador" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-procesador">
+            <p class="hw-kicker">Procesador</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: Placa base -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/placa base.png" alt="Placa Base" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-placa">
+            <p class="hw-kicker">Placa Base</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: RAM -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/ram.png" alt="Memoria RAM" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-ram">
+            <p class="hw-kicker">Memoria RAM</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: Caja -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/caja.png" alt="Caja o torre" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-caja">
+            <p class="hw-kicker">Caja/Torre</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: Refrigeración por aire -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/aire.png" alt="Refrigeración por aire" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-aire">
+            <p class="hw-kicker">Refrigeración por aire</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: Refrigeración líquida -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/liquida.png" alt="Refrigeración Líquida" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-liquida">
+            <p class="hw-kicker">Refrigeración Líquida</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: GPU -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/gpu.png" alt="Tarjeta Gráfica" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-gpu">
+            <p class="hw-kicker">Tarjeta Gráfica</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: PSU -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/psu.png" alt="Fuente de alimentación" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-psu">
+            <p class="hw-kicker">Fuente de alimentación</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: Almacenamiento -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/almacenamiento.png" alt="Disco Duro" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-disco">
+            <p class="hw-kicker">Disco Duro</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+        <!-- Item: Monitor -->
+        <section class="hw-item">
+          <div class="hw-media">
+            <a class="hw-media-link" href="#" target="_blank" rel="noopener">
+              <img src="../images/monitor.png" alt="Monitor" class="hw-icon">
+            </a>
+          </div>
+
+          <label class="hw-card" for="panel-monitor">
+            <p class="hw-kicker">Monitor</p>
+            <!-- (Opcional) Si quieres una línea “seleccionado”: -->
+            <!-- <h3 class="hw-title">Intel Core i5-12400F</h3> -->
+            <!-- <a class="hw-btn" href="#">Ofertas -&gt;</a> -->
+          </label>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- ========================= -->
+    <!--           FOOTER          -->
+    <!-- ========================= -->
+    <footer class="footer">
+      <!-- Footer: columna 1 -->
+      <div class="footer-section">
+        <h3>¿Quiénes somos?</h3>
+          <a href="#">¿Quiénes somos?</a>
+          <a href="#">Sobre UltraPresetGaming</a>
+          <a href="tel:+34604024297" aria-label="Llamar a +34 604 02 42 97">+34 604 02 42 97</a>
+          <a href="mailto:arodriguezc24@fpcoruna.afundacion.org">arodriguezc24@fpcoruna.afundacion.org</a>
+      </div>
+
+      <!-- Footer: columna 2 -->
+      <div class="footer-section">
+        <h3>¿Por qué aquí?</h3>
+          <a href="#">¿Cómo pagar?</a>
+          <a href="#">¿Cómo es el pago?</a>
+          <br>
+          <select id="moneda">
+            <option>Euros (€)</option>
+            <option>USD ($)</option>
+            <option>Libra (£)</option>
+          </select>
+      </div>
+
+      <!-- Footer: columna 3 -->
+      <div class="footer-section">
+        <h3>Comunidad</h3>
+
+        <!-- Redes sociales -->
+        <div class="social">
+          <a class="social-link" href="https://www.instagram.com/olamohcib/" target="_blank">
+            <img src="../images/instagram.svg" alt="Instagram">
+          </a>
+          <a class="social-link" href="https://www.youtube.com/@olaMohciB" target="_blank">
+            <img src="../images/youtube.svg" alt="YouTube">
+          </a>
+          <a class="social-link" href="https://x.com/olaMohciB" target="_blank">
+            <img src="../images/x.svg" alt="X">
+          </a>
+          <a class="social-link" href="https://www.tiktok.com/@olamohcib?is_from_webapp=1&sender_device=pc" target="_blank">
+            <img src="../images/tiktok.svg" alt="TikTok">
+          </a>
+        </div>
+
+        <!-- Donación -->
+        <a class="donate-link" href="https://www.paypal.com/donate/?hosted_button_id=BJYUR9G3XUYUE" target="_blank">
+          <button class="start blue centrar" role="button">Donación</button>
+        </a>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,268 @@
+/*  =========================================================
+              BUSCADOR (FORM + INPUT + BOTÓN)
+    ========================================================= */
+.buscador-form{
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1100px;
+  margin: 16px auto;
+}
+
+/* Input de búsqueda */
+.buscador{
+  flex: 1;
+  height: 36px;
+  border: 1px solid #d6d6d6;
+  border-right: 0;
+  padding: 0 12px;
+  outline: none;
+  width: auto;
+  display: inline-block;
+  border-radius: 6px 0 0 6px;
+}
+
+.buscador:hover {
+  border: 1px solid black;
+  border-right: 0;
+}
+
+/* Botón lupa */
+.btn-lupa {
+  height: 36px;
+  width: 42px;
+  border: 0;
+  cursor: pointer;
+  background-color: #6a2fd8;
+  display: grid;
+  place-items: center;
+  border-radius: 0 6px 6px 0;
+  transition: background-color 0.5s ease, transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+.btn-lupa:hover {
+  transform: scale(1.1);
+  box-shadow: 0px 8px 7px -7px rgba(0, 0, 0, 1);
+}
+
+/* Icono lupa */
+.icono-lupa{
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
+  /* --- x --- x --- x --- x --- x --- */
+  filter: 
+    invert(1)
+    drop-shadow(0.5px 0 0 white)
+    drop-shadow(-0.5px 0 0 white)
+    drop-shadow(0 0.5px 0 white)
+    drop-shadow(0 -0.5px 0 white);
+    /*  LA IMG DE LA LUPA QUE TENIA ERA NEGRA Y MUY DELGADA,
+        CON ESTO SE MEJORA */
+}
+
+
+/*  =========================================================
+                        SECCIONES TARJETAS
+    ========================================================= */
+.tendencias, .recomendaciones, .reservas {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 15px 16px;
+  background-color: #eaf0fd;
+  border-radius: 10px;
+}
+
+/* Header de sección (título + ver todos) */
+.top-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.top-section h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+/* Link “ver todos” */
+.ver-todos {
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.ver-todos:hover {
+  text-decoration: underline;
+}
+
+/* Contenedor visible del carrusel */
+.lista {
+  overflow: hidden;
+  padding: 10px;
+  background-color: white;
+  border-radius: 10px;
+}
+
+
+/*  =========================================================
+                  CARD (JUEGO) + CONTENIDO
+    ========================================================= */
+.card {
+  flex: 0 0 170px;
+  text-decoration: none;
+  color: inherit;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  padding: 5px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.card:hover{
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 12px 22px rgba(16,24,40,.12);
+  background-color: rgba(227, 227, 227, 0.867);
+}
+
+.card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover; 
+  border-radius: 6px;
+  display: block;
+}
+
+.card .titulo {
+  margin: 8px 0 4px;
+  font-size: 14px;
+  font-weight: bolder;
+}
+
+.card .precio {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: auto;
+}
+
+
+/*  =========================================================
+                          CARRUSEL
+    ========================================================= */
+
+/* Pausar animación al pasar el ratón por la lista */
+.lista:hover .track{
+  animation-play-state: paused;
+}
+
+/* Fila animada */
+.track{
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  animation: carrusel 10s linear infinite;
+}
+
+/* Animación carrusel */
+@keyframes carrusel {
+  from { 
+    transform: translateX(0); 
+  }
+  to { 
+    transform: translateX(calc(-100% / 3)); 
+  }
+}
+
+
+/*  =========================================================
+              RESPONSIVE: COMPRA VIDEOJUEGOS
+    ========================================================= */
+
+/* Ajuste “global” de anchuras */
+.buscador-form,
+.tendencias,
+.recomendaciones,
+.reservas {
+  width: min(1100px, 92%);
+}
+
+
+/* ---------- Medianas (<=1050px) ---------- */
+@media (max-width: 1050px){
+  .buscador-form{
+    margin: 14px auto;
+    padding: 0 6px;
+  }
+
+  .tendencias, .recomendaciones, .reservas{
+    margin: 22px auto;
+    padding: 14px;
+  }
+
+  .top-section h2{
+    font-size: 16px;
+  }
+
+  .card{
+    flex: 0 0 160px;
+  }
+
+  .card img{
+    height: 210px;
+  }
+}
+
+
+/* ---------- Pequeñas (<=610px) ---------- */
+@media (max-width: 610px){
+  .tendencias, .recomendaciones, .reservas{
+    padding: 12px;
+  }
+
+  .top-section{
+    gap: 10px;
+  }
+
+  .ver-todos{
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .lista{
+    overflow-x: auto; 
+    overflow-y: hidden;
+    padding: 10px;
+    scrollbar-width: none;
+  }
+
+  .card{
+    flex: 0 0 72vw;
+    max-width: 260px;
+  }
+
+  .card img{
+    height: 190px;
+  }
+
+  /* En móvil, el hover con scale puede “bailar”; lo suavizamos */
+  .card:hover{
+    transform: translateY(-1px);
+  }
+}
+
+
+/* ---------- ENANAS (<=420px) ---------- */
+@media (max-width: 420px){
+  .card{
+    flex-basis: 78vw;
+    height: 280px;
+  }
+
+  .card .precio{
+    font-size: 16px;
+  }
+}
