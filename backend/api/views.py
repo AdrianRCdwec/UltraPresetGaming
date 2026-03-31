@@ -18,6 +18,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
         queryset = Producto.objects.all().order_by('id')
         search = self.request.query_params.get('search', None)
         categoria = self.request.query_params.get('categoria', None)
+        tipo = self.request.query_params.get('tipo', None)
         
         # Filtro de texto
         if search is not None:
@@ -26,6 +27,9 @@ class ProductoViewSet(viewsets.ModelViewSet):
         # Filtro estricto por categoría (ej: Solo placas base)
         if categoria is not None:
             queryset = queryset.filter(categoria=categoria)
+            
+        if tipo is not None:
+            queryset = queryset.filter(tipo=tipo)
             
         return queryset
 
