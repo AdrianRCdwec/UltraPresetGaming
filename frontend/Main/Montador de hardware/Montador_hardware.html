@@ -98,18 +98,13 @@
             <label class="sidepanel-close" for="panel-close" title="Cerrar">×</label>
           </div>
 
-          <!--  Buscador (placeholder para futuro JS) -->
-          <!--  <form class="sidepanel-search" role="search">
-                  <input type="search" placeholder="Buscar..." aria-label="Buscar componente">
-                </form>  --><!-- Cuando se mejore la página con JS entonces se podrá poner el form -->
-
           <!-- Buscador (sin JS, solo UI) -->
           <div class="sidepanel-search" role="search">
-            <input type="search" name="q" placeholder="Buscar..." aria-label="Buscar componente">
+            <input type="search" id="buscador-hardware" name="q" placeholder="Buscar..." aria-label="Buscar componente">
           </div>
 
           <!-- Grid componentes (cards) -->
-          <div class="sidepanel-grid">
+          <!-- <div class="sidepanel-grid">
             <div class="component-card">
               <div class="component-thumb">
                 <img src="../images/placeholder.jpg" alt="Componente vacío">
@@ -137,6 +132,9 @@
               </div>
               <p>Componente</p>
             </div>
+          </div> -->
+          <div class="sidepanel-grid" id="grid-resultados">
+            <p style="text-align: center; color: #666; font-size: 14px; width: 100%; grid-column: span 2;">Escribe para buscar componentes...</p>
           </div>
         </aside>
 
@@ -363,5 +361,6 @@
         </a>
       </div>
     </footer>
+    <script src="Montador_hardware.js"></script>
   </body>
 </html>

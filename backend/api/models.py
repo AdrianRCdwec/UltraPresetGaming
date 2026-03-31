@@ -14,8 +14,23 @@ class Producto(models.Model):
         ('VG', 'Videojuego'),
     ]
     
+    # Nuevas categorías para el hardware
+    CATEGORIA_CHOICES = [
+        ('CPU', 'Procesador'),
+        ('MB', 'Placa Base'),
+        ('RAM', 'Memoria RAM'),
+        ('CASE', 'Caja/Torre'),
+        ('COOL', 'Refrigeración'),
+        ('GPU', 'Tarjeta Gráfica'),
+        ('PSU', 'Fuente Alimentación'),
+        ('SSD', 'Almacenamiento'),
+        ('MON', 'Monitor'),
+        ('NONE', 'Otro')
+    ]
+    
     nombre = models.CharField(max_length=200)
     tipo = models.CharField(max_length=2, choices=TIPO_CHOICES, default='HW')
+    categoria = models.CharField(max_length=4, choices=CATEGORIA_CHOICES, default='NONE')
     descripcion = models.TextField(blank=True, null=True)
     # Aquí se cumple el requisito de la relación N:M (ternaria) a través de "Oferta"
     tiendas = models.ManyToManyField(Tienda, through='Oferta')

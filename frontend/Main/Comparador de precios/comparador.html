@@ -68,11 +68,11 @@
               <img src="../images/eliminar.png" alt="Eliminar" class="hw-x">
             </span>
           </button>
-          <p class="hw-label">Procesador</p>
+          <p class="hw-label" id="nombre-producto-api">Cargando...</p>
         </div>
 
         <!-- Lado der: grid de tiendas (radios + labels) -->
-        <div class="offers-grid" aria-label="Tiendas y precios">
+        <div class="offers-grid" id="lista-productos" aria-label="Tiendas y precios">
 
           <!-- Oferta 1 -->
           <input class="offer-radio" type="radio" name="cpu-store" id="cpu-amazon">
@@ -146,22 +146,22 @@
 
         <!-- Línea resumen (producto) -->
         <div class="checkout-item">
-          <img class="checkout-img" src="../images/procesador.png" alt="Procesador">
+          <img id="checkout-img" class="checkout-img" src="../images/procesador.png" alt="Producto">
           <div class="checkout-info">
-            <p class="checkout-name">Procesador</p>
-            <p class="checkout-sub">25% rebaja</p>
+            <p id="checkout-name" class="checkout-name">Selecciona un producto</p>
+            <p id="checkout-sub" class="checkout-sub">-</p>
           </div>
-          <p class="checkout-price">134,99 €</p>
+          <p id="checkout-price" class="checkout-price">0,00 €</p>
         </div>
 
         <!-- Total + botones -->
         <div class="checkout-total">
-          <p class="linea">Precio oficial: <strong>179,99 €</strong></p>
-          <p class="linea">Ahorro total: <strong class="checkout-price">- 45,00 €</strong></p>
+          <p class="linea">Precio oficial: <strong id="checkout-base">0,00 €</strong></p>
+          <p class="linea">Ahorro total: <strong id="checkout-ahorro" class="checkout-price">0,00 €</strong></p>
 
-          <p class="total">TOTAL: 134,99 €</p>
+          <p id="checkout-total-final" class="total">TOTAL: 0,00 €</p>
 
-          <a class="btn btn-primary" href="#">SIGUIENTE &gt;</a>
+          <a id="btn-comprar" class="btn btn-primary" href="#" target="_blank">IR A LA TIENDA &gt;</a>
           <a class="btn btn-secondary" href="../Montador de hardware/Montador_hardware.html">&lt; Seguir comprando</a>
         </div>
       </section>
@@ -216,5 +216,6 @@
         </a>
       </div>
     </footer>
+    <script src="api.js"></script>
   </body>
 </html>
