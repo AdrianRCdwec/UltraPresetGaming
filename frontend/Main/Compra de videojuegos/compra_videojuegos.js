@@ -119,6 +119,11 @@ function crearCardResultado(juego) {
     const precio = precioMinimo(juego.ofertas);
     const imagen = juego.imagen ? juego.imagen : '../images/placeholder.png';
 
+    // Comprobamos si el juego ya existe en el carrito
+    const estaEnCarrito = carrito.some(item => item.id === juego.id);
+    const textoBoton = estaEnCarrito ? 'Añadido' : '+ Añadir';
+    const disabledAttr = estaEnCarrito ? 'disabled style="background: #a5a5a5; cursor: not-allowed;"' : '';
+
     return `
         <div class="card-resultado">
             <img src="${imagen}" alt="${juego.nombre}" loading="lazy">
@@ -126,8 +131,8 @@ function crearCardResultado(juego) {
                 <p class="titulo">${juego.nombre}</p>
                 <p class="precio">${precio}</p>
             </div>
-            <button class="btn-añadir" onclick='añadirAlCarrito(${JSON.stringify(juego)})'>
-                + Añadir
+            <button id="btn-add-${juego.id}" class="btn-añadir" ${disabledAttr} onclick='añadirAlCarrito(${JSON.stringify(juego)})'>
+                ${textoBoton}
             </button>
         </div>
     `;
@@ -156,15 +161,21 @@ function cerrarCarrito() {
 
 function añadirAlCarrito(juego) {
     const existente = carrito.find(item => item.id === juego.id);
-    if (existente) {
-        existente.cantidad++;
-    } else {
-        carrito.push({ ...juego, cantidad: 1 });
-    }
+    if (existente) return; // Si ya existe, no hacemos nada
 
+    carrito.push(juego);
     guardarCarritoVideojuegos();
     actualizarCarritoUI();
     parpadearCarrito();
+
+    // Cambiar el botón visualmente a "Añadido" al instante si estamos en la búsqueda
+    const btn = document.getElementById(`btn-add-${juego.id}`);
+    if (btn) {
+        btn.textContent = 'Añadido';
+        btn.disabled = true;
+        btn.style.background = '#a5a5a5';
+        btn.style.cursor = 'not-allowed';
+    }
 }
 
 function parpadearCarrito() {
@@ -187,6 +198,15 @@ window.eliminarDelCarritoVG = function(id) {
     if (idx !== -1) carrito.splice(idx, 1);
     guardarCarritoVideojuegos();
     actualizarCarritoUI();
+
+    // Restaurar el botón si el usuario sigue viendo la tarjeta de búsqueda
+    const btn = document.getElementById(`btn-add-${id}`);
+    if (btn) {
+        btn.textContent = '+ Añadir';
+        btn.disabled = false;
+        btn.style.background = ''; // Restaura el color CSS original
+        btn.style.cursor = 'pointer';
+    }
 };
 
 window.eliminarDelCarritoHW = function(ranura) {
@@ -206,25 +226,27 @@ function actualizarCarritoUI() {
     if (!contHW || !contVG) return;
 
     // -- VIDEOJUEGOS --
-    const totalItemsVG = carrito.reduce((acc, i) => acc + i.cantidad, 0);
+    // (Ojo: en Montador_hardware.js recuerda usar "carritoVideojuegos" y en compra_videojuegos.js usar "carrito")
+    const arrayJuegos = (typeof carrito !== 'undefined' && carrito.length !== undefined) ? carrito : carritoVideojuegos;
+    
+    const totalItemsVG = arrayJuegos.length;
     document.getElementById('badge-vg-tab').textContent = totalItemsVG;
     let sumaVG = 0;
 
-    if (carrito.length === 0) {
+    if (arrayJuegos.length === 0) {
         contVG.innerHTML = '<p class="carrito-vacio">Sin juegos</p>';
     } else {
-        contVG.innerHTML = carrito.map(item => {
+        contVG.innerHTML = arrayJuegos.map(item => {
             const precio = item.ofertas?.length ? parseFloat(item.ofertas[0].precio_final) : 0;
-            const sub = precio * item.cantidad;
-            sumaVG += sub;
+            sumaVG += precio; // Ya no multiplicamos por cantidad
             const img = item.imagen || '../images/placeholder.png';
             return `
                 <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7;">
                     <img src="${img}" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
                     <div style="flex: 1; min-width: 0;">
-                        <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Juego x${item.cantidad}</span>
+                        <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Videojuego</span>
                         <p style="font-size: 13px; font-weight: 700; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #101828;">${item.nombre}</p>
-                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${sub.toFixed(2)} €</p>
+                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${precio.toFixed(2)} €</p>
                     </div>
                     <button class="btn-eliminar" onclick="window.eliminarDelCarritoVG(${item.id})" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #bbb; padding: 4px;">✕</button>
                 </div>`;

@@ -184,25 +184,27 @@ function actualizarCarritoUI() {
     }
 
     // -- VIDEOJUEGOS --
-    const totalItemsVG = carritoVideojuegos.reduce((acc, i) => acc + i.cantidad, 0);
+    // (Ojo: en Montador_hardware.js recuerda usar "carritoVideojuegos" y en compra_videojuegos.js usar "carrito")
+    const arrayJuegos = (typeof carritoVideojuegos !== 'undefined' && carritoVideojuegos.length !== undefined) ? carritoVideojuegos : carritoVideojuegos;
+    
+    const totalItemsVG = arrayJuegos.length;
     document.getElementById('badge-vg-tab').textContent = totalItemsVG;
     let sumaVG = 0;
 
-    if (carritoVideojuegos.length === 0) {
+    if (arrayJuegos.length === 0) {
         contVG.innerHTML = '<p class="carrito-vacio">Sin juegos</p>';
     } else {
-        contVG.innerHTML = carritoVideojuegos.map(item => {
+        contVG.innerHTML = arrayJuegos.map(item => {
             const precio = item.ofertas?.length ? parseFloat(item.ofertas[0].precio_final) : 0;
-            const sub = precio * item.cantidad;
-            sumaVG += sub;
+            sumaVG += precio; // Ya no multiplicamos por cantidad
             const img = item.imagen || '../images/placeholder.png';
             return `
                 <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7;">
                     <img src="${img}" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
                     <div style="flex: 1; min-width: 0;">
-                        <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Juego x${item.cantidad}</span>
+                        <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Videojuego</span>
                         <p style="font-size: 13px; font-weight: 700; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #101828;">${item.nombre}</p>
-                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${sub.toFixed(2)} €</p>
+                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${precio.toFixed(2)} €</p>
                     </div>
                     <button class="btn-eliminar" onclick="window.eliminarDelCarritoVG(${item.id})" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #bbb; padding: 4px;">✕</button>
                 </div>`;
