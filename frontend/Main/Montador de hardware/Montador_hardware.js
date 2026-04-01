@@ -265,7 +265,21 @@ function pintarResultados(productos, esCargarMas, hayMasPaginas) {
             precioInfo = `Desde ${ofertaMasBarata.precio_final}€`;
         }
 
-        const imagenProd = producto.imagen || producto.imagen_url || '../images/procesador.png';
+        // Elegir imagen por defecto según la categoría
+        let imagenPorDefecto = '../images/placeholder.jpg'; // Por si acaso
+        switch (categoriaActual) {
+            case 'MB':   imagenPorDefecto = '../images/motherboard.png'; break;
+            case 'RAM':  imagenPorDefecto = '../images/ram.png'; break;
+            case 'CASE': imagenPorDefecto = '../images/caja.png'; break;
+            case 'COOL': imagenPorDefecto = '../images/aire.png'; break; // O liquida.png
+            case 'GPU':  imagenPorDefecto = '../images/gpu.png'; break;
+            case 'PSU':  imagenPorDefecto = '../images/psu.png'; break;
+            case 'SSD':  imagenPorDefecto = '../images/almacenamiento.png'; break;
+            case 'MON':  imagenPorDefecto = '../images/monitor.png'; break;
+            case 'CPU':  imagenPorDefecto = '../images/procesador.png'; break;
+        }
+
+        const imagenProd = producto.imagen || producto.imagen_url || imagenPorDefecto;
 
         const card = document.createElement('div');
         card.className = 'component-card';
@@ -359,7 +373,61 @@ function seleccionarComponente(id, nombre, imagen, precioInfo) {
     }
 }
 
-// Renderizar carrito guardado al cargar la página
+// ─── RESTAURAR SELECCIONES AL CARGAR ─────────────────────────────────────────
+function restaurarSeleccionesHardware() {
+    for (const ranura in carritoHardware) {
+        const item = carritoHardware[ranura];
+        const labelDestino = document.querySelector(`label[for="${ranura}"]`);
+        if (!labelDestino) continue;
+
+        // Actualizar la imagen
+        const seccionItem = labelDestino.closest('.hw-item');
+        const imgDestino = seccionItem.querySelector('.hw-icon');
+        if (imgDestino) {
+            imgDestino.src = item.imagen;
+            imgDestino.removeAttribute('style'); 
+            imgDestino.style.objectFit = 'contain';
+        }
+
+        // Rellenar el bloque con los datos guardados
+        labelDestino.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; height: 100%;">
+                
+                <p class="hw-kicker" style="font-weight: bold; margin: 0; font-size: 18px; flex: 1;">
+                    ${item.nombre}
+                </p>
+                
+                <span style="font-size: 16px; font-weight: bold; flex: 1; text-align: center;">
+                    ${item.precio.toFixed(2)} €
+                </span>
+                
+                <div style="flex: 1; text-align: right;">
+                    <a class="hw-btn" href="../Comparador de precios/comparador.html?id=${item.id}" 
+                       style="display: inline-block; font-size: 14px; font-weight: 600; background: #9814f1; color: white; text-decoration: none; border: 1px solid #9814f1; padding: 6px 14px; border-radius: 4px; transition: all 0.2s ease;">
+                       Ver Precios ➔
+                    </a>
+                </div>
+                
+            </div>
+        `;
+
+        // Eventos del botón
+        const btn = labelDestino.querySelector('.hw-btn');
+        if(btn) {
+            btn.addEventListener('mouseenter', () => {
+                btn.style.background = 'transparent';
+                btn.style.color = '#9814f1';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.background = '#9814f1';
+                btn.style.color = 'white';
+            });
+        }
+    }
+}
+
+// ─── AL CARGAR LA PÁGINA ─────────────────────────────────────────────────────
 window.addEventListener('load', () => {
     actualizarCarritoUI();
+    restaurarSeleccionesHardware(); // <--- Llamamos a la nueva función aquí
 });
