@@ -4,8 +4,12 @@ let paginaActual = 1;
 let idPanelActual = '';
 
 // ─── ESTADO DEL CARRITO ──────────────────────────────────────────────────────
-// Objeto en vez de array para que al elegir otro componente de la misma categoría, se sustituya.
-let carritoHardware = {};
+// Intentamos cargar el carrito guardado. Si no hay nada, creamos un objeto vacío.
+let carritoHardware = JSON.parse(localStorage.getItem('carrito_hardware')) || {};
+
+function guardarCarritoHardware() {
+    localStorage.setItem('carrito_hardware', JSON.stringify(carritoHardware));
+}
 
 // ─── INICIALIZACIÓN GENERAL ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -115,13 +119,15 @@ function añadirAlCarrito(categoriaRanura, productoData, precioNumero, imagenPro
         imagen: imagenProd,
         ranura: categoriaRanura
     };
-    
+
+    guardarCarritoHardware();
     actualizarCarritoUI();
     parpadearCarrito();
 }
 
 window.eliminarDelCarrito = function(categoriaRanura) {
     delete carritoHardware[categoriaRanura];
+    guardarCarritoHardware();
     actualizarCarritoUI();
 };
 
@@ -321,3 +327,8 @@ function seleccionarComponente(id, nombre, imagen, precioInfo) {
         });
     }
 }
+
+// Renderizar carrito guardado al cargar la página
+window.addEventListener('load', () => {
+    actualizarCarritoUI();
+});

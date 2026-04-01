@@ -1,8 +1,12 @@
 const API_BASE = 'http://127.0.0.1:8000/api/productos/';
 const MEDIA_BASE = 'http://127.0.0.1:8000';
 
-// Estado del carrito
-const carrito = [];
+// Estado del carrito (cargamos desde localStorage si existe)
+let carrito = JSON.parse(localStorage.getItem('carrito_videojuegos')) || [];
+
+function guardarCarritoVideojuegos() {
+    localStorage.setItem('carrito_videojuegos', JSON.stringify(carrito));
+}
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -133,6 +137,7 @@ function iniciarCarrito() {
     document.getElementById('btn-carrito-flotante').addEventListener('click', abrirCarrito);
     document.getElementById('carrito-cerrar').addEventListener('click', cerrarCarrito);
     document.getElementById('carrito-overlay').addEventListener('click', cerrarCarrito);
+    actualizarCarritoUI();
 }
 
 function abrirCarrito() {
@@ -154,6 +159,8 @@ function añadirAlCarrito(juego) {
     } else {
         carrito.push({ ...juego, cantidad: 1 });
     }
+
+    guardarCarritoVideojuegos();
     actualizarCarritoUI();
     parpadearCarrito();
 }
@@ -167,6 +174,8 @@ function parpadearCarrito() {
 function eliminarDelCarrito(id) {
     const idx = carrito.findIndex(item => item.id === id);
     if (idx !== -1) carrito.splice(idx, 1);
+
+    guardarCarritoVideojuegos();
     actualizarCarritoUI();
 }
 
