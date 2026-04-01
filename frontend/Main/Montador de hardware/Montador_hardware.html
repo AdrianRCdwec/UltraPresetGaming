@@ -46,8 +46,16 @@
           <a href="../Novedades/novedades.html">Novedades</a>
       </nav>
 
-      <!-- Botón de inicio de sesión -->
-      <a class="sesion" href="../login/login.html">Iniciar Sesión</a>
+      <!-- Botones de acción: Carrito y Login -->
+      <div class="header-acciones">
+        <!-- Botón del carrito -->
+        <button class="btn-carrito-header" id="btn-carrito-flotante" aria-label="Abrir carrito">
+          🛒 <span class="carrito-badge" id="carrito-badge">0</span>
+        </button>
+
+        <!-- Botón de inicio de sesión -->
+        <a class="sesion" href="../login/login.html">Iniciar Sesión</a>
+      </div>
 
       <!-- Overlay para cerrar al clicar fuera -->
       <label for="nav-toggle" class="nav-overlay" aria-label="Cerrar menú"></label>
@@ -311,6 +319,24 @@
 
       </div>
     </main>
+
+    <!-- ========================= -->
+    <!--        CARRITO            -->
+    <!-- ========================= -->
+    <div class="carrito-overlay" id="carrito-overlay"></div>
+    <aside class="carrito-panel" id="carrito-panel">
+        <div class="carrito-header">
+            <h3>🛒 Carrito</h3>
+            <button class="carrito-cerrar" id="carrito-cerrar">✖</button>
+        </div>
+        <div class="carrito-items" id="carrito-items">
+            <p class="carrito-vacio">Tu carrito está vacío</p>
+        </div>
+        <div class="carrito-footer">
+            <span>Total:</span>
+            <strong id="carrito-total">0,00 €</strong>
+        </div>
+    </aside>
 
     <!-- ========================= -->
     <!--           FOOTER          -->

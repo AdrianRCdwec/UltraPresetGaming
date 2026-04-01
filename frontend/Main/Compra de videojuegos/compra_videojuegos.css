@@ -382,7 +382,7 @@
 .carrito-item-precio {
   font-size: 14px;
   font-weight: 800;
-  color: #6a2fd8;
+  color: #9814f1;
   margin: 0;
 }
 
@@ -552,7 +552,7 @@
     transform: translateY(-1px);
   }
 
-    .grid-resultados {
+  .grid-resultados {
     grid-template-columns: 1fr;
   }
 

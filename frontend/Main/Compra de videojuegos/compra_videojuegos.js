@@ -138,11 +138,13 @@ function iniciarCarrito() {
 function abrirCarrito() {
     document.getElementById('carrito-panel').classList.add('abierto');
     document.getElementById('carrito-overlay').classList.add('visible');
+    document.body.style.overflow = 'hidden'; // Bloquear scroll
 }
 
 function cerrarCarrito() {
     document.getElementById('carrito-panel').classList.remove('abierto');
     document.getElementById('carrito-overlay').classList.remove('visible');
+    document.body.style.overflow = ''; // Recuperar scroll
 }
 
 function añadirAlCarrito(juego) {
