@@ -116,21 +116,41 @@
       </section>
     </div>
 
-    <!-- CARRITO -->
+    <!-- ========================= -->
+    <!--        CARRITO            -->
+    <!-- ========================= -->
     <div class="carrito-overlay" id="carrito-overlay"></div>
-    <aside class="carrito-panel" id="carrito-panel">
-      <div class="carrito-header">
-        <h3>🛒 Carrito</h3>
-        <button class="carrito-cerrar" id="carrito-cerrar">✖</button>
-      </div>
-      <div class="carrito-items" id="carrito-items">
-        <p class="carrito-vacio">Tu carrito está vacío</p>
-      </div>
-      <div class="carrito-footer">
-        <span>Total:</span>
-        <strong id="carrito-total">0,00 €</strong>
-      </div>
-    </aside>
+      <aside class="carrito-panel" id="carrito-panel" data-tab="hw">
+        <!-- NUEVO HEADER: Pestañas, Gran Total y Cerrar -->
+        <div class="carrito-header">
+            <div class="carrito-tabs">
+                <button class="carrito-tab-btn active" id="tab-hw" onclick="window.switchTab('hw')">
+                    <span class="tab-badge" id="badge-hw-tab">0</span>
+                    Hardware
+                </button>
+                <button class="carrito-tab-btn" id="tab-vg" onclick="window.switchTab('vg')">
+                    <span class="tab-badge" id="badge-vg-tab">0</span>
+                    Juegos
+                </button>
+            </div>
+            <div class="carrito-gran-total">
+                Total: <span id="gran-total-header">0,00 €</span>
+            </div>
+            <button class="carrito-cerrar" id="carrito-cerrar">×</button>
+        </div>
+
+        <!-- BODY: Contenedores separados para cada carrito -->
+        <div class="carrito-body" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+            <div id="carrito-items-hw" class="carrito-items-container"></div>
+            <div id="carrito-items-vg" class="carrito-items-container" style="display: none;"></div>
+        </div>
+
+        <!-- FOOTER: Total de la pestaña actual -->
+        <div class="carrito-footer">
+            <span>Subtotal pestaña:</span>
+            <strong id="carrito-total-seccion">0,00 €</strong>
+        </div>
+      </aside>
 
       <!-- ========================= -->
       <!--           FOOTER          -->

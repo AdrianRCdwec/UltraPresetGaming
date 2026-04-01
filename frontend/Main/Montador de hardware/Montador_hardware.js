@@ -6,6 +6,7 @@ let idPanelActual = '';
 // ─── ESTADO DEL CARRITO ──────────────────────────────────────────────────────
 // Intentamos cargar el carrito guardado. Si no hay nada, creamos un objeto vacío.
 let carritoHardware = JSON.parse(localStorage.getItem('carrito_hardware')) || {};
+let carritoVideojuegos = JSON.parse(localStorage.getItem('carrito_videojuegos')) || [];
 
 function guardarCarritoHardware() {
     localStorage.setItem('carrito_hardware', JSON.stringify(carritoHardware));
@@ -25,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(panelCarrito) panelCarrito.classList.add('abierto'); 
             if(overlayCarrito) overlayCarrito.classList.add('visible'); 
             document.body.style.overflow = 'hidden'; // Bloquea el scroll del fondo
+            window.switchTab('hw');
         });
     }
 
@@ -111,23 +113,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ─── LÓGICA DEL CARRITO (AÑADIR Y UI) ────────────────────────────────────────
-function añadirAlCarrito(categoriaRanura, productoData, precioNumero, imagenProd) {
-    carritoHardware[categoriaRanura] = {
-        id: productoData.id, 
-        nombre: productoData.nombre, 
-        precio: precioNumero,
-        imagen: imagenProd,
-        ranura: categoriaRanura
-    };
+window.switchTab = function(tab) {
+    document.getElementById('carrito-panel').setAttribute('data-tab', tab);
+    document.getElementById('tab-hw').classList.toggle('active', tab === 'hw');
+    document.getElementById('tab-vg').classList.toggle('active', tab === 'vg');
+    document.getElementById('carrito-items-hw').style.display = (tab === 'hw') ? 'flex' : 'none';
+    document.getElementById('carrito-items-vg').style.display = (tab === 'vg') ? 'flex' : 'none';
+    actualizarCarritoUI();
+};
 
+function añadirAlCarrito(categoriaRanura, productoData, precioNumero, imagenProd) {
+    carritoHardware[categoriaRanura] = { id: productoData.id, nombre: productoData.nombre, precio: precioNumero, imagen: imagenProd, ranura: categoriaRanura };
     guardarCarritoHardware();
     actualizarCarritoUI();
     parpadearCarrito();
 }
 
-window.eliminarDelCarrito = function(categoriaRanura) {
+window.eliminarDelCarritoHW = function(categoriaRanura) {
     delete carritoHardware[categoriaRanura];
     guardarCarritoHardware();
+    actualizarCarritoUI();
+};
+
+window.eliminarDelCarritoVG = function(id) {
+    const idx = carritoVideojuegos.findIndex(item => item.id === id);
+    if (idx !== -1) carritoVideojuegos.splice(idx, 1);
+    localStorage.setItem('carrito_videojuegos', JSON.stringify(carritoVideojuegos));
     actualizarCarritoUI();
 };
 
@@ -139,54 +150,72 @@ function parpadearCarrito() {
 }
 
 function actualizarCarritoUI() {
-    const contenedor = document.getElementById('carrito-items');
-    const badge      = document.getElementById('carrito-badge');
-    const totalDiv   = document.getElementById('carrito-total');
+    // Refrescar memorias
+    carritoHardware = JSON.parse(localStorage.getItem('carrito_hardware')) || {};
+    carritoVideojuegos = JSON.parse(localStorage.getItem('carrito_videojuegos')) || [];
 
-    if (!contenedor || !badge || !totalDiv) return;
+    const tabActual = document.getElementById('carrito-panel').getAttribute('data-tab') || 'hw';
+    const contHW = document.getElementById('carrito-items-hw');
+    const contVG = document.getElementById('carrito-items-vg');
 
-    const itemsCarrito = Object.values(carritoHardware);
-    badge.textContent = itemsCarrito.length;
+    if (!contHW || !contVG) return;
 
-    if (itemsCarrito.length === 0) {
-        contenedor.innerHTML = '<p class="carrito-vacio">Tu PC está vacío</p>';
-        totalDiv.textContent = '0,00 €';
-        return;
+    // -- HARDWARE --
+    const itemsHW = Object.values(carritoHardware);
+    document.getElementById('badge-hw-tab').textContent = itemsHW.length;
+    let sumaHW = 0;
+
+    if (itemsHW.length === 0) {
+        contHW.innerHTML = '<p class="carrito-vacio">Tu PC está vacío</p>';
+    } else {
+        contHW.innerHTML = itemsHW.map(item => {
+            sumaHW += item.precio;
+            return `
+                <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7;">
+                    <img src="${item.imagen}" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
+                    <div style="flex: 1; min-width: 0;">
+                        <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Hardware</span>
+                        <p style="font-size: 13px; font-weight: 700; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #101828;">${item.nombre}</p>
+                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${item.precio.toFixed(2)} €</p>
+                    </div>
+                    <button class="btn-eliminar" onclick="window.eliminarDelCarritoHW('${item.ranura}')" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #bbb; padding: 4px;">✕</button>
+                </div>`;
+        }).join('');
     }
 
-    let sumaTotal = 0;
+    // -- VIDEOJUEGOS --
+    const totalItemsVG = carritoVideojuegos.reduce((acc, i) => acc + i.cantidad, 0);
+    document.getElementById('badge-vg-tab').textContent = totalItemsVG;
+    let sumaVG = 0;
+
+    if (carritoVideojuegos.length === 0) {
+        contVG.innerHTML = '<p class="carrito-vacio">Sin juegos</p>';
+    } else {
+        contVG.innerHTML = carritoVideojuegos.map(item => {
+            const precio = item.ofertas?.length ? parseFloat(item.ofertas[0].precio_final) : 0;
+            const sub = precio * item.cantidad;
+            sumaVG += sub;
+            const img = item.imagen || '../images/placeholder.png';
+            return `
+                <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7;">
+                    <img src="${img}" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
+                    <div style="flex: 1; min-width: 0;">
+                        <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Juego x${item.cantidad}</span>
+                        <p style="font-size: 13px; font-weight: 700; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #101828;">${item.nombre}</p>
+                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${sub.toFixed(2)} €</p>
+                    </div>
+                    <button class="btn-eliminar" onclick="window.eliminarDelCarritoVG(${item.id})" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #bbb; padding: 4px;">✕</button>
+                </div>`;
+        }).join('');
+    }
+
+    // -- TOTALES Y BADGE GLOBAL --
+    document.getElementById('gran-total-header').textContent = (sumaHW + sumaVG).toFixed(2) + ' €';
+    document.getElementById('carrito-total-seccion').textContent = (tabActual === 'hw' ? sumaHW : sumaVG).toFixed(2) + ' €';
     
-    contenedor.innerHTML = itemsCarrito.map(item => {
-        sumaTotal += item.precio;
-
-        let nombreRanura = "Componente";
-        if(item.ranura === 'panel-procesador') nombreRanura = "Procesador";
-        if(item.ranura === 'panel-placa') nombreRanura = "Placa Base";
-        if(item.ranura === 'panel-ram') nombreRanura = "Memoria RAM";
-        if(item.ranura === 'panel-caja') nombreRanura = "Caja/Torre";
-        if(item.ranura === 'panel-aire') nombreRanura = "Refrig. Aire";
-        if(item.ranura === 'panel-liquida') nombreRanura = "Refrig. Líquida";
-        if(item.ranura === 'panel-gpu') nombreRanura = "Tarjeta Gráfica";
-        if(item.ranura === 'panel-psu') nombreRanura = "Fuente de Alimentación";
-        if(item.ranura === 'panel-disco') nombreRanura = "Disco Duro";
-        if(item.ranura === 'panel-monitor') nombreRanura = "Monitor";
-
-        return `
-            <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7; margin-bottom: 10px;">
-                <img src="${item.imagen}" alt="${item.nombre}" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
-                <div class="carrito-item-info" style="flex: 1; min-width: 0;">
-                    <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800; display: block;">${nombreRanura}</span>
-                    <p class="carrito-item-nombre" style="font-size: 13px; font-weight: 700; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.nombre}</p>
-                    <p class="carrito-item-precio" style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${item.precio.toFixed(2)} €</p>
-                </div>
-                <button class="btn-eliminar" onclick="window.eliminarDelCarrito('${item.ranura}')" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #bbb; padding: 4px; border-radius: 4px;">✕</button>
-            </div>
-        `;
-    }).join('');
-
-    totalDiv.textContent = `${sumaTotal.toFixed(2)} €`;
+    const badgeFlotante = document.getElementById('carrito-badge');
+    if (badgeFlotante) badgeFlotante.textContent = itemsHW.length + totalItemsVG;
 }
-
 
 // ─── LLAMADAS A LA API Y PINTADO ─────────────────────────────────────────────
 async function cargarProductos(categoria, texto, pagina, esCargarMas) {
