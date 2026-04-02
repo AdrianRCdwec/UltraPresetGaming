@@ -64,8 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'panel-placa': 'MB',
                 'panel-ram': 'RAM',
                 'panel-caja': 'CASE',
-                'panel-aire': 'COOL',
-                'panel-liquida': 'COOL',
+                'panel-aire': 'AIR',
+                'panel-liquida': 'LIQ',
                 'panel-gpu': 'GPU',
                 'panel-psu': 'PSU',
                 'panel-disco': 'SSD',
@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
 // ─── LÓGICA DEL CARRITO (AÑADIR Y UI) ────────────────────────────────────────
 window.switchTab = function(tab) {
     document.getElementById('carrito-panel').setAttribute('data-tab', tab);
@@ -127,12 +126,39 @@ function añadirAlCarrito(categoriaRanura, productoData, precioNumero, imagenPro
     guardarCarritoHardware();
     actualizarCarritoUI();
     parpadearCarrito();
+    // AQUÍ ESTABA EL ERROR: Faltaban los paréntesis para llamar a la función
+    gestionarExclusionRefrigeracion(); 
 }
 
 window.eliminarDelCarritoHW = function(categoriaRanura) {
     delete carritoHardware[categoriaRanura];
     guardarCarritoHardware();
     actualizarCarritoUI();
+
+    const labelDestino = document.querySelector(`label[for="${categoriaRanura}"]`);
+    if (labelDestino) {
+        // Dejamos el recuadro como estaba originalmente
+        let nombreOriginal = '';
+        if (categoriaRanura === 'panel-aire') nombreOriginal = 'Refrigeración por aire';
+        if (categoriaRanura === 'panel-liquida') nombreOriginal = 'Refrigeración Líquida';
+        // Añade aquí los demás si quieres (Procesador, etc)
+        
+        if (nombreOriginal) {
+            labelDestino.innerHTML = `<p class="hw-kicker">${nombreOriginal}</p>`;
+        }
+        
+        // Restauramos el icono original
+        const imgDestino = labelDestino.closest('.hw-item').querySelector('.hw-icon');
+        if (imgDestino) {
+            let imgOriginal = '../images/placeholder.jpg';
+            if (categoriaRanura === 'panel-aire') imgOriginal = '../images/aire.png';
+            if (categoriaRanura === 'panel-liquida') imgOriginal = '../images/liquida.png';
+            imgDestino.src = imgOriginal;
+        }
+    }
+
+    // NUEVO:
+    gestionarExclusionRefrigeracion();
 };
 
 window.eliminarDelCarritoVG = function(id) {
@@ -184,7 +210,6 @@ function actualizarCarritoUI() {
     }
 
     // -- VIDEOJUEGOS --
-    // (Ojo: en Montador_hardware.js recuerda usar "carritoVideojuegos" y en compra_videojuegos.js usar "carrito")
     const arrayJuegos = (typeof carritoVideojuegos !== 'undefined' && carritoVideojuegos.length !== undefined) ? carritoVideojuegos : carritoVideojuegos;
     
     const totalItemsVG = arrayJuegos.length;
@@ -196,7 +221,7 @@ function actualizarCarritoUI() {
     } else {
         contVG.innerHTML = arrayJuegos.map(item => {
             const precio = item.ofertas?.length ? parseFloat(item.ofertas[0].precio_final) : 0;
-            sumaVG += precio; // Ya no multiplicamos por cantidad
+            sumaVG += precio; 
             const img = item.imagen || '../images/placeholder.png';
             return `
                 <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7;">
@@ -266,12 +291,13 @@ function pintarResultados(productos, esCargarMas, hayMasPaginas) {
         }
 
         // Elegir imagen por defecto según la categoría
-        let imagenPorDefecto = '../images/placeholder.jpg'; // Por si acaso
+        let imagenPorDefecto = '../images/placeholder.jpg';
         switch (categoriaActual) {
             case 'MB':   imagenPorDefecto = '../images/motherboard.png'; break;
             case 'RAM':  imagenPorDefecto = '../images/ram.png'; break;
             case 'CASE': imagenPorDefecto = '../images/caja.png'; break;
-            case 'COOL': imagenPorDefecto = '../images/aire.png'; break; // O liquida.png
+            case 'AIR':  imagenPorDefecto = '../images/aire.png'; break;
+            case 'LIQ':  imagenPorDefecto = '../images/liquida.png'; break;
             case 'GPU':  imagenPorDefecto = '../images/gpu.png'; break;
             case 'PSU':  imagenPorDefecto = '../images/psu.png'; break;
             case 'SSD':  imagenPorDefecto = '../images/almacenamiento.png'; break;
@@ -353,7 +379,7 @@ function seleccionarComponente(id, nombre, imagen, precioInfo) {
             <div style="flex: 1; text-align: right;">
                 <a class="hw-btn" href="../Comparador de precios/comparador.html?id=${id}" 
                    style="display: inline-block; font-size: 14px; font-weight: 600; background: #9814f1; color: white; text-decoration: none; border: 1px solid #9814f1; padding: 6px 14px; border-radius: 4px; transition: all 0.2s ease;">
-                   Ver Precios ➔
+                    Ver Precios ➔
                 </a>
             </div>
             
@@ -426,8 +452,56 @@ function restaurarSeleccionesHardware() {
     }
 }
 
+// ─── LÓGICA DE EXCLUSIÓN: AIRE VS LÍQUIDA ────────────────────────────────────
+
+// Esta función se encarga de oscurecer/bloquear la opción contraria
+function gestionarExclusionRefrigeracion() {
+    const labelAire = document.querySelector('label[for="panel-aire"]');
+    const labelLiquida = document.querySelector('label[for="panel-liquida"]');
+
+    // Recuperamos los input radio reales para deshabilitarlos físicamente
+    const inputAire = document.getElementById('panel-aire');
+    const inputLiquida = document.getElementById('panel-liquida');
+
+    if (!labelAire || !labelLiquida) return;
+
+    const sectionAire = labelAire.closest('.hw-item');
+    const sectionLiquida = labelLiquida.closest('.hw-item');
+
+    // Comprobamos si el usuario ya tiene algo de estas categorías
+    const tieneAire = carritoHardware['panel-aire'] !== undefined;
+    const tieneLiquida = carritoHardware['panel-liquida'] !== undefined;
+
+    // Si tiene AIRE, bloqueamos LÍQUIDA
+    if (tieneAire) {
+        sectionLiquida.style.opacity = '0.4';
+        sectionLiquida.style.pointerEvents = 'none';
+        sectionLiquida.style.filter = 'grayscale(100%)';
+        if(inputLiquida) inputLiquida.disabled = true; // Impide que se abra el panel
+    } else {
+        sectionLiquida.style.opacity = '1';
+        sectionLiquida.style.pointerEvents = 'auto';
+        sectionLiquida.style.filter = 'none';
+        if(inputLiquida) inputLiquida.disabled = false;
+    }
+
+    // Si tiene LÍQUIDA, bloqueamos AIRE
+    if (tieneLiquida) {
+        sectionAire.style.opacity = '0.4';
+        sectionAire.style.pointerEvents = 'none';
+        sectionAire.style.filter = 'grayscale(100%)';
+        if(inputAire) inputAire.disabled = true; // Impide que se abra el panel
+    } else {
+        sectionAire.style.opacity = '1';
+        sectionAire.style.pointerEvents = 'auto';
+        sectionAire.style.filter = 'none';
+        if(inputAire) inputAire.disabled = false;
+    }
+}
+
 // ─── AL CARGAR LA PÁGINA ─────────────────────────────────────────────────────
 window.addEventListener('load', () => {
     actualizarCarritoUI();
-    restaurarSeleccionesHardware(); // <--- Llamamos a la nueva función aquí
+    restaurarSeleccionesHardware(); 
+    gestionarExclusionRefrigeracion();
 });
