@@ -147,3 +147,5 @@ AUTHENTICATION_BACKENDS = [
     'api.backends.EmailOrUsernameModelBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 100000
