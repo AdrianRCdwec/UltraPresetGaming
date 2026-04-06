@@ -1,0 +1,45 @@
+--------------------------------------------------------------
+INICIO DEL PROYECTO EN UN NUEVO DISPOSITIVO:
+--------------------------------------------------------------
+    git pull
+    cd .\backend\
+    py -m venv venv
+    .\venv\Scripts\Activate.ps1
+    pip install -r requirements.txt
+
+
+
+--------------------------------------------------------------
+ACTUALIZAR EL PROYECTO AL DÍA:
+--------------------------------------------------------------
+    git pull
+    cd .\backend\
+    .\venv\Scripts\Activate.ps1
+    pip install -r requirements.txt
+    playwright install chromium
+
+
+
+--------------------------------------------------------------
+RESET DE LA BASE DE DATOS:
+--------------------------------------------------------------
+    del db.sqlite3
+    python manage.py migrate
+    python manage.py createsuperuser
+
+
+
+--------------------------------------------------------------
+TODO DENTRO DEL ENTORNO:
+--------------------------------------------------------------
+    EJECUTAR CRAWLER (ACTUALIZAR/AÑADIR PRODUCTOS):
+        python crawler.py
+
+    ENCENDER SERVIDOR:
+        python manage.py runserver
+
+    CREAR/ACTUALIZAR ARCHIVO REQUIREMENTS.TXT:
+        pip freeze > requirements.txt
+
+    VACIAR DATOS SIN BORRAR LA ESTRUCTURA:
+        python manage.py flush

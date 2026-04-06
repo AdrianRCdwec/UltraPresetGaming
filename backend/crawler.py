@@ -34,7 +34,6 @@ def limpiar_precio(texto):
             
     return float(num_str)
 
-
 # =================================================================
 # NUEVA FUNCIÓN UNIVERSAL PARA GUARDAR EN LA BD (Sirve para TODAS las tiendas)
 # =================================================================
@@ -85,67 +84,9 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
 
     return productos_guardados_exitosamente
 
-
 # =================================================================
 # LÓGICA EXCLUSIVA DE PC COMPONENTES
 # =================================================================
-def extraer_productos_de_pagina_pcc(page):
-    """Extrae productos de la vista actual adaptado a PcComponentes"""
-    for _ in range(8):
-        page.mouse.wheel(0, 1000)
-        page.wait_for_timeout(800)
-
-    datos = page.evaluate('''() => {
-        let resultados = [];
-        let tarjetas = document.querySelectorAll('a[data-product-id], a[data-testid="normal-link"]');
-        
-        tarjetas.forEach(tarjeta => {
-            try {
-                let link = tarjeta.href;
-                if(!link || link.includes('#')) return;
-
-                let titulo = tarjeta.getAttribute('data-product-name');
-                let precioStr = tarjeta.getAttribute('data-product-price');
-                
-                if (!titulo) {
-                    let tituloEl = tarjeta.querySelector('h3, [data-e2e="title-card"]');
-                    titulo = tituloEl ? tituloEl.innerText : null;
-                }
-                
-                if (!precioStr) {
-                    let precioEl = tarjeta.querySelector('[data-e2e="price-card"], .priceBase-av5at');
-                    precioStr = precioEl ? precioEl.innerText : null;
-                }
-
-                let imgEl = tarjeta.querySelector('img');
-                let imgUrl = imgEl ? imgEl.src : null;
-
-                if (titulo && precioStr && titulo.trim() !== '') {
-                    resultados.push({
-                        nombre: titulo,
-                        link: link,
-                        precio: precioStr.toString(), 
-                        imagen: imgUrl
-                    });
-                }
-            } catch(e) {}
-        });
-        
-        let unicos = [];
-        let linksVistos = new Set();
-        resultados.forEach(r => {
-            if(!linksVistos.has(r.link)) {
-                linksVistos.add(r.link);
-                unicos.push(r);
-            }
-        });
-        
-        return unicos;
-    }''')
-    
-    return datos
-
-
 def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
     print(f"\n🕷️ [PCC] -> Escaneando: {url_catalogo_base}")
     
@@ -154,9 +95,41 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
-        context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
+        browser = p.chromium.launch(
+            headless=True, 
+            args=[
+                "--start-maximized",
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu"
+            ]
+        )
+        context = browser.new_context(
+            viewport={'width': 1920, 'height': 1080},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36", 
+            locale="es-ES",
+            timezone_id="Europe/Madrid",
+            extra_http_headers={
+                "Accept-Language": "es-ES,es;q=0.9",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Sec-Ch-Ua-Platform": '"Windows"',
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1"
+            }
+        )
+        
+        # Script fundamental para borrar la huella de Playwright del navegador antes de que cargue la página
         page = context.new_page()
+        page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            window.chrome = { runtime: {} };
+        """)
         
         try:
             while hay_mas_paginas:
@@ -213,47 +186,48 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
         tipo_db=tipo_db
     )
 
-# =================================================================
-# LÓGICA EXCLUSIVA DE COOLMOD
-# =================================================================
-def extraer_productos_de_pagina_coolmod(page):
-    """Extrae productos de la vista actual adaptado a Coolmod"""
-    # Hacemos algo de scroll para asegurar que carguen las imágenes (Lazy Load)
+def extraer_productos_de_pagina_pcc(page):
+    """Extrae productos de la vista actual adaptado a PcComponentes"""
     for _ in range(8):
         page.mouse.wheel(0, 1000)
         page.wait_for_timeout(800)
 
     datos = page.evaluate('''() => {
         let resultados = [];
-        let tarjetas = document.querySelectorAll('article.product-card');
+        let tarjetas = document.querySelectorAll('a[data-product-id], a[data-testid="normal-link"]');
         
         tarjetas.forEach(tarjeta => {
             try {
-                let datosProducto = tarjeta.querySelector('figure a[data-itemname]');
-                
-                if (datosProducto) {
-                    let nombre = datosProducto.getAttribute('data-itemname');
-                    let precioStr = datosProducto.getAttribute('data-itemprice');
-                    let link = datosProducto.href;
-                    
-                    let imgEl = datosProducto.querySelector('img');
-                    let imgUrl = imgEl ? imgEl.src : null;
+                let link = tarjeta.href;
+                if(!link || link.includes('#')) return;
 
-                    if (nombre && precioStr && nombre.trim() !== '') {
-                        resultados.push({
-                            nombre: nombre.trim(),
-                            link: link,
-                            precio: precioStr.toString(), 
-                            imagen: imgUrl
-                        });
-                    }
+                let titulo = tarjeta.getAttribute('data-product-name');
+                let precioStr = tarjeta.getAttribute('data-product-price');
+                
+                if (!titulo) {
+                    let tituloEl = tarjeta.querySelector('h3, [data-e2e="title-card"]');
+                    titulo = tituloEl ? tituloEl.innerText : null;
                 }
-            } catch(e) {
-                // Silenciamos el error individual para que siga iterando
-            }
+                
+                if (!precioStr) {
+                    let precioEl = tarjeta.querySelector('[data-e2e="price-card"], .priceBase-av5at');
+                    precioStr = precioEl ? precioEl.innerText : null;
+                }
+
+                let imgEl = tarjeta.querySelector('img');
+                let imgUrl = imgEl ? imgEl.src : null;
+
+                if (titulo && precioStr && titulo.trim() !== '') {
+                    resultados.push({
+                        nombre: titulo,
+                        link: link,
+                        precio: precioStr.toString(), 
+                        imagen: imgUrl
+                    });
+                }
+            } catch(e) {}
         });
         
-        // Filtramos duplicados por si Coolmod renderiza algún elemento de más
         let unicos = [];
         let linksVistos = new Set();
         resultados.forEach(r => {
@@ -268,7 +242,9 @@ def extraer_productos_de_pagina_coolmod(page):
     
     return datos
 
-
+# =================================================================
+# LÓGICA EXCLUSIVA DE COOLMOD
+# =================================================================
 def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_palabras=None):
     print(f"\n🕷️ [COOLMOD] -> Escaneando: {url_catalogo_base}")
     
@@ -277,9 +253,41 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
-        context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
+        browser = p.chromium.launch(
+            headless=True, 
+            args=[
+                "--start-maximized",
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu"
+            ]
+        )
+        context = browser.new_context(
+            viewport={'width': 1920, 'height': 1080},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36", 
+            locale="es-ES",
+            timezone_id="Europe/Madrid",
+            extra_http_headers={
+                "Accept-Language": "es-ES,es;q=0.9",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Sec-Ch-Ua-Platform": '"Windows"',
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1"
+            }
+        )
+        
+        # Script fundamental para borrar la huella de Playwright del navegador antes de que cargue la página
         page = context.new_page()
+        page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            window.chrome = { runtime: {} };
+        """)
         
         try:
             while hay_mas_paginas:
@@ -353,7 +361,59 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
         categoria_db=categoria_db,
         tipo_db=tipo_db
     )
+
+def extraer_productos_de_pagina_coolmod(page):
+    """Extrae productos de la vista actual adaptado a Coolmod"""
+    # Hacemos algo de scroll para asegurar que carguen las imágenes (Lazy Load)
+    for _ in range(8):
+        page.mouse.wheel(0, 1000)
+        page.wait_for_timeout(800)
+
+    datos = page.evaluate('''() => {
+        let resultados = [];
+        let tarjetas = document.querySelectorAll('article.product-card');
+        
+        tarjetas.forEach(tarjeta => {
+            try {
+                let datosProducto = tarjeta.querySelector('figure a[data-itemname]');
+                
+                if (datosProducto) {
+                    let nombre = datosProducto.getAttribute('data-itemname');
+                    let precioStr = datosProducto.getAttribute('data-itemprice');
+                    let link = datosProducto.href;
+                    
+                    let imgEl = datosProducto.querySelector('img');
+                    let imgUrl = imgEl ? imgEl.src : null;
+
+                    if (nombre && precioStr && nombre.trim() !== '') {
+                        resultados.push({
+                            nombre: nombre.trim(),
+                            link: link,
+                            precio: precioStr.toString(), 
+                            imagen: imgUrl
+                        });
+                    }
+                }
+            } catch(e) {
+                // Silenciamos el error individual para que siga iterando
+            }
+        });
+        
+        // Filtramos duplicados por si Coolmod renderiza algún elemento de más
+        let unicos = [];
+        let linksVistos = new Set();
+        resultados.forEach(r => {
+            if(!linksVistos.has(r.link)) {
+                linksVistos.add(r.link);
+                unicos.push(r);
+            }
+        });
+        
+        return unicos;
+    }''')
     
+    return datos
+
 # =================================================================
 # LÓGICA EXCLUSIVA DE LIFE INFORMÁTICA
 # =================================================================
@@ -363,9 +423,41 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
     todos_los_productos_extraidos = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
-        context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
+        browser = p.chromium.launch(
+            headless=True, 
+            args=[
+                "--start-maximized",
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu"
+            ]
+        )
+        context = browser.new_context(
+            viewport={'width': 1920, 'height': 1080},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36", 
+            locale="es-ES",
+            timezone_id="Europe/Madrid",
+            extra_http_headers={
+                "Accept-Language": "es-ES,es;q=0.9",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Sec-Ch-Ua-Platform": '"Windows"',
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1"
+            }
+        )
+        
+        # Script fundamental para borrar la huella de Playwright del navegador antes de que cargue la página
         page = context.new_page()
+        page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            window.chrome = { runtime: {} };
+        """)
         
         try:
             page.goto(url_catalogo_base, timeout=40000, wait_until="domcontentloaded")
@@ -502,73 +594,6 @@ def extraer_productos_de_pagina_lifeinformatica(page):
 # =================================================================
 # LÓGICA EXCLUSIVA DE ALTERNATE
 # =================================================================
-def extraer_productos_de_pagina_alternate(page):
-    """Extrae productos de la vista actual adaptado a Alternate"""
-    # Scroll suave para que carguen las imágenes
-    for _ in range(6):
-        page.mouse.wheel(0, 1000)
-        page.wait_for_timeout(800)
-
-    datos = page.evaluate('''() => {
-        let resultados = [];
-        // Alternate utiliza estos elementos 'a' como tarjetas de producto
-        let tarjetas = document.querySelectorAll('a.productBox');
-        
-        tarjetas.forEach(tarjeta => {
-            try {
-                let link = tarjeta.href;
-                
-                // El nombre está dentro de un div con clase 'product-name'
-                let nombreEl = tarjeta.querySelector('.product-name');
-                let subtituloEl = tarjeta.querySelector('.product-name-sub');
-                let nombre = "";
-                
-                if (nombreEl) {
-                    nombre = nombreEl.innerText.trim();
-                    // A veces añaden el tipo de caja en el subtitulo, lo juntamos si quieres o lo dejamos así
-                    if (subtituloEl && subtituloEl.innerText.trim() !== '') {
-                        nombre += " " + subtituloEl.innerText.trim();
-                    }
-                }
-                
-                // El precio está en un span con clase 'price'
-                let precioStr = "0";
-                let precioEl = tarjeta.querySelector('.price');
-                if (precioEl) {
-                    precioStr = precioEl.innerText;
-                }
-                
-                let imgEl = tarjeta.querySelector('.productPicture');
-                let imgUrl = imgEl ? imgEl.src : null;
-
-                if (nombre !== '' && precioStr !== "0") {
-                    resultados.push({
-                        nombre: nombre,
-                        link: link,
-                        precio: precioStr, 
-                        imagen: imgUrl
-                    });
-                }
-            } catch(e) {
-                // Silenciamos error individual
-            }
-        });
-        
-        // Filtramos duplicados
-        let unicos = [];
-        let linksVistos = new Set();
-        resultados.forEach(r => {
-            if(!linksVistos.has(r.link)) {
-                linksVistos.add(r.link);
-                unicos.push(r);
-            }
-        });
-        
-        return unicos;
-    }''')
-    
-    return datos
-
 def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, excluir_palabras=None):
     print(f"\n🕷️ [ALTERNATE] -> Escaneando: {url_catalogo_base}")
     
@@ -577,9 +602,41 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
-        context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
+        browser = p.chromium.launch(
+            headless=True, 
+            args=[
+                "--start-maximized",
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu"
+            ]
+        )
+        context = browser.new_context(
+            viewport={'width': 1920, 'height': 1080},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36", 
+            locale="es-ES",
+            timezone_id="Europe/Madrid",
+            extra_http_headers={
+                "Accept-Language": "es-ES,es;q=0.9",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Sec-Ch-Ua-Platform": '"Windows"',
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1"
+            }
+        )
+        
+        # Script fundamental para borrar la huella de Playwright del navegador antes de que cargue la página
         page = context.new_page()
+        page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            window.chrome = { runtime: {} };
+        """)
         
         try:
             while hay_mas_paginas:
@@ -647,51 +704,53 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
         categoria_db=categoria_db,
         tipo_db=tipo_db
     )
-    
-# =================================================================
-# LÓGICA EXCLUSIVA DE NEOBYTE
-# =================================================================
-def extraer_productos_de_pagina_neobyte(page):
-    """Extrae productos de la vista actual adaptado a NeoByte"""
-    # Hacemos scroll para asegurar que las imágenes y elementos carguen (Lazy Load)
+
+def extraer_productos_de_pagina_alternate(page):
+    """Extrae productos de la vista actual adaptado a Alternate"""
+    # Scroll suave para que carguen las imágenes
     for _ in range(6):
         page.mouse.wheel(0, 1000)
         page.wait_for_timeout(800)
 
     datos = page.evaluate('''() => {
         let resultados = [];
-        let tarjetas = document.querySelectorAll('article.product-miniature');
+        // Alternate utiliza estos elementos 'a' como tarjetas de producto
+        let tarjetas = document.querySelectorAll('a.productBox');
         
         tarjetas.forEach(tarjeta => {
             try {
-                let tituloEl = tarjeta.querySelector('.product-title a');
+                let link = tarjeta.href;
                 
-                if (tituloEl) {
-                    let nombre = tituloEl.innerText;
-                    let link = tituloEl.href;
-                    
-                    let precioStr = "0";
-                    let precioEl = tarjeta.querySelector('.product-price');
-                    if (precioEl) {
-                        // NeoByte suele poner el precio en el atributo 'content' o como texto
-                        precioStr = precioEl.getAttribute('content') || precioEl.innerText;
+                // El nombre está dentro de un div con clase 'product-name'
+                let nombreEl = tarjeta.querySelector('.product-name');
+                let subtituloEl = tarjeta.querySelector('.product-name-sub');
+                let nombre = "";
+                
+                if (nombreEl) {
+                    nombre = nombreEl.innerText.trim();
+                    // A veces añaden el tipo de caja en el subtitulo, lo juntamos si quieres o lo dejamos así
+                    if (subtituloEl && subtituloEl.innerText.trim() !== '') {
+                        nombre += " " + subtituloEl.innerText.trim();
                     }
-                    
-                    let imgEl = tarjeta.querySelector('.product-thumbnail img');
-                    // NeoByte usa lazy loading y puede guardar la url real en data-src
-                    let imgUrl = null;
-                    if (imgEl) {
-                        imgUrl = imgEl.getAttribute('data-src') || imgEl.src;
-                    }
+                }
+                
+                // El precio está en un span con clase 'price'
+                let precioStr = "0";
+                let precioEl = tarjeta.querySelector('.price');
+                if (precioEl) {
+                    precioStr = precioEl.innerText;
+                }
+                
+                let imgEl = tarjeta.querySelector('.productPicture');
+                let imgUrl = imgEl ? imgEl.src : null;
 
-                    if (nombre && precioStr && nombre.trim() !== '') {
-                        resultados.push({
-                            nombre: nombre.trim(),
-                            link: link,
-                            precio: precioStr.toString(), 
-                            imagen: imgUrl
-                        });
-                    }
+                if (nombre !== '' && precioStr !== "0") {
+                    resultados.push({
+                        nombre: nombre,
+                        link: link,
+                        precio: precioStr, 
+                        imagen: imgUrl
+                    });
                 }
             } catch(e) {
                 // Silenciamos error individual
@@ -713,6 +772,9 @@ def extraer_productos_de_pagina_neobyte(page):
     
     return datos
 
+# =================================================================
+# LÓGICA EXCLUSIVA DE NEOBYTE
+# =================================================================
 def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_palabras=None):
     print(f"\n🕷️ [NEOBYTE] -> Escaneando: {url_catalogo_base}")
     
@@ -721,9 +783,41 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
-        context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
+        browser = p.chromium.launch(
+            headless=True, 
+            args=[
+                "--start-maximized",
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu"
+            ]
+        )
+        context = browser.new_context(
+            viewport={'width': 1920, 'height': 1080},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36", 
+            locale="es-ES",
+            timezone_id="Europe/Madrid",
+            extra_http_headers={
+                "Accept-Language": "es-ES,es;q=0.9",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+                "Sec-Ch-Ua-Mobile": "?0",
+                "Sec-Ch-Ua-Platform": '"Windows"',
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1"
+            }
+        )
+        
+        # Script fundamental para borrar la huella de Playwright del navegador antes de que cargue la página
         page = context.new_page()
+        page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            window.chrome = { runtime: {} };
+        """)
         
         try:
             while hay_mas_paginas:
@@ -793,84 +887,71 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
         tipo_db=tipo_db
     )
 
-# =================================================================
-# LÓGICA EXCLUSIVA DE AMAZON
-# =================================================================
-def extraer_productos_de_pagina_amazon(page, precio_min=0.0):
-    """Extrae productos de la vista actual adaptado a Amazon"""
-    for _ in range(8):
+def extraer_productos_de_pagina_neobyte(page):
+    """Extrae productos de la vista actual adaptado a NeoByte"""
+    # Hacemos scroll para asegurar que las imágenes y elementos carguen (Lazy Load)
+    for _ in range(6):
         page.mouse.wheel(0, 1000)
-        page.wait_for_timeout(600)
+        page.wait_for_timeout(800)
 
-    datos = page.evaluate(r'''() => {
+    datos = page.evaluate('''() => {
         let resultados = [];
-        let tarjetas = document.querySelectorAll('div[data-asin]');
+        let tarjetas = document.querySelectorAll('article.product-miniature');
         
         tarjetas.forEach(tarjeta => {
             try {
-                let asin = tarjeta.getAttribute('data-asin');
-                if (!asin || asin.trim() === '') return;
-
-                // Localizamos el H2 (el contenedor del título)
-                let h2El = tarjeta.querySelector('h2');
-                if (!h2El) return;
+                let tituloEl = tarjeta.querySelector('.product-title a');
                 
-                // Amazon a veces pone el <a> dentro del <h2>, y a veces el <a> envuelve al <h2>
-                let linkEl = h2El.querySelector('a') || h2El.closest('a');
-                let tituloEl = h2El.querySelector('span');
-                
-                if (tituloEl && linkEl) {
+                if (tituloEl) {
                     let nombre = tituloEl.innerText;
-                    let link = linkEl.href;
+                    let link = tituloEl.href;
                     
                     let precioStr = "0";
-                    let precioEl = tarjeta.querySelector('.a-price .a-offscreen');
-                    
-                    if (!precioEl) {
-                        let entero = tarjeta.querySelector('.a-price-whole');
-                        let decimal = tarjeta.querySelector('.a-price-fraction');
-                        if (entero) {
-                            let enteroLimpio = entero.innerText.replace(',', '').replace('.', '').trim();
-                            let decimalLimpio = decimal ? decimal.innerText.trim() : '00';
-                            precioStr = enteroLimpio + '.' + decimalLimpio;
-                        }
-                    } else {
-                        precioStr = precioEl.innerText;
+                    let precioEl = tarjeta.querySelector('.product-price');
+                    if (precioEl) {
+                        // NeoByte suele poner el precio en el atributo 'content' o como texto
+                        precioStr = precioEl.getAttribute('content') || precioEl.innerText;
                     }
                     
-                    let imgEl = tarjeta.querySelector('.s-image');
-                    let imgUrl = imgEl ? imgEl.src : null;
+                    let imgEl = tarjeta.querySelector('.product-thumbnail img');
+                    // NeoByte usa lazy loading y puede guardar la url real en data-src
+                    let imgUrl = null;
+                    if (imgEl) {
+                        imgUrl = imgEl.getAttribute('data-src') || imgEl.src;
+                    }
 
-                    if (nombre && nombre.trim() !== '') {
+                    if (nombre && precioStr && nombre.trim() !== '') {
                         resultados.push({
                             nombre: nombre.trim(),
                             link: link,
-                            precio: precioStr, 
+                            precio: precioStr.toString(), 
                             imagen: imgUrl
                         });
                     }
                 }
-            } catch(e) {}
+            } catch(e) {
+                // Silenciamos error individual
+            }
         });
-        return resultados;
+        
+        // Filtramos duplicados
+        let unicos = [];
+        let linksVistos = new Set();
+        resultados.forEach(r => {
+            if(!linksVistos.has(r.link)) {
+                linksVistos.add(r.link);
+                unicos.push(r);
+            }
+        });
+        
+        return unicos;
     }''')
     
-    unicos = []
-    links_vistos = set()
-    
-    for r in datos:
-        if r['link'] not in links_vistos:
-            try:
-                precio_float = limpiar_precio(r['precio'])
-                if precio_float >= precio_min:
-                    r['precio'] = str(precio_float)
-                    links_vistos.add(r['link'])
-                    unicos.append(r)
-            except:
-                pass
-                
-    return unicos
+    return datos
 
+# =================================================================
+# LÓGICA EXCLUSIVA DE AMAZON
+# =================================================================
 def escanear_catalogo_amazon(url_catalogo_base, categoria_db, tipo_db, precio_min=0.0, excluir_palabras=None):
     print(f"\n🕷️ [AMAZON] -> Escaneando: {url_catalogo_base} (Precio Min: {precio_min}€)")
     
@@ -955,6 +1036,81 @@ def escanear_catalogo_amazon(url_catalogo_base, categoria_db, tipo_db, precio_mi
         categoria_db=categoria_db,
         tipo_db=tipo_db
     )
+
+def extraer_productos_de_pagina_amazon(page, precio_min=0.0):
+    """Extrae productos de la vista actual adaptado a Amazon"""
+    for _ in range(8):
+        page.mouse.wheel(0, 1000)
+        page.wait_for_timeout(600)
+
+    datos = page.evaluate(r'''() => {
+        let resultados = [];
+        let tarjetas = document.querySelectorAll('div[data-asin]');
+        
+        tarjetas.forEach(tarjeta => {
+            try {
+                let asin = tarjeta.getAttribute('data-asin');
+                if (!asin || asin.trim() === '') return;
+
+                // Localizamos el H2 (el contenedor del título)
+                let h2El = tarjeta.querySelector('h2');
+                if (!h2El) return;
+                
+                // Amazon a veces pone el <a> dentro del <h2>, y a veces el <a> envuelve al <h2>
+                let linkEl = h2El.querySelector('a') || h2El.closest('a');
+                let tituloEl = h2El.querySelector('span');
+                
+                if (tituloEl && linkEl) {
+                    let nombre = tituloEl.innerText;
+                    let link = linkEl.href;
+                    
+                    let precioStr = "0";
+                    let precioEl = tarjeta.querySelector('.a-price .a-offscreen');
+                    
+                    if (!precioEl) {
+                        let entero = tarjeta.querySelector('.a-price-whole');
+                        let decimal = tarjeta.querySelector('.a-price-fraction');
+                        if (entero) {
+                            let enteroLimpio = entero.innerText.replace(',', '').replace('.', '').trim();
+                            let decimalLimpio = decimal ? decimal.innerText.trim() : '00';
+                            precioStr = enteroLimpio + '.' + decimalLimpio;
+                        }
+                    } else {
+                        precioStr = precioEl.innerText;
+                    }
+                    
+                    let imgEl = tarjeta.querySelector('.s-image');
+                    let imgUrl = imgEl ? imgEl.src : null;
+
+                    if (nombre && nombre.trim() !== '') {
+                        resultados.push({
+                            nombre: nombre.trim(),
+                            link: link,
+                            precio: precioStr, 
+                            imagen: imgUrl
+                        });
+                    }
+                }
+            } catch(e) {}
+        });
+        return resultados;
+    }''')
+    
+    unicos = []
+    links_vistos = set()
+    
+    for r in datos:
+        if r['link'] not in links_vistos:
+            try:
+                precio_float = limpiar_precio(r['precio'])
+                if precio_float >= precio_min:
+                    r['precio'] = str(precio_float)
+                    links_vistos.add(r['link'])
+                    unicos.append(r)
+            except:
+                pass
+                
+    return unicos
 
 # =================================================================
 # ESCANEO DE TIENDAS
