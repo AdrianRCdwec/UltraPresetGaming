@@ -3,6 +3,9 @@ import os
 import django
 import re
 from playwright.sync_api import sync_playwright
+from fuzzywuzzy import fuzz
+from django.db import transaction
+
 
 # --- CONFIGURACIÓN DE DJANGO ---
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -37,50 +40,89 @@ def limpiar_precio(texto):
 # =================================================================
 # NUEVA FUNCIÓN UNIVERSAL PARA GUARDAR EN LA BD (Sirve para TODAS las tiendas)
 # =================================================================
+def limpiar_nombre_producto(nombre):
+    nombre_limpio = nombre.lower()
+    palabras_basura = [
+        "procesador", "tarjeta grafica", "tarjeta gráfica", "placa base", 
+        "memoria ram", "disco duro", "fuente de alimentacion", "fuente de alimentación",
+        "caja de pc", "caja pc", "torre", "refrigeracion liquida", "refrigeración líquida",
+        "kit", "disipador", "ventilador", "sin ventilador", "no cooler", "box", "tray", 
+        "edition", "oem", "retail", "v2", "v3", "reacondicionado", "refurbished"
+    ]
+    for palabra in palabras_basura:
+        nombre_limpio = re.sub(r'\b' + palabra + r'\b', '', nombre_limpio)
+    nombre_limpio = re.sub(r'[^a-z0-9\s\.\-]', ' ', nombre_limpio)
+    return ' '.join(nombre_limpio.split()).strip()
+
 def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda, categoria_db, tipo_db):
     if not productos_extraidos:
         return 0
 
-    print(f"\n💾 Guardando {len(productos_extraidos)} productos en la BD para la tienda {nombre_tienda}...")
-    
-    # Nos aseguramos de que la tienda existe (ya sea Amazon, PcComponentes, etc)
-    tienda_db, _ = Tienda.objects.get_or_create(
-        nombre=nombre_tienda,
-        defaults={"url_base": url_base_tienda}
-    )
-    
-    productos_guardados_exitosamente = 0
-    
-    for item in productos_extraidos:
-        try:
-            nombre_limpio = item['nombre'].strip()
-            precio_float = limpiar_precio(item['precio'])
-            
-            if precio_float <= 0:
-                continue
+    print(f"\n💾 Guardando {len(productos_extraidos)} productos en la BD para la tienda {nombre_tienda}...\n")
 
-            # 1. Producto
-            producto, creado_prod = Producto.objects.get_or_create(
-                nombre=nombre_limpio,
-                defaults={'tipo': tipo_db, 'categoria': categoria_db}
-            )
-            
-            # 2. Oferta
-            oferta, creado_oferta = Oferta.objects.update_or_create(
-                producto=producto,
-                tienda=tienda_db,
-                defaults={
-                    'precio_base': precio_float,
-                    'enlace_compra': item['link'],
-                    'gastos_envio': 0.00,
-                    'descuento_porcentaje': 0.00
-                }
-            )
-            productos_guardados_exitosamente += 1
-            print(f"{'➕ NUEVO' if creado_prod else '🔄 ACTUALIZADO'}: {nombre_limpio} -> {precio_float}€")
-            
-        except Exception as db_error:
-            print(f"❌ Error guardando '{item.get('nombre', 'Desconocido')}': {db_error}")
+    tienda_db, _ = Tienda.objects.get_or_create(
+        nombre=nombre_tienda, 
+        defaults={'url_base': url_base_tienda}
+    )
+
+    productos_guardados_exitosamente = 0
+    UMBRAL_SIMILITUD = 85
+    productos_existentes = list(Producto.objects.filter(categoria=categoria_db))
+
+    with transaction.atomic():
+        for item in productos_extraidos:
+            try:
+                nombre_original = item['nombre'].strip()
+                precio_float = limpiar_precio(item['precio'])
+                
+                if precio_float <= 0:
+                    continue
+                    
+                nombre_para_comparar = limpiar_nombre_producto(nombre_original)
+                
+                producto_asociado = None
+                mejor_score = 0
+                
+                for prod_bd in productos_existentes:
+                    nombre_bd_limpio = limpiar_nombre_producto(prod_bd.nombre)
+                    score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
+                    
+                    if score > mejor_score:
+                        mejor_score = score
+                        producto_asociado = prod_bd
+
+                creado_prod = False
+                if mejor_score >= UMBRAL_SIMILITUD and producto_asociado:
+                    producto = producto_asociado
+                else:
+                    producto = Producto.objects.create(
+                        nombre=nombre_original,
+                        tipo=tipo_db,
+                        categoria=categoria_db
+                    )
+                    productos_existentes.append(producto)
+                    creado_prod = True
+
+                oferta, creado_oferta = Oferta.objects.update_or_create(
+                    producto=producto,
+                    tienda=tienda_db,
+                    defaults={
+                        'precio_base': precio_float,
+                        'enlace_compra': item['link'],
+                        'gastos_envio': 0.00,
+                        'descuento_porcentaje': 0.00
+                    }
+                )
+
+                productos_guardados_exitosamente += 1
+
+                if creado_prod:
+                    print(f"[NUEVO] {nombre_original} ({mejor_score}%) - {precio_float}€")
+                else:
+                    print(f"[OFERTA] {nombre_original} -> {producto.nombre} ({mejor_score}%) - {precio_float}€")
+
+            except Exception as db_error:
+                print(f"❌ Error guardando {item.get('nombre', 'Desconocido')}: {db_error}")
 
     return productos_guardados_exitosamente
 
@@ -160,7 +202,7 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
                 todos_los_productos_extraidos.extend(datos_pagina)
                 
                 # Comprobar botón "Siguiente" de PC Componentes
-                siguiente_deshabilitado = page.evaluate('''() => {
+                siguiente_deshabilitado = page.evaluate(r'''() => {
                     let nextBtn = document.querySelector('button[aria-label="Página siguiente"], a[aria-label="Página siguiente"]');
                     if (!nextBtn) return true;
                     return nextBtn.disabled || nextBtn.classList.contains('disabled');
@@ -192,7 +234,7 @@ def extraer_productos_de_pagina_pcc(page):
         page.mouse.wheel(0, 1000)
         page.wait_for_timeout(800)
 
-    datos = page.evaluate('''() => {
+    datos = page.evaluate(r'''() => {
         let resultados = [];
         let tarjetas = document.querySelectorAll('a[data-product-id], a[data-testid="normal-link"]');
         
@@ -333,7 +375,7 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
                 todos_los_productos_extraidos.extend(datos_pagina)
                 
                 # Comprobar si hay botón "Siguiente" activo en la paginación
-                siguiente_deshabilitado = page.evaluate('''() => {
+                siguiente_deshabilitado = page.evaluate(r'''() => {
                     let nextBtn = document.querySelector('.paginate-buttons.next-button');
                     
                     // Si no existe el botón de siguiente, o tiene un atributo 'disabled', o está 'disable', paramos.
@@ -369,7 +411,7 @@ def extraer_productos_de_pagina_coolmod(page):
         page.mouse.wheel(0, 1000)
         page.wait_for_timeout(800)
 
-    datos = page.evaluate('''() => {
+    datos = page.evaluate(r'''() => {
         let resultados = [];
         let tarjetas = document.querySelectorAll('article.product-card');
         
@@ -530,7 +572,7 @@ def extraer_productos_de_pagina_lifeinformatica(page):
         page.mouse.wheel(0, 1500)
         page.wait_for_timeout(500)
 
-    datos = page.evaluate('''() => {
+    datos = page.evaluate(r'''() => {
         let resultados = [];
         let tarjetas = document.querySelectorAll('li.product.type-product');
         
@@ -678,7 +720,7 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
                 todos_los_productos_extraidos.extend(datos_pagina)
                 
                 # Comprobar botón "Página Siguiente"
-                siguiente_deshabilitado = page.evaluate('''() => {
+                siguiente_deshabilitado = page.evaluate(r'''() => {
                     let nextBtn = document.querySelector('a[aria-label="Página siguiente"]');
                     if (!nextBtn) return true;
                     // En Alternate, cuando no hay más páginas, el botón suele tener la clase "disabled"
@@ -712,7 +754,7 @@ def extraer_productos_de_pagina_alternate(page):
         page.mouse.wheel(0, 1000)
         page.wait_for_timeout(800)
 
-    datos = page.evaluate('''() => {
+    datos = page.evaluate(r'''() => {
         let resultados = [];
         // Alternate utiliza estos elementos 'a' como tarjetas de producto
         let tarjetas = document.querySelectorAll('a.productBox');
@@ -861,7 +903,7 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
                 
                 # Comprobar si hay botón "Siguiente" activo en la paginación
                 # NeoByte usa un enlace con id "infinity-url" y rel="next"
-                siguiente_deshabilitado = page.evaluate('''() => {
+                siguiente_deshabilitado = page.evaluate(r'''() => {
                     let nextBtn = document.querySelector('a[rel="next"], a.next');
                     if (!nextBtn) return true; // Si no existe, no hay más
                     return false; // Si existe, hay más páginas
@@ -894,7 +936,7 @@ def extraer_productos_de_pagina_neobyte(page):
         page.mouse.wheel(0, 1000)
         page.wait_for_timeout(800)
 
-    datos = page.evaluate('''() => {
+    datos = page.evaluate(r'''() => {
         let resultados = [];
         let tarjetas = document.querySelectorAll('article.product-miniature');
         
@@ -1010,7 +1052,7 @@ def escanear_catalogo_amazon(url_catalogo_base, categoria_db, tipo_db, precio_mi
                 todos_los_productos_extraidos.extend(datos_pagina)
                 
                 # Amazon a veces elimina el botón next, así que comprobamos si la url final no devolvió nada
-                siguiente_deshabilitado = page.evaluate('''() => {
+                siguiente_deshabilitado = page.evaluate(r'''() => {
                     let nextBtn = document.querySelector('.s-pagination-next');
                     if (!nextBtn) return true;
                     return nextBtn.classList.contains('s-pagination-disabled');
@@ -1117,99 +1159,250 @@ def extraer_productos_de_pagina_amazon(page, precio_min=0.0):
 # =================================================================
 def escanearPcComponentes():
     total_pcc = 0
+    total_productos = 0
+
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/procesadores", 'CPU', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Procesadores] Se han guardado un total de {total_productos} procesadores.")
     
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/procesadores", 'CPU', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/placas-base", 'MB', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/memorias-ram", 'RAM', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/cajas-pc", 'CASE', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/ventiladores-cpu", 'AIR', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/refrigeracion-liquida/kit-refrigeracion-liquida", 'LIQ', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/tarjetas-graficas", 'GPU', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/fuentes-alimentacion", 'PSU', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/discos-duros", 'SSD', 'HW')
-    total_pcc += escanear_catalogo_pcc("https://www.pccomponentes.com/monitores", 'MON', 'HW')
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/placas-base", 'MB', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Placas Base] Se han guardado un total de {total_productos} placas base.")
     
-    # 1 HORA
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/memorias-ram", 'RAM', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Memorias RAM] Se han guardado un total de {total_productos} memorias RAM.")
     
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/cajas-pc", 'CASE', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Cajas PC] Se han guardado un total de {total_productos} cajas de pc.")
+    
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/ventiladores-cpu", 'AIR', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Refrigeración Aire] Se han guardado un total de {total_productos} refrigeración de aire.")
+    
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/refrigeracion-liquida/kit-refrigeracion-liquida", 'LIQ', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Refrigeración Líquida] Se han guardado un total de {total_productos} refrigeraciones líquidas.")
+    
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/tarjetas-graficas", 'GPU', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Tarjetas Gráficas] Se han guardado un total de {total_productos} tarjetas gráficas.")
+    
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/fuentes-alimentacion", 'PSU', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Fuentes de Alimentación] Se han guardado un total de {total_productos} fuentes de alimentación.")
+    
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/discos-duros", 'SSD', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Discos Duros] Se han guardado un total de {total_productos} discos duros.")
+    
+    total_productos = escanear_catalogo_pcc("https://www.pccomponentes.com/monitores", 'MON', 'HW')
+    total_pcc += total_productos
+    print(f"\n✅ [Monitores] Se han guardado un total de {total_productos} monitores.")
+
+
     print(f"\n✅ [PcComponentes FIN] Se han guardado un total de {total_pcc} productos.")
     return total_pcc
 
 def escanearCoolmod():
     total_coolmod = 0
+    total_productos = 0
+
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-procesadores/", 'CPU', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Procesadores] Se han guardado un total de {total_productos} procesadores.")
     
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-procesadores/", 'CPU', 'HW')
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-placas-base/", 'MB', 'HW')
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-memorias-ram/", 'RAM', 'HW')
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-torres-cajas/", 'CASE', 'HW')
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-disipadores-ventiladores/", 'AIR', 'HW', excluir_palabras=[
-        '240', '280', '360', '420', 'refrigeracion liquida', 'refrigeración líquida'
+    
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-placas-base/", 'MB', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Placas Base] Se han guardado un total de {total_productos} placas base.")
+    
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-memorias-ram/", 'RAM', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Memorias RAM] Se han guardado un total de {total_productos} memorias RAM.")
+    
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-torres-cajas/", 'CASE', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Cajas PC] Se han guardado un total de {total_productos} cajas de pc.")
+    
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-disipadores-ventiladores/", 'AIR', 'HW', excluir_palabras=[
+        '240', '280', '360', '420', 'refrigeracion liquida', 'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
         ]
     )
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/refrigeracion-liquida-kits-liquida/", 'LIQ', 'HW')
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/tarjetas-graficas/", 'GPU', 'HW')
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-fuentes-alimentacion/", 'PSU', 'HW')
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-discos-duros/", 'SSD', 'HW')
-    total_coolmod += escanear_catalogo_coolmod("https://www.coolmod.com/perifericos-monitores/", 'MON', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Refrigeración Aire] Se han guardado un total de {total_productos} refrigeración de aire.")
     
-    # X
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/refrigeracion-liquida-kits-liquida/", 'LIQ', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Refrigeración Líquida] Se han guardado un total de {total_productos} refrigeraciones líquidas.")
     
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/tarjetas-graficas/", 'GPU', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Tarjetas Gráficas] Se han guardado un total de {total_productos} tarjetas gráficas.")
+    
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-fuentes-alimentacion/", 'PSU', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Fuentes de Alimentación] Se han guardado un total de {total_productos} fuentes de alimentación.")
+    
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/componentes-pc-discos-duros/", 'SSD', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Discos Duros] Se han guardado un total de {total_productos} discos duros.")
+    
+    total_productos = escanear_catalogo_coolmod("https://www.coolmod.com/perifericos-monitores/", 'MON', 'HW')
+    total_coolmod += total_productos
+    print(f"\n✅ [Monitores] Se han guardado un total de {total_productos} monitores.")
+
     print(f"\n✅ [Coolmod FIN] Se han guardado un total de {total_coolmod} productos.")
     return total_coolmod
 
 def escanearLifeInformatica():
     total_life = 0
+    total_productos = 0
+
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/procesadores/", 'CPU', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Procesadores] Se han guardado un total de {total_productos} procesadores.")
     
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/procesadores/", 'CPU', 'HW')
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/placas-base/", 'MB', 'HW')
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/memorias-ram/", 'RAM', 'HW')
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/cajas-y-accesorios/cajas/", 'CASE', 'HW')
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/refrigeracion/disipadores-de-cpu/", 'AIR', 'HW', excluir_palabras=['240', '280', '360', '420', 'liquida', 'líquida'])
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/refrigeracion/kits-de-refrigeracion-liquida/", 'LIQ', 'HW')
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/tarjetas-graficas/", 'GPU', 'HW')
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/fuentes-de-alimentacion-y-accesorios/fuentes-de-alimentacion/", 'PSU', 'HW')
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/discos-duros/", 'SSD', 'HW')
-    total_life += escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/perifericos/monitores-y-accesorios/monitores/", 'MON', 'HW')
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/placas-base/", 'MB', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Placas Base] Se han guardado un total de {total_productos} placas base.")
     
-    # 
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/memorias-ram/", 'RAM', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Memorias RAM] Se han guardado un total de {total_productos} memorias RAM.")
     
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/cajas-y-accesorios/cajas/", 'CASE', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Cajas PC] Se han guardado un total de {total_productos} cajas de pc.")
+    
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/refrigeracion/disipadores-de-cpu/", 'AIR', 'HW', excluir_palabras=[
+        '240', '280', '360', '420', 'refrigeracion liquida', 'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
+        ]
+    )
+    total_life += total_productos
+    print(f"\n✅ [Refrigeración Aire] Se han guardado un total de {total_productos} refrigeración de aire.")
+    
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/refrigeracion/kits-de-refrigeracion-liquida/", 'LIQ', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Refrigeración Líquida] Se han guardado un total de {total_productos} refrigeraciones líquidas.")
+    
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/tarjetas-graficas/", 'GPU', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Tarjetas Gráficas] Se han guardado un total de {total_productos} tarjetas gráficas.")
+    
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/fuentes-de-alimentacion-y-accesorios/fuentes-de-alimentacion/", 'PSU', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Fuentes de Alimentación] Se han guardado un total de {total_productos} fuentes de alimentación.")
+    
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/componentes/discos-duros/", 'SSD', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Discos Duros] Se han guardado un total de {total_productos} discos duros.")
+    
+    total_productos = escanear_catalogo_lifeinformatica("https://lifeinformatica.com/categoria-producto/perifericos/monitores-y-accesorios/monitores/", 'MON', 'HW')
+    total_life += total_productos
+    print(f"\n✅ [Monitores] Se han guardado un total de {total_productos} monitores.")
+
     print(f"\n✅ [Life Informática FIN] Se han guardado un total de {total_life} productos.")
     return total_life
 
 def escanearAlternate():
     total_alternate = 0
+    total_productos = 0
+
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Procesadores", 'CPU', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Procesadores] Se han guardado un total de {total_productos} procesadores.")
     
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Procesadores", 'CPU', 'HW')
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Placas-base", 'MB', 'HW')
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Memoria-RAM", 'RAM', 'HW')
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Cajas-de-PC", 'CASE', 'HW')
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Disipadores-de-CPU", 'AIR', 'HW', excluir_palabras=['240', '280', '360', '420', 'líquida', 'liquida', 'aio', 'water'])
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Refrigeraci%C3%B3n-l%C3%ADquida", 'LIQ', 'HW')
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Tarjetas-gr%C3%A1ficas", 'GPU', 'HW')
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Fuentes-de-alimentaci%C3%B3n", 'PSU', 'HW')
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/SSD", 'SSD', 'HW')
-    total_alternate += escanear_catalogo_alternate("https://www.alternate.es/Monitores", 'MON', 'HW')
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Placas-base", 'MB', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Placas Base] Se han guardado un total de {total_productos} placas base.")
     
-    # 
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Memoria-RAM", 'RAM', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Memorias RAM] Se han guardado un total de {total_productos} memorias RAM.")
     
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Cajas-de-PC", 'CASE', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Cajas PC] Se han guardado un total de {total_productos} cajas de pc.")
+    
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Disipadores-de-CPU", 'AIR', 'HW', excluir_palabras=[
+        '240', '280', '360', '420', 'refrigeracion liquida', 'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
+        ]
+    )
+    total_alternate += total_productos
+    print(f"\n✅ [Refrigeración Aire] Se han guardado un total de {total_productos} refrigeración de aire.")
+    
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Refrigeraci%C3%B3n-l%C3%ADquida", 'LIQ', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Refrigeración Líquida] Se han guardado un total de {total_productos} refrigeraciones líquidas.")
+    
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Tarjetas-gr%C3%A1ficas", 'GPU', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Tarjetas Gráficas] Se han guardado un total de {total_productos} tarjetas gráficas.")
+    
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Fuentes-de-alimentaci%C3%B3n", 'PSU', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Fuentes de Alimentación] Se han guardado un total de {total_productos} fuentes de alimentación.")
+    
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/SSD", 'SSD', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Discos Duros] Se han guardado un total de {total_productos} discos duros.")
+    
+    total_productos = escanear_catalogo_alternate("https://www.alternate.es/Monitores", 'MON', 'HW')
+    total_alternate += total_productos
+    print(f"\n✅ [Monitores] Se han guardado un total de {total_productos} monitores.")
+
     print(f"\n✅ [Alternate FIN] Se han guardado un total de {total_alternate} productos.")
     return total_alternate
 
 def escanearNeoByte():
     total_neobyte = 0
+    total_productos = 0
+
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/procesadores-107", 'CPU', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Procesadores] Se han guardado un total de {total_productos} procesadores.")
     
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/procesadores-107", 'CPU', 'HW')
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/placas-base-106", 'MB', 'HW')
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/memorias-ram-108", 'RAM', 'HW')
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/cajas-de-ordenador-112", 'CASE', 'HW')
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/ventiladores-cpu-138", 'AIR', 'HW', excluir_palabras=['líquida', 'liquida', 'aio'])
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/refrigeracion-liquida-139", 'LIQ', 'HW')
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/tarjetas-graficas-111", 'GPU', 'HW')
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/fuentes-de-alimentacion-113", 'PSU', 'HW')
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/discos-duros-110", 'SSD', 'HW')
-    total_neobyte += escanear_catalogo_neobyte("https://www.neobyte.es/monitores-169", 'MON', 'HW')
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/placas-base-106", 'MB', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Placas Base] Se han guardado un total de {total_productos} placas base.")
     
-    # 
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/memorias-ram-108", 'RAM', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Memorias RAM] Se han guardado un total de {total_productos} memorias RAM.")
     
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/cajas-de-ordenador-112", 'CASE', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Cajas PC] Se han guardado un total de {total_productos} cajas de pc.")
+    
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/ventiladores-cpu-138", 'AIR', 'HW', excluir_palabras=[
+        '240', '280', '360', '420', 'refrigeracion liquida', 'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
+        ]
+    )
+    total_neobyte += total_productos
+    print(f"\n✅ [Refrigeración Aire] Se han guardado un total de {total_productos} refrigeración de aire.")
+    
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/refrigeracion-liquida-139", 'LIQ', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Refrigeración Líquida] Se han guardado un total de {total_productos} refrigeraciones líquidas.")
+    
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/tarjetas-graficas-111", 'GPU', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Tarjetas Gráficas] Se han guardado un total de {total_productos} tarjetas gráficas.")
+    
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/fuentes-de-alimentacion-113", 'PSU', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Fuentes de Alimentación] Se han guardado un total de {total_productos} fuentes de alimentación.")
+    
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/discos-duros-110", 'SSD', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Discos Duros] Se han guardado un total de {total_productos} discos duros.")
+    
+    total_productos = escanear_catalogo_neobyte("https://www.neobyte.es/monitores-169", 'MON', 'HW')
+    total_neobyte += total_productos
+    print(f"\n✅ [Monitores] Se han guardado un total de {total_productos} monitores.")
+
     print(f"\n✅ [NeoByte FIN] Se han guardado un total de {total_neobyte} productos.")
     return total_neobyte
 
