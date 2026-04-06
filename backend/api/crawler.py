@@ -154,7 +154,7 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
+        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
         context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
         page = context.new_page()
         
@@ -277,7 +277,7 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
+        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
         context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
         page = context.new_page()
         
@@ -363,7 +363,7 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
     todos_los_productos_extraidos = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
+        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
         context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
         page = context.new_page()
         
@@ -577,7 +577,7 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
+        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
         context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
         page = context.new_page()
         
@@ -721,7 +721,7 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
+        browser = p.chromium.launch(headless=True, args=["--start-maximized", "--disable-blink-features=AutomationControlled"])
         context = browser.new_context(no_viewport=True, user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36", locale="es-ES")
         page = context.new_page()
         
@@ -1096,16 +1096,16 @@ if __name__ == '__main__':
     total_general = 0
     # Escaneamos las tiendas y sumamos al total general
     
-    # total_general += escanearPcComponentes()
+    total_general += escanearPcComponentes()
     
-    total_general += escanearAmazon()
+    # total_general += escanearAmazon()
     
-    # total_general += escanearCoolmod()
+    total_general += escanearCoolmod()
     
-    # total_general += escanearLifeInformatica()
+    total_general += escanearLifeInformatica()
     
-    # total_general += escanearAlternate()
+    total_general += escanearAlternate()
     
-    # total_general += escanearNeoByte()
+    total_general += escanearNeoByte()
     
     print(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS EN LA BASE DE DATOS.")
