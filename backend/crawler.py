@@ -1,14 +1,27 @@
-import sys
-import os
-import django
-import re
-import random
-import openai
-import json
+import sys, os, django, re, random, openai, json
+
 from playwright.sync_api import sync_playwright
 from fuzzywuzzy import fuzz
 from django.db import transaction
 from fake_useragent import UserAgent
+
+# --- CONFIGURACIÓN DE PROXY ---
+# Solo usar proxy cuando sea algo real (IPRoyal, Webshare, Smartproxy o BrightData)
+USAR_PROXY = False  
+
+# Datos de ejemplo. Cámbialos por los que te dé tu proveedor (ej: Webshare o Smartproxy)
+PROXY_SERVER = "http://gate.smartproxy.com:7000" 
+PROXY_USERNAME = "tu_usuario"
+PROXY_PASSWORD = "tu_password"
+
+def obtener_configuracion_proxy():
+    if not USAR_PROXY:
+        return None
+    return {
+        "server": PROXY_SERVER,
+        "username": PROXY_USERNAME,
+        "password": PROXY_PASSWORD
+    }
 
 # --- CONFIGURACIÓN DEL AGENTE OLLAMA (LOCAL) ---
 cliente_ia = openai.OpenAI(
@@ -680,6 +693,7 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
             user_agent=nuevo_user_agent, 
             locale="es-ES",
             timezone_id="Europe/Madrid",
+            proxy=obtener_configuracion_proxy(),
             extra_http_headers={
                 "Accept-Language": "es-ES,es;q=0.9",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -866,6 +880,7 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
             user_agent=nuevo_user_agent, 
             locale="es-ES",
             timezone_id="Europe/Madrid",
+            proxy=obtener_configuracion_proxy(),
             extra_http_headers={
                 "Accept-Language": "es-ES,es;q=0.9",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -1061,6 +1076,7 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
             user_agent=nuevo_user_agent, 
             locale="es-ES",
             timezone_id="Europe/Madrid",
+            proxy=obtener_configuracion_proxy(),
             extra_http_headers={
                 "Accept-Language": "es-ES,es;q=0.9",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -1264,6 +1280,7 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
             user_agent=nuevo_user_agent, 
             locale="es-ES",
             timezone_id="Europe/Madrid",
+            proxy=obtener_configuracion_proxy(),
             extra_http_headers={
                 "Accept-Language": "es-ES,es;q=0.9",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -1470,6 +1487,7 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
             user_agent=nuevo_user_agent, 
             locale="es-ES",
             timezone_id="Europe/Madrid",
+            proxy=obtener_configuracion_proxy(),
             extra_http_headers={
                 "Accept-Language": "es-ES,es;q=0.9",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
