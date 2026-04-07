@@ -1,4 +1,4 @@
-import sys, os, django, re, random, openai, json
+import sys, os, django, re, random, openai, json, concurrent.futures
 
 from playwright.sync_api import sync_playwright
 from fuzzywuzzy import fuzz
@@ -2107,22 +2107,60 @@ def escanearAmazon():
 # =================================================================
 # INICIO DEL SCRIPT
 # =================================================================
-if __name__ == '__main__':
-    print("🚀 INICIANDO ESCANEO MASIVO DEL CATÁLOGO DE HARDWARE...")
-    
+if __name__ == "__main__":
+    print("🚀 INICIANDO ESCANEO MASIVO EN PARALELO (MULTITHREADING)...")
     total_general = 0
-    # Escaneamos las tiendas y sumamos al total general
+
+    # Lista de las funciones que queremos ejecutar al mismo tiempo
+    funciones_scrapers = [
+        escanear_PcComponentes,
+        # escanear_Amazon
+        escanear_Coolmod,
+        escanear_LifeInformatica,
+        escanear_Alternate,
+        escanear_NeoByte
+    ]
+
+    # max_workers=3 significa que abrirá 3 navegadores (tiendas) al mismo tiempo.
+    # No pongas 10 o tu ordenador se quedará sin memoria RAM. 3 o 4 es perfecto.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        # Iniciamos todas las funciones en paralelo
+        futuros = {executor.submit(func): func.__name__ for func in funciones_scrapers}
+        
+        # A medida que cada tienda va terminando, recogemos su total y lo sumamos
+        for futuro in concurrent.futures.as_completed(futuros):
+            nombre_funcion = futuros[futuro]
+            try:
+                resultado = futuro.result()
+                total_general += resultado
+                print(f"✅ {nombre_funcion} ha terminado y sumado {resultado} productos.")
+            except Exception as e:
+                print(f"❌ Error crítico en {nombre_funcion}: {e}")
+
+    print(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS.")
+
+
+
+# ==================================================================
+# ESCANEO MONOTHREADING (PARA DEBUG EN CASO DE ERRORES EN SIMILITUD) 
+# ==================================================================
+
+# if __name__ == '__main__':
+#     print("🚀 INICIANDO ESCANEO MASIVO DEL CATÁLOGO DE HARDWARE...")
     
-    total_general += escanearPcComponentes()
+#     total_general = 0
+#     # Escaneamos las tiendas y sumamos al total general
     
-    # total_general += escanearAmazon()
+#     total_general += escanearPcComponentes()
     
-    total_general += escanearCoolmod()
+#     # total_general += escanearAmazon()
     
-    total_general += escanearLifeInformatica()
+#     total_general += escanearCoolmod()
     
-    total_general += escanearAlternate()
+#     total_general += escanearLifeInformatica()
     
-    total_general += escanearNeoByte()
+#     total_general += escanearAlternate()
     
-    print(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS EN LA BASE DE DATOS.")
+#     total_general += escanearNeoByte()
+    
+#     print(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS EN LA BASE DE DATOS.")
