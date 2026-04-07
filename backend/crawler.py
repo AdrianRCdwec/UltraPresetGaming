@@ -366,11 +366,27 @@ o
 
 # --- CONFIGURACIÓN PARA AGENTE ALEATORIO ---
 USER_AGENTS_MODERNOS = [
+    # Chrome en Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, likeাজী Gecko) Chrome/123.0.0.0 Safari/537.36",
+    
+    # Chrome en macOS
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/123.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    
+    # Edge en Windows (Edge está basado en Chromium, así que es seguro)
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0",
+    
+    # Edge en macOS
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0",
+
+    # Chrome en Linux
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ]
 
 def obtener_user_agent_aleatorio():
@@ -422,7 +438,7 @@ def limpiar_precio(texto):
 def limpiar_nombre_producto(nombre):
     nombre_limpio = nombre.lower()
     
-    # 1. Quitar palabras basura
+    # 1. Quitar palabras basura que no aportan al modelo base
     palabras_basura = [
         "procesador", "tarjeta grafica", "tarjeta gráfica", "placa base", "memoria ram", 
         "disco duro", "fuente de alimentacion", "fuente de alimentación", "caja de pc", 
@@ -431,7 +447,7 @@ def limpiar_nombre_producto(nombre):
         "edition", "oem", "retail", "v2", "v3", "reacondicionado", "refurbished",
         "frecuencia", "base", "turbo", "gráficos", "graficos", "overclocking", 
         "núcleos", "nucleos", "ghz", "ecc", "lga", "socket", "threads", "hilos",
-        "ia integrada", "intel ai boost", "npu", "radeon 780m", "vega 11"
+        "ia integrada", "intel ai boost", "npu", "radeon", "vega", "integrados"
     ]
     for palabra in palabras_basura:
         # Usamos \b para asegurar que borramos la palabra entera y no partes de otras
@@ -440,40 +456,75 @@ def limpiar_nombre_producto(nombre):
     # 2. Expresiones regulares para capturar el "Corazón" del hardware
     modelo_extraido = ""
     
-    # -- PROCESADORES --
-    match_intel_core = re.search(r'(i[3579]-?\s*\d{4,5}[a-z]*)', nombre_limpio)
-    match_intel_ultra = re.search(r'(ultra\s*[579]\s*\d{3}[a-z]*)', nombre_limpio) # Atrapa "Ultra 7 265K"
-    match_xeon  = re.search(r'(xeon\s+[a-z0-9\-]+)', nombre_limpio)
-    match_amd   = re.search(r'(ryzen\s*[3579]\s*\d{4}[a-z0-9]*|r[3579]-?\d{4}[a-z]*)', nombre_limpio)
-    match_tr    = re.search(r'(threadripper\s*\d{4}[a-z]*)', nombre_limpio)
+    # -- PROCESADORES INTEL Y AMD --
+    match_intel = re.search(r'((?:i[3579]|ultra\s*[579])-?\s*\d{3,5}[a-z]*)', nombre_limpio)
+    match_amd = re.search(r'((?:ryzen\s*[3579]|r[3579])-?\s*\d{4}[a-z0-9]*)', nombre_limpio)
+    match_xeon = re.search(r'(xeon\s+[a-z0-9\-]+)', nombre_limpio)
+    match_tr = re.search(r'(threadripper\s*\d{4}[a-z]*)', nombre_limpio)
     
     # -- TARJETAS GRÁFICAS --
-    match_rtx = re.search(r'(rtx\s*\d{4}\s*(?:ti|super)?)', nombre_limpio)
-    match_gtx = re.search(r'(gtx\s*\d{4}\s*(?:ti|super)?)', nombre_limpio)
-    match_rx  = re.search(r'(rx\s*\d{4}\s*(?:xtx|xt)?)', nombre_limpio)
+    match_gpu_nvidia = re.search(r'(rtx|gtx|quadro)\s*\d{4}\s*(?:ti|super)?[a-z]*', nombre_limpio)
+    match_gpu_amd = re.search(r'rx\s*\d{4}\s*(?:xtx|xt|super)?[a-z]*', nombre_limpio)
+    match_gpu_intel = re.search(r'(arc\s*a\d{3})', nombre_limpio)
 
-    # -- PLACAS BASE (Chipsets) --
+    # -- PLACAS BASE --
     match_mb = re.search(r'\b([zhbxab]\d{2,3}[a-z]*)\b', nombre_limpio)
 
+    # -- MEMORIA RAM --
+    match_ram = re.search(r'(ddr[45])\s*(\d{2}gb)?\s*(\d{4})(?:\s*cl\d+)?', nombre_limpio)
+
+    # -- SSD --
+    match_ssd = re.search(r'(\d{1,2}(?:tb|gb))\s*(?:nvme|pcie\s*4\.0|pcie\s*5\.0|sata)?', nombre_limpio)
+
+    # -- FUENTES DE ALIMENTACIÓN --
+    match_psu = re.search(r'(\d{3,4}w)\s*(?:bronze|silver|gold|platinum|titanium)?', nombre_limpio)
+
+    # -- MONITORES --
+    match_monitor = re.search(r'(\d{2})\s*(?:pulgadas?)?\s*(?:[24]k|1080p|1440p|uhd)?\s*(\d{2,3}hz)?', nombre_limpio)
+
+    # -- REFRIGERACIÓN LÍQUIDA --
+    match_aio = re.search(r'(?:aio|liquida)\s*(\d{3})', nombre_limpio)
+
     # Asignar el modelo extraído siguiendo un orden de prioridad
-    if match_intel_core:
-        modelo_extraido = match_intel_core.group(1).replace(" ", "").replace("-", "")
-    elif match_intel_ultra:
-        modelo_extraido = match_intel_ultra.group(1).replace(" ", "")
-    elif match_xeon:
-        modelo_extraido = match_xeon.group(1).replace(" ", "").replace("-", "")
+    if match_intel:
+        modelo_extraido = match_intel.group(1).replace(" ", "").replace("-", "")
     elif match_amd:
         modelo_extraido = match_amd.group(1).replace(" ", "").replace("-", "")
+        # Normalizamos "r7" a "ryzen7" para unificar criterios
+        if modelo_extraido.startswith("r") and not modelo_extraido.startswith("ryzen"):
+            modelo_extraido = modelo_extraido.replace("r", "ryzen", 1)
+    elif match_xeon:
+        modelo_extraido = match_xeon.group(1).replace(" ", "").replace("-", "")
     elif match_tr:
         modelo_extraido = match_tr.group(1).replace(" ", "")
-    elif match_rtx:
-        modelo_extraido = match_rtx.group(1).replace(" ", "")
-    elif match_gtx:
-        modelo_extraido = match_gtx.group(1).replace(" ", "")
-    elif match_rx:
-        modelo_extraido = match_rx.group(1).replace(" ", "")
+    elif match_gpu_nvidia:
+        modelo_extraido = match_gpu_nvidia.group(0).replace(" ", "")
+    elif match_gpu_amd:
+        modelo_extraido = match_gpu_amd.group(0).replace(" ", "")
+    elif match_gpu_intel:
+        modelo_extraido = match_gpu_intel.group(1).replace(" ", "")
     elif match_mb:
         modelo_extraido = match_mb.group(1).replace(" ", "")
+    elif match_ram:
+        tipo = match_ram.group(1)
+        capacidad = match_ram.group(2) or ""
+        frecuencia = match_ram.group(3)
+        modelo_extraido = f"{tipo}-{capacidad}{frecuencia}".replace(" ", "")
+    elif match_ssd:
+        capacidad = match_ssd.group(1)
+        interfaz = match_ssd.group(2) or ""
+        modelo_extraido = f"{capacidad}-{interfaz}".replace(" ", "")
+    elif match_psu:
+        potencia = match_psu.group(1)
+        cert = match_psu.group(2) or ""
+        modelo_extraido = f"{potencia}-{cert}".replace(" ", "")
+    elif match_monitor:
+        tamano = match_monitor.group(1)
+        resolucion = match_monitor.group(2) or ""
+        hz = match_monitor.group(3) or ""
+        modelo_extraido = f"{tamano}-{resolucion}-{hz}".replace(" ", "")
+    elif match_aio:
+        modelo_extraido = f"aio-{match_aio.group(1)}mm"
 
     # 3. Limpiar caracteres especiales para el Fuzzing
     nombre_limpio = re.sub(r'[^a-z0-9\.\-\s]', ' ', nombre_limpio)
@@ -502,7 +553,7 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
     with transaction.atomic():
         for item in productos_extraidos:
             try:
-                nombre_original = item['nombre'].strip()
+                nombre_original = item['nombre'].strip().replace('"', '').replace("'", "")
                 precio_float = limpiar_precio(item['precio'])
                 
                 if precio_float <= 0:
@@ -522,27 +573,51 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                     nombre_bd_limpio = datos_bd["texto_limpio"]
                     modelo_bd = datos_bd["modelo_clave"]
                     
-                    # REGLA DE ORO: Evitar falsos positivos entre modelos distintos
-                    if modelo_para_comparar and modelo_bd and modelo_para_comparar != modelo_bd:
-                        continue 
-                    
-                    # 1. Primer filtro: FuzzyWuzzy matemático (rápido y gratis)
+                    # REGLA DE ORO MULTICATEGORÍA
+                    if modelo_para_comparar and modelo_bd:
+                        # Si ambos tienen modelo extraído y es distinto (ej: rtx4060 vs rx7800xt o i512400 vs ultra7265k)
+                        if modelo_para_comparar != modelo_bd:
+                            continue # Rechazo instantáneo, pasamos al siguiente
+                        else:
+                            # Tienen el mismo modelo exacto extraído por Regex (ej: ambos son rtx4060ti)
+                            score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
+                            
+                            if score == 100:
+                                mejor_score = score
+                                producto_asociado = prod_bd
+                                break
+                            
+                            # Como Regex confirmó que el chip/modelo es igual, 
+                            # usamos un umbral más bajo (60) para no perder asociaciones comerciales válidas
+                            if score >= 60: 
+                                if es_mismo_producto_ia(nombre_original, prod_bd.nombre):
+                                    mejor_score = score
+                                    producto_asociado = prod_bd
+                                    break
+                            continue # Si no superó la IA o el Fuzzy bajito, descartamos pero NO seguimos la iteración normal
+
+                    # Si llegamos aquí, es porque uno o ambos NO tienen modelo extraíble (ej: cajas de pc, ratones)
+                    # 1. Primer filtro: FuzzyWuzzy matemático (rápido y gratis) con umbral normal (70)
                     score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
+                    
+                    if score == 100:
+                        mejor_score = score
+                        producto_asociado = prod_bd
+                        break
                     
                     if score >= UMBRAL_SIMILITUD:
                         # 2. Segundo filtro: El Juez de IA (Ollama)
-                        # Solo llamamos a la IA si FuzzyWuzzy cree que son iguales (>= 85%)
                         if es_mismo_producto_ia(nombre_original, prod_bd.nombre):
                             mejor_score = score
                             producto_asociado = prod_bd
                             break
 
                 creado_prod = False
-                # Si el FuzzyWuzzy supera el umbral, unimos la oferta al producto existente
-                if mejor_score >= UMBRAL_SIMILITUD and producto_asociado:
+                # Si el FuzzyWuzzy supera el umbral (o la regla de oro) y la IA dio el ok, unimos la oferta
+                if mejor_score > 0 and producto_asociado:
                     producto = producto_asociado
                 else:
-                    # Si no supera el umbral, creamos un producto nuevo "base" en la BD
+                    # Si no supera los filtros, creamos un producto nuevo "base" en la BD
                     producto = Producto.objects.create(
                         nombre=nombre_original,
                         tipo=tipo_db,
@@ -565,7 +640,7 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                 productos_guardados_exitosamente += 1
 
                 if creado_prod:
-                    print(f"[NUEVO] {nombre_original} ({mejor_score}%) - {precio_float}€")
+                    print(f"[NUEVO] {nombre_original} (Max Score Rechazado: {mejor_score}%) - {precio_float}€")
                 else:
                     print(f"[OFERTA] {nombre_original} -> {producto.nombre} ({mejor_score}%) - {precio_float}€")
 
