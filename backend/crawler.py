@@ -1,9 +1,11 @@
-import sys, os, django, re, random, openai, json, concurrent.futures
+import sys, os, django, re, random, openai, json, concurrent.futures, logging
 
 from playwright.sync_api import sync_playwright
 from fuzzywuzzy import fuzz
 from django.db import transaction
 from fake_useragent import UserAgent
+from django.utils import timezone
+from datetime import timedelta
 
 # --- CONFIGURACIÓN DE PROXY ---
 # Solo usar proxy cuando sea algo real (IPRoyal, Webshare, Smartproxy o BrightData)
@@ -22,6 +24,13 @@ def obtener_configuracion_proxy():
         "username": PROXY_USERNAME,
         "password": PROXY_PASSWORD
     }
+
+# --- CONFIGURACIÓN DE LOGGER ---
+logging.basicConfig(
+    filename='errores_scraper.log', 
+    level=logging.ERROR, 
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 # --- CONFIGURACIÓN DEL AGENTE OLLAMA (LOCAL) ---
 cliente_ia = openai.OpenAI(
@@ -646,7 +655,8 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                         'precio_base': precio_float,
                         'enlace_compra': item['link'],
                         'gastos_envio': 0.00,
-                        'descuento_porcentaje': 0.00
+                        'descuento_porcentaje': 0.00,
+                        'disponible': True
                     }
                 )
 
@@ -659,8 +669,30 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
 
             except Exception as db_error:
                 print(f"❌ Error guardando {item.get('nombre', 'Desconocido')}: {db_error}")
+                logging.error(f"[BASE DE DATOS] Error guardando productos de {nombre_tienda}: {str(db_error)}")
 
     return productos_guardados_exitosamente
+
+# =================================================================
+# LIMPIEZA DE PRODUCTOS OBSOLETOS
+# =================================================================
+def desactivar_ofertas_obsoletas():
+    """
+    Busca ofertas que no se han visto en el último escaneo (más de 24 horas).
+    Las marca como no disponibles para que no aparezcan productos fantasma o sin stock.
+    """
+    print("\n🧹 Iniciando limpieza de ofertas caducadas/sin stock...")
+    limite = timezone.now() - timedelta(days=1)
+    
+    # Filtramos usando TU campo 'fecha_actualizacion'
+    ofertas_obsoletas = Oferta.objects.filter(fecha_actualizacion__lt=limite, disponible=True)
+    cantidad = ofertas_obsoletas.count()
+    
+    if cantidad > 0:
+        ofertas_obsoletas.update(disponible=False)
+        print(f"✅ Se han marcado {cantidad} ofertas como NO disponibles (fuera de stock).")
+    else:
+        print("✅ Todas las ofertas están vigentes. No hay stock fantasma.")
 
 # =================================================================
 # LÓGICA EXCLUSIVA DE PC COMPONENTES
@@ -716,13 +748,27 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
             Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
             window.chrome = { runtime: {} };
         """)
-        
+
         try:
             while hay_mas_paginas:
                 url_con_paginacion = f"{url_catalogo_base}?page={pagina_actual}"
                 print(f"\n📄 Entrando a la página {pagina_actual}... ({url_con_paginacion})")
                 
-                page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+                exito_carga = False
+                for intento in range(3):
+                    try:
+                        page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+                        exito_carga = True
+                        break
+                    except Exception as e:
+                        print(f"⚠️ Fallo de conexión en página {pagina_actual}. Intento {intento+1} de 3...")
+                        page.wait_for_timeout(3000)
+
+                if not exito_carga:
+                    print(f"❌ Imposible cargar la página {pagina_actual} tras 3 intentos. Cancelando catálogo.")
+                    hay_mas_paginas = False
+                    break
+
                 try:
                     # Espera máximo 5 segundos a que aparezca al menos un producto en el DOM
                     page.wait_for_selector('a[data-testid="normal-link"]', state='attached', timeout=5000)
@@ -763,6 +809,7 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
 
         except Exception as e:
             print(f"❌ Error en Playwright: {e}")
+            logging.error(f"[SCRAPER {url_catalogo_base}] Fallo crítico: {str(e)}")
         finally:
             context.close()
             browser.close()
@@ -912,7 +959,21 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
                 
                 print(f"\n📄 Entrando a la página {pagina_actual}... ({url_con_paginacion})")
                 
-                page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+                exito_carga = False
+                for intento in range(3):
+                    try:
+                        page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+                        exito_carga = True
+                        break
+                    except Exception as e:
+                        print(f"⚠️ Fallo de conexión en página {pagina_actual}. Intento {intento+1} de 3...")
+                        page.wait_for_timeout(3000)
+
+                if not exito_carga:
+                    print(f"❌ Imposible cargar la página {pagina_actual} tras 3 intentos. Cancelando catálogo.")
+                    hay_mas_paginas = False
+                    break
+
                 try:
                     # Espera máximo 5 segundos a que aparezca al menos un producto en el DOM
                     page.wait_for_selector('article.product-card', state='attached', timeout=5000)
@@ -968,6 +1029,7 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
 
         except Exception as e:
             print(f"❌ Error en Playwright: {e}")
+            logging.error(f"[SCRAPER {url_catalogo_base}] Fallo crítico: {str(e)}")
         finally:
             context.close()
             browser.close()
@@ -1091,26 +1153,40 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
             }
         )
         page = context.new_page()
-        
         page.route("**/*", bloquear_recursos_innecesarios)
         
-        # Script fundamental para borrar la huella de Playwright del navegador antes de que cargue la página
         page.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
             window.chrome = { runtime: {} };
         """)
-        
-        try:
-            page.goto(url_catalogo_base, timeout=40000, wait_until="domcontentloaded")
+
+        exito_carga = False
+        for intento in range(3):
             try:
-                # Espera máximo 5 segundos a que aparezca al menos un producto en el DOM
+                page.goto(url_catalogo_base, timeout=40000, wait_until="domcontentloaded")
+                exito_carga = True
+                break 
+            except Exception as e:
+                print(f"⚠️ Fallo de conexión en LifeInformatica. Intento {intento+1} de 3...")
+                page.wait_for_timeout(3000)
+
+        # Si después de 3 intentos no hemos podido entrar, salimos de la función
+        if not exito_carga:
+            print(f"❌ Imposible cargar el catálogo {url_catalogo_base} tras 3 intentos. Abortando esta categoría.")
+            logging.error(f"[SCRAPER {url_catalogo_base}] Fallo crítico: {str(e)}")
+            browser.close()
+            return 0
+
+        # Todo el bloque siguiente solo se ejecuta si la página cargó con éxito
+        try:
+            # Espera máximo 5 segundos a que aparezca al menos un producto en el DOM
+            try:
                 page.wait_for_selector('a[data-testid="normal-link"]', state='attached', timeout=5000)
             except:
                 pass
 
             # Aceptar cookies (vital para que no tape el botón Cargar Más)
             try:
-                # Usamos el ID y las clases que has proporcionado
                 btn_cookies = page.locator('#cf_consent-buttons__accept-all, button.cf_button--accept').first
                 if btn_cookies.is_visible(timeout=3000):
                     btn_cookies.click()
@@ -1126,7 +1202,7 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
                         boton_cargar_mas.scroll_into_view_if_needed()
                         boton_cargar_mas.click()
                         print("⏳ Cargando más productos...")
-                        page.wait_for_timeout(2500) # Esperamos a que el DOM se actualice con los nuevos productos
+                        page.wait_for_timeout(2500)
                     else:
                         print("✅ Catálogo completo desplegado.")
                         break
@@ -1154,11 +1230,11 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
             todos_los_productos_extraidos.extend(datos_pagina)
             
         except Exception as e:
-            print(f"❌ Error escaneando {url_catalogo_base}: {e}")
+            print(f"❌ Error interno procesando {url_catalogo_base}: {e}")
+            logging.error(f"[SCRAPER {url_catalogo_base}] Fallo crítico: {str(e)}")
         finally:
             browser.close()
             
-    # Llamamos a la función universal para guardar en la BD
     return guardar_productos_en_db(
         productos_extraidos=todos_los_productos_extraidos,
         nombre_tienda="Life Informatica",
@@ -1309,7 +1385,21 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
                 url_con_paginacion = f"{url_catalogo_base}?page={pagina_actual}"
                 print(f"\n📄 Entrando a la página {pagina_actual}... ({url_con_paginacion})")
 
-                page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+                exito_carga = False
+                for intento in range(3):
+                    try:
+                        page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+                        exito_carga = True
+                        break
+                    except Exception as e:
+                        print(f"⚠️ Fallo de conexión en página {pagina_actual}. Intento {intento+1} de 3...")
+                        page.wait_for_timeout(3000)
+
+                if not exito_carga:
+                    print(f"❌ Imposible cargar la página {pagina_actual} tras 3 intentos. Cancelando catálogo.")
+                    hay_mas_paginas = False
+                    break
+
                 try:
                     # Espera máximo 5 segundos a que aparezca al menos un producto en el DOM
                     page.wait_for_selector('a.productBox', state='attached', timeout=5000)
@@ -1362,6 +1452,7 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
 
         except Exception as e:
             print(f"❌ Error en Playwright escaneando Alternate: {e}")
+            logging.error(f"[SCRAPER {url_catalogo_base}] Fallo crítico: {str(e)}")
         finally:
             context.close()
             browser.close()
@@ -1516,7 +1607,21 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
                 url_con_paginacion = f"{url_catalogo_base}?page={pagina_actual}"
                 print(f"\n📄 Entrando a la página {pagina_actual}... ({url_con_paginacion})")
                 
-                page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+                exito_carga = False
+                for intento in range(3):
+                    try:
+                        page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+                        exito_carga = True
+                        break
+                    except Exception as e:
+                        print(f"⚠️ Fallo de conexión en página {pagina_actual}. Intento {intento+1} de 3...")
+                        page.wait_for_timeout(3000)
+
+                if not exito_carga:
+                    print(f"❌ Imposible cargar la página {pagina_actual} tras 3 intentos. Cancelando catálogo.")
+                    hay_mas_paginas = False
+                    break
+
                 try:
                     # Espera máximo 5 segundos a que aparezca al menos un producto en el DOM
                     page.wait_for_selector('article.product-miniature', state='attached', timeout=5000)
@@ -1570,6 +1675,7 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
 
         except Exception as e:
             print(f"❌ Error en Playwright: {e}")
+            logging.error(f"[SCRAPER {url_catalogo_base}] Fallo crítico: {str(e)}")
         finally:
             context.close()
             browser.close()
@@ -2105,7 +2211,7 @@ def escanearAmazon():
     return total_amazon
 
 # =================================================================
-# INICIO DEL SCRIPT
+# INICIO DEL SCRIPT (03:00)
 # =================================================================
 if __name__ == "__main__":
     print("🚀 INICIANDO ESCANEO MASIVO EN PARALELO (MULTITHREADING)...")
@@ -2136,14 +2242,15 @@ if __name__ == "__main__":
                 print(f"✅ {nombre_funcion} ha terminado y sumado {resultado} productos.")
             except Exception as e:
                 print(f"❌ Error crítico en {nombre_funcion}: {e}")
+                logging.error(f"[HILO PRINCIPAL] El scraper {nombre_funcion} reventó y se detuvo: {str(e)}")
 
     print(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS.")
 
+    desactivar_ofertas_obsoletas()
 
-
-# ==================================================================
+# ===================================================================
 # ESCANEO MONOTHREADING (PARA DEBUG EN CASO DE ERRORES EN SIMILITUD) 
-# ==================================================================
+# ===================================================================
 
 # if __name__ == '__main__':
 #     print("🚀 INICIANDO ESCANEO MASIVO DEL CATÁLOGO DE HARDWARE...")

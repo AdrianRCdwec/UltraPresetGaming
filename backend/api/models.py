@@ -52,6 +52,7 @@ class Oferta(models.Model):
     gastos_envio          = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     enlace_compra         = models.URLField(max_length=500)
     fecha_actualizacion   = models.DateTimeField(auto_now=True)
+    disponible            = models.BooleanField(default=True)
 
     @property
     def precio_final(self):

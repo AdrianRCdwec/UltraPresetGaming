@@ -17,8 +17,6 @@ ACTUALIZAR EL PROYECTO AL DÍA:
     cd .\backend\
     .\venv\Scripts\Activate.ps1
     pip install -r requirements.txt
-    playwright install chromium
-
 
 
 --------------------------------------------------------------
