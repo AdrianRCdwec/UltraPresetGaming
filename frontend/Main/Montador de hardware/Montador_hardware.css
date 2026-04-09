@@ -92,7 +92,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 360px;
+  width: 480px;
   max-width: 92vw;
   height: 100vh;
   background: #ffffff;
@@ -104,8 +104,8 @@
 
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
+  gap: 16px;
+  padding: 20px;
 
   box-sizing: border-box;
   overflow-x: hidden; 
@@ -329,13 +329,16 @@
   align-items: center;
   gap: 10px;
   margin-left: auto;
+
+  position: relative;
 }
 
 .btn-carrito-header {
-  position: relative;
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
+  right: calc(100% + 15px); 
   width: 40px;
   height: 40px;
   background: #fff;
@@ -401,18 +404,20 @@
   top: 0;
   right: -420px;
   width: 380px;
-  max-width: 95vw;
+  max-width: 92vw;
   height: 100dvh;
   background: white;
   z-index: 1200; /* Alto para pisar el panel de hardware */
   display: flex;
   flex-direction: column;
   box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  visibility: hidden;
   transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .carrito-panel.abierto {
   right: 0;
+  visibility: visible;
 }
 
 .carrito-header {

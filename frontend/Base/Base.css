@@ -29,9 +29,8 @@ body {
                         CABECERA (HEADER)
     ========================================================= */
 header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;  
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     padding: 10px 40px;
     position: sticky;
@@ -41,12 +40,28 @@ header {
     background-color: white;
 }
 
+header .logo {
+    justify-self: start; /* Lo pega a la pared izquierda */
+    display: flex;
+    align-items: center;
+}
+
 /* Nav principal (desktop) */
 header nav {
+    justify-self: center; /* Centrado matemático absoluto */
     display: flex;
     gap: 35px;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0; /* Quitamos márgenes auto que tenías antes */
+}
+
+header .header-acciones,
+.user-menu-container,
+header > .sesion {
+    justify-self: end; /* Lo pega a la pared derecha */
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espacio entre carrito y sesión */
+    margin: 0; /* Quitamos márgenes auto */
 }
 
 /* Tamaño general de imágenes del header */
@@ -342,7 +357,7 @@ header .sesion:hover {
                 TABLET Y MÓVIL (<=1050px)
 Diseño Flex: Hamburguesa(Izq) - Logo(Centro) - Perfil(Der)
 ========================================================= */
-@media (max-width: 1050px) {
+@media (max-width: 1100px) {
     header {
         /* Mantenemos el flex, forzamos una sola línea y centramos verticalmente */
         display: flex;
@@ -446,6 +461,21 @@ Diseño Flex: Hamburguesa(Izq) - Logo(Centro) - Perfil(Der)
         padding: 10px 16px; 
     }
     
+    .header-acciones,
+    .user-menu-container {
+        justify-content: flex-end;
+        gap: 8px; /* Espacio real entre carrito y botón sesión */
+    }
+
+    .btn-carrito-header {
+        position: relative;
+        right: auto;
+        
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+    }
+
     header .logo img {
         max-width: 130px; 
     }
