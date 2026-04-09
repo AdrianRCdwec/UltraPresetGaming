@@ -1,7 +1,7 @@
+from .models import Tienda, Producto, Oferta, ItemGuardado
+from .serializers import TiendaSerializer, ProductoSerializer, OfertaSerializer, ItemGuardadoSerializer
 from rest_framework import viewsets, status
 from rest_framework.pagination import PageNumberPagination
-from .models import Tienda, Producto, Oferta
-from .serializers import TiendaSerializer, ProductoSerializer, OfertaSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -115,3 +115,14 @@ class PerfilView(APIView):
             'email':    user.email,
             'date_joined': user.date_joined,
         })
+
+
+class ItemGuardadoViewSet(viewsets.ModelViewSet):
+    serializer_class = ItemGuardadoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ItemGuardado.objects.filter(usuario=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)

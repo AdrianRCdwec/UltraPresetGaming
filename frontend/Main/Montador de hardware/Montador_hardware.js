@@ -1,15 +1,69 @@
 const API_URL = 'http://127.0.0.1:8000/api/productos/';
+const API_CONFIG_URL = 'http://127.0.0.1:8000/api/configuracion/';
+
 let categoriaActual = '';
 let paginaActual = 1;
 let idPanelActual = '';
 
+// Función auxiliar para obtener el token
+function obtenerToken() {
+    return localStorage.getItem('access');
+}
+
 // ─── ESTADO DEL CARRITO ──────────────────────────────────────────────────────
-// Intentamos cargar el carrito guardado. Si no hay nada, creamos un objeto vacío.
+// Intentamos cargar el carrito guardado. Si no hay nada, creamos un objeto vacío (usuarios no logueados)
 let carritoHardware = JSON.parse(localStorage.getItem('carrito_hardware')) || {};
 let carritoVideojuegos = JSON.parse(localStorage.getItem('carrito_videojuegos')) || [];
 
 function guardarCarritoHardware() {
     localStorage.setItem('carrito_hardware', JSON.stringify(carritoHardware));
+}
+
+// ─── PETICIÓN GET (CARGAR CONFIGURACIÓN DEL SERVIDOR) ────────────────
+async function cargarCarritoDesdeServidor() {
+    const token = obtenerToken();
+    if (!token) {
+        console.log("Usuario no autenticado. Usando carrito local.");
+        return; 
+    }
+
+    try {
+        const respuesta = await fetch(API_CONFIG_URL, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (respuesta.ok) {
+            const itemsGuardados = await respuesta.json();
+
+            // Si el servidor nos devuelve datos, usamos la DB como fuente de verdad
+            if (itemsGuardados.length > 0) {
+                carritoHardware = {};
+                
+                itemsGuardados.forEach(item => {
+                    carritoHardware[item.ranura] = {
+                        db_id: item.id,
+                        id: item.producto, 
+                        nombre: item.producto_nombre,
+                        precio: 0,
+                        imagen: item.producto_imagen,
+                        ranura: item.ranura
+                    };
+                });
+                
+                guardarCarritoHardware();
+                actualizarCarritoUI();
+                restaurarSeleccionesHardware();
+                gestionarExclusionRefrigeracion();
+                console.log("Carrito sincronizado con la DB:", carritoHardware);
+            }
+        }
+    } catch (error) {
+        console.error("Error cargando carrito del servidor:", error);
+    }
 }
 
 // ─── INICIALIZACIÓN GENERAL ──────────────────────────────────────────────────
@@ -111,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ─── LÓGICA DEL CARRITO (AÑADIR Y UI) ────────────────────────────────────────
+// ─── LÓGICA DEL CARRITO (AÑADIR Y UI) CON POST/PATCH ────────────────────────────────────────
 window.switchTab = function(tab) {
     document.getElementById('carrito-panel').setAttribute('data-tab', tab);
     document.getElementById('tab-hw').classList.toggle('active', tab === 'hw');
@@ -121,27 +175,140 @@ window.switchTab = function(tab) {
     actualizarCarritoUI();
 };
 
-function añadirAlCarrito(categoriaRanura, productoData, precioNumero, imagenProd) {
-    carritoHardware[categoriaRanura] = { id: productoData.id, nombre: productoData.nombre, precio: precioNumero, imagen: imagenProd, ranura: categoriaRanura };
+async function añadirAlCarrito(categoriaRanura, productoData, precioNumero, imagenProd) {
+    const token = obtenerToken();
+    const itemPrevio = carritoHardware[categoriaRanura];
+
+    const payload = {
+        producto: productoData.id,
+        ranura: categoriaRanura
+    };
+
+    if (token) {
+        try {
+            let url = API_CONFIG_URL;
+            let method = 'POST'; // Asumimos que es nuevo
+
+            // Si ya había un item en esta ranura con un db_id, hacemos PATCH (actualizar) en vez de POST
+            if (itemPrevio && itemPrevio.db_id) {
+                url = `${API_CONFIG_URL}${itemPrevio.db_id}/`;
+                method = 'PATCH'; 
+            }
+
+            const respuesta = await fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (respuesta.ok) {
+                const data = await respuesta.json();
+                console.log(`Guardado en DB (${method}):`, data);
+
+                // Usamos el ID de la base de datos devuelto por la API
+                carritoHardware[categoriaRanura] = { 
+                    db_id: data.id, 
+                    id: productoData.id, 
+                    nombre: productoData.nombre, 
+                    precio: precioNumero, 
+                    imagen: imagenProd, 
+                    ranura: categoriaRanura 
+                };
+            } else {
+                console.error(`Error guardando en el servidor con ${method}. Código: ${respuesta.status}`);
+                if (method === 'PATCH') {
+                    console.log("Intentando recuperar con POST...");
+                    const fallbackRespuesta = await fetch(API_CONFIG_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (fallbackRespuesta.ok) {
+                        const fallbackData = await fallbackRespuesta.json();
+                        carritoHardware[categoriaRanura] = { 
+                            db_id: fallbackData.id, 
+                            id: productoData.id, 
+                            nombre: productoData.nombre, 
+                            precio: precioNumero, 
+                            imagen: imagenProd, 
+                            ranura: categoriaRanura 
+                        };
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error de conexión al añadir al carrito:", error);
+        }
+    } else {
+        carritoHardware[categoriaRanura] = { 
+            id: productoData.id, 
+            nombre: productoData.nombre, 
+            precio: precioNumero, 
+            imagen: imagenProd, 
+            ranura: categoriaRanura 
+        };
+    }
+
     guardarCarritoHardware();
     actualizarCarritoUI();
     parpadearCarrito();
-    // AQUÍ ESTABA EL ERROR: Faltaban los paréntesis para llamar a la función
     gestionarExclusionRefrigeracion(); 
 }
 
-window.eliminarDelCarritoHW = function(categoriaRanura) {
+
+// ─── ELIMINAR DEL CARRITO (Y DE LA DB SI EXISTE) ───────────────────────────
+window.eliminarDelCarritoHW = async function(categoriaRanura) {
+    const token = obtenerToken();
+    const itemAEliminar = carritoHardware[categoriaRanura];
+
+    // Si el item existe y tiene un db_id, enviamos un DELETE al servidor
+    if (token && itemAEliminar && itemAEliminar.db_id) {
+        try {
+            const url = `${API_CONFIG_URL}${itemAEliminar.db_id}/`;
+            const respuesta = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (respuesta.ok) {
+                console.log(`Eliminado de DB (DELETE) con ID: ${itemAEliminar.db_id}`);
+            } else {
+                console.error("Error al intentar borrar el elemento en el servidor.");
+            }
+        } catch (error) {
+            console.error("Error de red al intentar eliminar:", error);
+        }
+    }
+
+    // Borramos localmente en cualquier caso
     delete carritoHardware[categoriaRanura];
     guardarCarritoHardware();
     actualizarCarritoUI();
 
+    // Lógica para devolver el recuadro a su estado original (placeholder)
     const labelDestino = document.querySelector(`label[for="${categoriaRanura}"]`);
     if (labelDestino) {
-        // Dejamos el recuadro como estaba originalmente
         let nombreOriginal = '';
+        if (categoriaRanura === 'panel-procesador') nombreOriginal = 'Procesador';
+        if (categoriaRanura === 'panel-placa') nombreOriginal = 'Placa Base';
+        if (categoriaRanura === 'panel-ram') nombreOriginal = 'Memoria RAM';
+        if (categoriaRanura === 'panel-caja') nombreOriginal = 'Caja/Torre';
         if (categoriaRanura === 'panel-aire') nombreOriginal = 'Refrigeración por aire';
         if (categoriaRanura === 'panel-liquida') nombreOriginal = 'Refrigeración Líquida';
-        // Añade aquí los demás si quieres (Procesador, etc)
+        if (categoriaRanura === 'panel-gpu') nombreOriginal = 'Tarjeta Gráfica';
+        if (categoriaRanura === 'panel-psu') nombreOriginal = 'Fuente de alimentación';
+        if (categoriaRanura === 'panel-disco') nombreOriginal = 'Disco Duro';
+        if (categoriaRanura === 'panel-monitor') nombreOriginal = 'Monitor';
         
         if (nombreOriginal) {
             labelDestino.innerHTML = `<p class="hw-kicker">${nombreOriginal}</p>`;
@@ -151,13 +318,22 @@ window.eliminarDelCarritoHW = function(categoriaRanura) {
         const imgDestino = labelDestino.closest('.hw-item').querySelector('.hw-icon');
         if (imgDestino) {
             let imgOriginal = '../images/placeholder.jpg';
+            if (categoriaRanura === 'panel-procesador') imgOriginal = '../images/procesador.png';
+            if (categoriaRanura === 'panel-placa') imgOriginal = '../images/motherboard.png';
+            if (categoriaRanura === 'panel-ram') imgOriginal = '../images/ram.png';
+            if (categoriaRanura === 'panel-caja') imgOriginal = '../images/caja.png';
             if (categoriaRanura === 'panel-aire') imgOriginal = '../images/aire.png';
             if (categoriaRanura === 'panel-liquida') imgOriginal = '../images/liquida.png';
+            if (categoriaRanura === 'panel-gpu') imgOriginal = '../images/gpu.png';
+            if (categoriaRanura === 'panel-psu') imgOriginal = '../images/psu.png';
+            if (categoriaRanura === 'panel-disco') imgOriginal = '../images/almacenamiento.png';
+            if (categoriaRanura === 'panel-monitor') imgOriginal = '../images/monitor.png';
+            
             imgDestino.src = imgOriginal;
         }
     }
 
-    // NUEVO:
+    // Comprobamos la exclusión entre aire y líquida tras borrar
     gestionarExclusionRefrigeracion();
 };
 
@@ -504,4 +680,5 @@ window.addEventListener('load', () => {
     actualizarCarritoUI();
     restaurarSeleccionesHardware(); 
     gestionarExclusionRefrigeracion();
+    cargarCarritoDesdeServidor();
 });

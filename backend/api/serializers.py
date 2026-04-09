@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Tienda, Producto, Oferta
+from .models import Tienda, Producto, Oferta, ItemGuardado
 
 class TiendaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,3 +26,18 @@ class ProductoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Producto
         fields = ['id', 'nombre', 'tipo', 'categoria', 'descripcion', 'imagen', 'ofertas']
+
+
+class ItemGuardadoSerializer(serializers.ModelSerializer):
+    producto_nombre = serializers.ReadOnlyField(source='producto.nombre')
+    producto_imagen = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ItemGuardado
+        fields = ['id', 'producto', 'producto_nombre', 'producto_imagen', 'ranura', 'fecha_agregado']
+        read_only_fields = ['id', 'fecha_agregado']
+
+    def get_producto_imagen(self, obj):
+        if obj.producto.imagen:
+            return obj.producto.imagen.url
+        return None

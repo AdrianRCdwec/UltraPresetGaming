@@ -1,12 +1,69 @@
 const API_BASE = 'http://127.0.0.1:8000/api/productos/';
+const API_CONFIG_URL = 'http://127.0.0.1:8000/api/configuracion/';
 const MEDIA_BASE = 'http://127.0.0.1:8000';
 
-// Estado del carrito (cargamos desde localStorage si existe)
+// Función auxiliar para obtener el token
+function obtenerToken() {
+    return localStorage.getItem('access');
+}
+
+// Estado del carrito (cargamos desde localStorage temporalmente)
 let carrito = JSON.parse(localStorage.getItem('carrito_videojuegos')) || [];
 let carritoHardware = JSON.parse(localStorage.getItem('carrito_hardware')) || {};
 
-function guardarCarritoVideojuegos() {
-    localStorage.setItem('carrito_videojuegos', JSON.stringify(carrito));
+// ─── PETICIÓN GET (CARGAR CONFIGURACIÓN DEL SERVIDOR) ────────────────
+async function cargarCarritoDesdeServidor() {
+    const token = obtenerToken();
+    if (!token) return; // Si no hay token, usamos localStorage y listo
+
+    try {
+        const respuesta = await fetch(API_CONFIG_URL, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (respuesta.ok) {
+            const itemsGuardados = await respuesta.json();
+
+            if (itemsGuardados.length > 0) {
+                // Filtramos solo los que son videojuegos (su ranura empieza por "videojuego_")
+                const itemsVideojuegos = itemsGuardados.filter(item => item.ranura.startsWith('videojuego_'));
+                
+                if (itemsVideojuegos.length > 0) {
+                    carrito = []; // Limpiamos local
+                    
+                    itemsVideojuegos.forEach(item => {
+                        carrito.push({
+                            db_id: item.id, // ID del registro en DB para poder hacer DELETE luego
+                            id: item.producto, 
+                            nombre: item.producto_nombre,
+                            imagen: item.producto_imagen,
+                            ofertas: [] 
+                        });
+                    });
+                    
+                    guardarCarritoVideojuegos();
+                    actualizarCarritoUI();
+                    
+                    // Actualizamos visualmente los botones de "Añadir" que ya estén en pantalla
+                    carrito.forEach(juego => {
+                        const btn = document.getElementById(`btn-add-${juego.id}`);
+                        if (btn) {
+                            btn.textContent = 'Añadido';
+                            btn.disabled = true;
+                            btn.style.background = '#a5a5a5';
+                            btn.style.cursor = 'not-allowed';
+                        }
+                    });
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error cargando carrito de videojuegos:", error);
+    }
 }
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
@@ -16,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarCarrusel('VG_REC',  'track-recomendaciones');
     iniciarBuscador();
     iniciarCarrito();
+    cargarCarritoDesdeServidor();
 });
 
 // ─── CARRUSELES ──────────────────────────────────────────────────────────────
@@ -156,19 +214,50 @@ function abrirCarrito() {
 function cerrarCarrito() {
     document.getElementById('carrito-panel').classList.remove('abierto');
     document.getElementById('carrito-overlay').classList.remove('visible');
-    document.body.style.overflow = ''; // Recuperar scroll
+    document.body.style.overflow = '';
 }
 
-function añadirAlCarrito(juego) {
+async function añadirAlCarrito(juego) {
     const existente = carrito.find(item => item.id === juego.id);
-    if (existente) return; // Si ya existe, no hacemos nada
+    if (existente) return;
 
-    carrito.push(juego);
+    const token = obtenerToken();
+    const ranuraUnica = `videojuego_${juego.id}`; // Truco para que sea único en la BD
+    
+    // Objeto a guardar localmente
+    const juegoLocal = { ...juego };
+
+    if (token) {
+        try {
+            const respuesta = await fetch(API_CONFIG_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    producto: juego.id,
+                    ranura: ranuraUnica
+                })
+            });
+
+            if (respuesta.ok) {
+                const data = await respuesta.json();
+                console.log("Videojuego guardado en DB:", data);
+                juegoLocal.db_id = data.id; // Guardamos el ID de la base de datos
+            } else {
+                console.error("Error guardando videojuego en el servidor.");
+            }
+        } catch (error) {
+            console.error("Error de conexión al guardar videojuego:", error);
+        }
+    }
+
+    carrito.push(juegoLocal);
     guardarCarritoVideojuegos();
     actualizarCarritoUI();
     parpadearCarrito();
 
-    // Cambiar el botón visualmente a "Añadido" al instante si estamos en la búsqueda
     const btn = document.getElementById(`btn-add-${juego.id}`);
     if (btn) {
         btn.textContent = 'Añadido';
@@ -177,6 +266,7 @@ function añadirAlCarrito(juego) {
         btn.style.cursor = 'not-allowed';
     }
 }
+
 
 function parpadearCarrito() {
     const btn = document.getElementById('btn-carrito-flotante');
@@ -193,19 +283,43 @@ window.switchTab = function(tab) {
     actualizarCarritoUI();
 };
 
-window.eliminarDelCarritoVG = function(id) {
+window.eliminarDelCarritoVG = async function(id) {
     const idx = carrito.findIndex(item => item.id === id);
-    if (idx !== -1) carrito.splice(idx, 1);
-    guardarCarritoVideojuegos();
-    actualizarCarritoUI();
+    if (idx !== -1) {
+        const itemAEliminar = carrito[idx];
+        const token = obtenerToken();
 
-    // Restaurar el botón si el usuario sigue viendo la tarjeta de búsqueda
-    const btn = document.getElementById(`btn-add-${id}`);
-    if (btn) {
-        btn.textContent = '+ Añadir';
-        btn.disabled = false;
-        btn.style.background = ''; // Restaura el color CSS original
-        btn.style.cursor = 'pointer';
+        // Si estamos logueados y el item tiene db_id, lo borramos de la BD
+        if (token && itemAEliminar.db_id) {
+            try {
+                const respuesta = await fetch(`${API_CONFIG_URL}${itemAEliminar.db_id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (respuesta.ok) {
+                    console.log(`Videojuego borrado de DB con ID: ${itemAEliminar.db_id}`);
+                }
+            } catch (error) {
+                console.error("Error al borrar videojuego del servidor:", error);
+            }
+        }
+
+        // Borramos localmente
+        carrito.splice(idx, 1);
+        guardarCarritoVideojuegos();
+        actualizarCarritoUI();
+
+        // Restaurar el botón si el usuario sigue viendo la tarjeta de búsqueda
+        const btn = document.getElementById(`btn-add-${id}`);
+        if (btn) {
+            btn.textContent = '+ Añadir';
+            btn.disabled = false;
+            btn.style.background = '';
+            btn.style.cursor = 'pointer';
+        }
     }
 };
 

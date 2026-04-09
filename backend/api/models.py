@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Tienda(models.Model):
@@ -61,3 +62,17 @@ class Oferta(models.Model):
 
     def __str__(self):
         return f"{self.producto.nombre} en {self.tienda.nombre} - {self.precio_final}€"
+
+
+class ItemGuardado(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='items_guardados')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    ranura = models.CharField(max_length=50) # Ej: 'panel-procesador', 'panel-placa', 'videojuego'
+    fecha_agregado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Asegura que el usuario no pueda tener dos productos en la misma ranura
+        unique_together = ('usuario', 'ranura')
+
+    def __str__(self):
+        return f"{self.ranura}: {self.producto.nombre} ({self.usuario.username})"
