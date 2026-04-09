@@ -509,13 +509,15 @@ function pintarResultados(productos, esCargarMas, hayMasPaginas) {
         const btnVerMas = document.createElement('button');
         btnVerMas.id = 'btn-ver-mas';
         btnVerMas.innerText = 'Cargar más resultados...';
-        btnVerMas.style.cssText = 'grid-column: span 2; padding: 10px; background: #9814f1; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: bold;';
+        
+        btnVerMas.style.cssText = 'grid-column: 1 / -1; padding: 12px; background: #9814f1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; margin-bottom: 20px;';
         
         btnVerMas.onclick = () => {
             paginaActual++;
             const textoBuscador = document.getElementById('buscador-hardware').value;
             cargarProductos(categoriaActual, textoBuscador, paginaActual, true);
             btnVerMas.innerText = 'Cargando...';
+            btnVerMas.disabled = true;
         };
 
         grid.appendChild(btnVerMas);
