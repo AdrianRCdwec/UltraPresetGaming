@@ -2219,12 +2219,12 @@ if __name__ == "__main__":
 
     # Lista de las funciones que queremos ejecutar al mismo tiempo
     funciones_scrapers = [
-        escanear_PcComponentes,
-        # escanear_Amazon
-        escanear_Coolmod,
-        escanear_LifeInformatica,
-        escanear_Alternate,
-        escanear_NeoByte
+        escanearPcComponentes,
+        # escanearAmazon
+        escanearCoolmod,
+        escanearLifeInformatica,
+        escanearAlternate,
+        escanearNeoByte
     ]
 
     # max_workers=3 significa que abrirá 3 navegadores (tiendas) al mismo tiempo.
