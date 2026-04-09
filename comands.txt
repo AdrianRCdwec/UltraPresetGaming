@@ -42,3 +42,9 @@ TODO DENTRO DEL ENTORNO:
 
     VACIAR DATOS SIN BORRAR LA ESTRUCTURA:
         python manage.py flush
+
+    ACTUALIZAR DE FORMA INTERACTIVA (PREGUNTA EN CADA DEPENDENCIA)
+        pip-review --interactive
+
+    ACTUALIZAR TODAS LAS DEPENDENCIAS:
+        pip-review --auto
