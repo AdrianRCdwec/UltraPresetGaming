@@ -1,5 +1,5 @@
-from .models import Tienda, Producto, Oferta, ItemGuardado
-from .serializers import TiendaSerializer, ProductoSerializer, OfertaSerializer, ItemGuardadoSerializer
+from .models import Tienda, Producto, Oferta, ItemGuardado, Perfil
+from .serializers import TiendaSerializer, ProductoSerializer, OfertaSerializer, ItemGuardadoSerializer, PerfilSerializer
 from rest_framework import viewsets, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
@@ -108,13 +108,26 @@ class LoginView(APIView):
 class PerfilView(APIView):
     permission_classes = [IsAuthenticated]
 
+    # Función auxiliar: get_or_create evita que reviente si un usuario antiguo no tiene perfil
+    def get_object(self):
+        perfil, created = Perfil.objects.get_or_create(usuario=self.request.user)
+        return perfil
+
     def get(self, request):
-        user = request.user
-        return Response({
-            'username': user.username,
-            'email':    user.email,
-            'date_joined': user.date_joined,
-        })
+        perfil = self.get_object()
+        serializer = PerfilSerializer(perfil, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request):
+        perfil = self.get_object()
+        # partial=True permite enviar solo la foto, o solo el nombre, sin obligar a enviar todo
+        serializer = PerfilSerializer(perfil, data=request.data, partial=True, context={'request': request})
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ItemGuardadoViewSet(viewsets.ModelViewSet):

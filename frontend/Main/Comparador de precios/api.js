@@ -118,3 +118,8 @@ function actualizarCheckout(producto, oferta) {
         }
     }
 }
+
+function obtenerToken() {
+
+    return sessionStorage.getItem('access');
+}

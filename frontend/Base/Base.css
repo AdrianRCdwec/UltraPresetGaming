@@ -9,7 +9,7 @@
 }
 
 html, body {
-    height: 100%;
+    min-height: 100%;
 }
 
 body {
@@ -292,23 +292,21 @@ header .sesion:hover {
 }
 
 
-/*  =========================================================
+/* =========================================================
                     NAV RESPONSIVE
-                    Desktop: >1050px
-                    Mediana: 610px–1050px
-                Pequeña: <610px (hamburguesa)
-    ========================================================= */
-
+          Desktop: >1050px (Nav normal)
+    Tablet/Móvil: <=1050px (Hamburguesa, Logo centro, Perfil der)
+========================================================= */
 
 /* --- Elementos extra del header --- */
-.nav-toggle{
+.nav-toggle {
     position: absolute;
     opacity: 0;
     pointer-events: none;
 }
 
-/* Botón hamburguesa (solo móvil) */
-.nav-burger{
+/* Botón hamburguesa oculto en Desktop */
+.nav-burger {
     display: none;
     width: 44px;
     height: 44px;
@@ -316,165 +314,213 @@ header .sesion:hover {
     border: 1px solid rgba(16,24,40,.12);
     background: #fff;
     cursor: pointer;
-
     align-items: center;
     justify-content: center;
-    gap: 5px;
 }
 
-/* Overlay (cierra al clicar fuera) */
+/* Icono dentro del botón hamburguesa */
+.nav-burger-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+    object-fit: contain;
+}
+
+/* Overlay (fondo oscuro al abrir menú) */
 .nav-overlay {
     display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(16,24,40,.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .16s ease;
+    z-index: 90;
 }
 
-
-/*  =========================================================
-                    MEDIANA (610px–1050px)
-                Header en grid, sin hamburguesa
-    ========================================================= */
-@media (max-width: 1050px) and (min-width: 611px){
-    header{
-        padding: 10px 18px;
-        gap: 12px;
-
-        display: grid;
-        grid-template-columns: auto 1fr auto;
+/* =========================================================
+                TABLET Y MÓVIL (<=1050px)
+Diseño Flex: Hamburguesa(Izq) - Logo(Centro) - Perfil(Der)
+========================================================= */
+@media (max-width: 1050px) {
+    header {
+        /* Mantenemos el flex, forzamos una sola línea y centramos verticalmente */
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
         align-items: center;
+        padding: 12px 24px; /* Un poco de margen para que respire */
+        min-height: 70px;
     }
 
-    header nav{
+    /* 1. HAMBURGUESA (Izquierda) */
+    .nav-burger {
+        display: inline-flex;
+        order: 1; /* Lo ponemos primero */
+        margin: 0;
+        width: 42px; /* Tamaño razonable */
+        height: 42px;
+    }
+
+    /* 2. LOGOTIPO (Centro) */
+    header .logo {
+        order: 2; /* Lo ponemos en el medio */
+        flex: 1; /* Le damos todo el espacio disponible para que se centre perfectamente */
+        display: flex;
         justify-content: center;
-        margin-left: 0;
-        margin-right: 0;
-
-        flex-wrap: wrap;
-        gap: 12px 14px;
-    }
-
-    nav a{
-        padding: 9px 12px;
-        font-size: 15px;
-    }
-
-    header .sesion{
-        margin-left: 0;
-        padding: 8px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(16,24,40,.12);
-        background: #fff;
-        text-align: center;
-    }
-}
-
-
-/*  =========================================================
-                    Pantalla pequeña (<610px)
-    ========================================================= */
-@media (max-width: 610px){
-    header{
-        padding: 10px 14px;
-        gap: 10px;
-
-        display: grid;
-        grid-template-columns: 1fr auto auto;
         align-items: center;
     }
 
-    /* Menú oculto por defecto */
-    header nav{
+    header .logo img {
+        width: 100%;
+        max-width: 160px; /* Tamaño moderado para que no rompa la línea */
+        max-height: 42px; /* Misma altura que los botones */
+        object-fit: contain;
+    }
+
+    /* 3. PERFIL / LOGIN (Derecha) */
+    header .header-acciones,
+    .user-menu-container,
+    header > .sesion {
+        order: 3; /* Lo ponemos al final */
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    header .sesion {
+        padding: 0 16px;
+        height: 42px;
+        font-size: 14px;
+        white-space: nowrap; /* Evita que el botón baje a una segunda línea */
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* 4. MENÚ FLOTANTE (Oculto hasta que se abra) */
+    header nav {
         position: absolute;
         left: 12px;
         right: 12px;
         top: calc(100% + 10px);
-
         background: #fff;
         border: 1px solid rgba(16,24,40,.12);
         border-radius: 16px;
         box-shadow: 0 18px 40px rgba(16,24,40,.14);
         padding: 10px;
-
         display: grid;
         gap: 8px;
-
-        transform: translateY(-6px);
+        transform: translateY(-10px);
         opacity: 0;
         pointer-events: none;
-        transition: transform .16s ease, opacity .16s ease;
-    }
-
-    /* Links en columna */
-    header nav a{
-        display: block;
-        padding: 12px 12px;
-        border-radius: 12px;
-    }
-
-    /* Mostrar hamburguesa */
-    .nav-burger{
-        display: inline-flex;
-    }
-
-    /* Overlay */
-    .nav-overlay{
-        position: fixed;
-        inset: 0;
-        background: rgba(16,24,40,.35);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity .16s ease;
-        z-index: 90;
-    }
-
-    header{
-        z-index: 100;
-    }
-
-    header nav{
+        transition: transform .2s ease, opacity .2s ease;
         z-index: 101;
+        order: 4; /* El nav no interfiere en la línea principal */
     }
 
-    /* Abrir menú al hacer check */
-    #nav-toggle:checked ~ nav{
+    header nav a {
+        display: block;
+        padding: 12px 16px;
+        border-radius: 12px;
+        text-align: left; 
+    }
+
+    #nav-toggle:checked ~ nav {
         transform: translateY(0);
         opacity: 1;
         pointer-events: auto;
     }
 
-    #nav-toggle:checked ~ .nav-overlay{
+    #nav-toggle:checked ~ .nav-overlay {
         display: block;
         opacity: 1;
         pointer-events: auto;
     }
+}
 
-    /* Animación “hamburguesa a X” (si fueran spans) */
-    #nav-toggle:checked + .nav-burger span:nth-child(1){
-        transform: translateY(7px) rotate(45deg);
+/* =========================================================
+                MÓVILES PEQUEÑOS (<=480px)
+========================================================= */
+@media (max-width: 480px) {
+    header {
+        padding: 10px 16px; 
     }
-    #nav-toggle:checked + .nav-burger span:nth-child(2){
-        opacity: 0;
-    }
-    #nav-toggle:checked + .nav-burger span:nth-child(3){
-        transform: translateY(-7px) rotate(-45deg);
+    
+    header .logo img {
+        max-width: 130px; 
     }
 
-    /* Sesión compacta */
-    header .sesion{
-        margin-left: 0;
-        padding: 8px 10px;
-        font-size: 14px;
-        border-radius: 999px;
-        border: 1px solid rgba(16,24,40,.12);
-        background: #fff;
+    header .sesion {
+        padding: 0 12px;
+        font-size: 13px;
+        height: 38px;
+    }
+    
+    .nav-burger {
+        width: 38px;
+        height: 38px;
     }
 }
 
+/* =========================================================
+                DROPDOWN DEL PERFIL (Menú usuario)
+========================================================= */
+.user-menu-container {
+    position: relative;
+}
 
-/*  =========================================================
-                ICONO SVG HAMBURGUESA (img)
-    ========================================================= */
-.nav-burger-icon{
-    width: 22px;
-    height: 22px;
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: white;
+    min-width: 180px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    border: 1px solid #eee;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 200;
+    overflow: hidden;
+}
+
+.user-dropdown.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.user-dropdown a, 
+.user-dropdown button {
     display: block;
-    object-fit: contain;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #333;
+    background: none;
+    border: none;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: "Inter", Arial, sans-serif;
+    border-bottom: 1px solid #f5f5f5;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.user-dropdown a:hover, 
+.user-dropdown button:hover {
+    background: #f8f9ff;
+    color: #9814f1;
+}
+
+.user-dropdown .logout-btn {
+    color: #e74c3c;
+    border-bottom: none;
+}
+
+.user-dropdown .logout-btn:hover {
+    background: #fde8e8;
+    color: #c0392b;
 }

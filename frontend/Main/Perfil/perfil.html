@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil | UltraPresetGaming</title>
+
+    <!-- Icono -->
+    <link rel="icon" type="image/x-icon" href="../images/Logo pag web.ico">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../../Base/Base.css" type="text/css">
+    <link rel="stylesheet" href="perfil.css" type="text/css">
+
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ========================= -->
+    <!--           HEADER          -->
+    <!-- ========================= -->
+    <header>
+      <a class="logo" href="../Proyecto_5_pagina.html">
+        <img src="../images/Logo_Comparador_Absoluto.png" alt="Logotipo" title="Inicio" width="150px" height="auto">
+      </a>
+      <input type="checkbox" id="nav-toggle" class="nav-toggle">
+      <label for="nav-toggle" class="nav-burger" aria-label="Abrir menú">
+        <img class="nav-burger-icon" src="../images/menu.svg" alt="">
+      </label>
+      <nav>
+          <a href="../Montador de hardware/Montador_hardware.html">Hardware</a>
+          <a href="../Compra de videojuegos/compra_videojuegos.html">Videojuegos</a>
+          <a href="../Comparador de precios/comparador.html">Precios</a>
+          <a href="../Modeador recomendado/modeador.html">Mods</a>
+          <a href="../Novedades/novedades.html">Novedades</a>
+      </nav>
+      <div class="header-acciones">
+        <button class="btn-carrito-header" id="btn-carrito-flotante" style="display:none;" aria-label="Abrir carrito">🛒</button>
+        <button class="sesion" id="btn-logout" style="background:#e03e3e; border:none; cursor:pointer; color:white; font-weight:bold; padding:10px 18px; border-radius:999px;">Cerrar Sesión</button>
+      </div>
+      <label for="nav-toggle" class="nav-overlay" aria-label="Cerrar menú"></label>
+    </header>
+
+    <!-- ========================= -->
+    <!--            MAIN           -->
+    <!-- ========================= -->
+    <main class="cuerpo perfil-container">
+        <div class="perfil-card">
+            <h1 class="perfil-titulo">Ajustes de mi cuenta</h1>
+            
+            <form id="perfil-form" class="perfil-form">
+                <!-- Zona superior: Foto de perfil -->
+                <div class="foto-seccion">
+                    <div class="foto-wrapper">
+                        <!-- Imagen temporal hasta que cargue la del server -->
+                        <img id="img-preview" src="../images/placeholder_user.png" alt="Foto de perfil" class="foto-actual">
+                        <label for="input-foto" class="foto-btn-editar">Cambiar Imagen</label>
+                        <input type="file" id="input-foto" accept="image/*" style="display: none;">
+                    </div>
+                    <p class="foto-ayuda">Sube una imagen (JPG o PNG)</p>
+                </div>
+
+                <!-- Zona inferior: Datos de texto -->
+                <div class="datos-seccion">
+                    <div class="form-group">
+                        <label for="input-username">Nombre de usuario (Login)</label>
+                        <input type="text" id="input-username" disabled title="El nombre de usuario no se puede cambiar">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-email">Correo Electrónico</label>
+                        <input type="email" id="input-email" disabled title="El correo no se puede cambiar">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-nombre">Nombre Real</label>
+                        <input type="text" id="input-nombre">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-apodo">Apodo / Gamertag</label>
+                        <input type="text" id="input-apodo">
+                    </div>
+                </div>
+
+                <div class="submit-area">
+                    <div id="mensaje-estado" class="mensaje-estado"></div>
+                    <button type="submit" class="btn-guardar" id="btn-guardar">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- ========================= -->
+    <!--           FOOTER          -->
+    <!-- ========================= -->
+    <footer class="footer">
+        <div class="footer-section">
+          <h3>¿Quiénes somos?</h3>
+            <a href="#">¿Quiénes somos?</a>
+            <a href="#">Sobre UltraPresetGaming</a>
+            <a href="tel:+34604024297">+34 604 02 42 97</a>
+            <a href="mailto:arodriguezc24@fpcoruna.afundacion.org">arodriguezc24@fpcoruna.afundacion.org</a>
+        </div>
+        <div class="footer-section">
+          <h3>¿Por qué aquí?</h3>
+            <a href="#">¿Cómo pagar?</a>
+            <a href="#">¿Cómo es el pago?</a>
+            <br>
+            <select id="moneda">
+              <option>Euros (€)</option>
+              <option>USD ($)</option>
+              <option>Libra (£)</option>
+            </select>
+        </div>
+        <div class="footer-section">
+          <h3>Comunidad</h3>
+          <div class="social">
+            <a class="social-link" href="#" target="_blank"><img src="../images/instagram.svg" alt="Insta"></a>
+            <a class="social-link" href="#" target="_blank"><img src="../images/youtube.svg" alt="YT"></a>
+            <a class="social-link" href="#" target="_blank"><img src="../images/x.svg" alt="X"></a>
+            <a class="social-link" href="#" target="_blank"><img src="../images/tiktok.svg" alt="TK"></a>
+          </div>
+          <a class="donate-link" href="#" target="_blank"><button class="start blue centrar">Donación</button></a>
+        </div>
+      </footer>
+
+    <script src="perfil.js"></script>
+    <script src="../../Base/auth_header.js"></script>
+</body>
+</html>

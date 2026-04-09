@@ -47,14 +47,24 @@
                 <div class="input-group">
                     <label for="username">Usuario o Correo electrónico</label>
                     <input type="text" id="username" name="username" required>
-                    <span class="input-icon">👤</span>
+                    <span class="input-icon icon-base">👤</span>
                 </div>
 
                 <!-- Campo: Contraseña -->
                 <div class="input-group">
                     <label for="password">Contraseña</label>
                     <input type="password" id="password" name="password" required>
-                    <span class="input-icon">🔒</span>
+                    <span class="input-icon icon-base">🔒</span>
+                    <button type="button" id="togglePassword" class="toggle-password icon-base" aria-label="Mostrar contraseña">👁️</button>
+                </div>
+
+                <!-- Opciones extra (Recuérdame y Olvidé contraseña) -->
+                <div class="options-group">
+                    <label class="remember-me" for="rememberMe">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Recuérdame</span>
+                    </label>
+                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
                 </div>
 
                 <!-- Botón -->
@@ -74,5 +84,6 @@
 
         </div>
         <script src="login.js"></script>
+        <script src="../../Base/auth_header.js"></script>
     </body>
 </html>

@@ -73,16 +73,12 @@ body {
 
 
 /*  =========================================================
-                        FORMULARIO
+                        INPUTS Y FORMULARIO
     ========================================================= */
 .login-form {
     margin-bottom: 30px;
 }
 
-
-/*  =========================================================
-                            INPUTS
-    ========================================================= */
 .input-group {
     position: relative;
     margin-bottom: 25px;
@@ -97,9 +93,11 @@ body {
     font-size: 14px;
 }
 
+/* El input en sí */
 .input-group input {
     width: 100%;
-    padding: 16px 20px 16px 48px;
+    /* Padding: arriba/abajo 16px, derecha 48px (para el ojito), izquierda 48px (para el icono) */
+    padding: 16px 48px; 
     border: 2px solid #e1e5e9;
     border-radius: 15px;
     font-size: 16px;
@@ -108,7 +106,6 @@ body {
     outline: none;
 }
 
-/* Estado focus (VER DONDE ESTÁ EL USUARIO) */
 .input-group input:focus {
     border-color: #9814f1;
     background: white;
@@ -116,20 +113,71 @@ body {
     transform: translateY(-1px);
 }
 
-/* Icono dentro del input */
-.input-icon {
+/* Clase base compartida para los iconos (izquierdo y derecho) */
+.icon-base {
     position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(25%);
+    /* La altura del icono se calcula dinámicamente: la altura del input empieza debajo del label */
+    bottom: 16px; /* Coincide con el padding vertical del input */
     font-size: 18px;
-    color: #9814f1;
-    pointer-events: none;
+    height: 24px;
     width: 24px;
-    text-align: center;
-    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Icono izquierdo (Usuario / Candado) */
+.input-icon {
+    left: 16px;
+    color: #9814f1;
+    pointer-events: none;
+}
+
+/* Icono derecho (Ojito) */
+.toggle-password {
+    right: 16px;
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    color: #666;
+    outline: none;
+    transition: transform 0.2s ease;
+}
+
+.toggle-password:hover {
+    transform: scale(1.1);
+}
+
+/* Contenedor de Recuérdame y Olvidaste contraseña */
+.options-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #555;
+    font-weight: 500;
+}
+
+.forgot-password {
+    color: #2c65ee;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+    color: #9814f1;
+}
 
 /*  =========================================================
                     BOTÓN PRINCIPAL (LOGIN)

@@ -7,7 +7,7 @@ let idPanelActual = '';
 
 // Función auxiliar para obtener el token
 function obtenerToken() {
-    return localStorage.getItem('access');
+    return sessionStorage.getItem('access');
 }
 
 // ─── ESTADO DEL CARRITO ──────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Tienda, Producto, Oferta, ItemGuardado
+from .models import Tienda, Producto, Oferta, ItemGuardado, Perfil
+from django.contrib.auth.models import User
 
 class TiendaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,3 +42,29 @@ class ItemGuardadoSerializer(serializers.ModelSerializer):
         if obj.producto.imagen:
             return obj.producto.imagen.url
         return None
+
+class PerfilSerializer(serializers.ModelSerializer):
+    # Traemos campos del modelo User
+    username = serializers.CharField(source='usuario.username', read_only=True)
+    email = serializers.EmailField(source='usuario.email', read_only=True)
+    nombre = serializers.CharField(source='usuario.first_name', required=False, allow_blank=True)
+
+    class Meta:
+        model = Perfil
+        fields = ['username', 'email', 'nombre', 'apodo', 'foto_perfil']
+
+    def update(self, instance, validated_data):
+        # 1. Extraemos y guardamos el "nombre" en el modelo User original
+        usuario_data = validated_data.pop('usuario', {})
+        if 'first_name' in usuario_data:
+            instance.usuario.first_name = usuario_data['first_name']
+            instance.usuario.save()
+
+        # 2. Guardamos el apodo y la foto en el modelo Perfil
+        instance.apodo = validated_data.get('apodo', instance.apodo)
+        
+        if 'foto_perfil' in validated_data:
+            instance.foto_perfil = validated_data.get('foto_perfil')
+
+        instance.save()
+        return instance

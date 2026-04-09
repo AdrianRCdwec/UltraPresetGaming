@@ -17,7 +17,8 @@ function mostrarMensaje(texto, tipo = 'error') {
         msg.id = 'register-msg';
         form.insertBefore(msg, btnReg);
     }
-    msg.textContent = texto;
+    msg.innerHTML = texto; 
+    
     msg.style.cssText = `
         padding: 10px 14px;
         border-radius: 6px;
@@ -26,8 +27,8 @@ function mostrarMensaje(texto, tipo = 'error') {
         margin-bottom: 12px;
         text-align: center;
         background: ${tipo === 'error' ? '#fde8e8' : '#e8f5e9'};
-        color:      ${tipo === 'error' ? '#c0392b' : '#2e7d32'};
-        border:     1px solid ${tipo === 'error' ? '#f5c6c6' : '#c8e6c9'};
+        color: ${tipo === 'error' ? '#c0392b' : '#2e7d32'};
+        border: 1px solid ${tipo === 'error' ? '#f5c6c6' : '#c8e6c9'};
     `;
 }
 
@@ -39,19 +40,32 @@ form.addEventListener('submit', async (e) => {
     const email     = inputMail.value.trim();
     const password  = inputPass.value;
     const password2 = inputPass2.value;
+    
+    const regexMayuscula = /[A-Z]/;
+    const regexMinuscula = /[a-z]/;
+    const regexNumero = /[0-9]/;
+    const regexEspecial = /[^A-Za-z0-9]/;
 
-    if (!username || !email || !password || !password2) {
-        mostrarMensaje('Rellena todos los campos.');
-        return;
-    }
-
-    if (password !== password2) {
-        mostrarMensaje('Las contraseñas no coinciden.');
-        return;
-    }
+    let erroresPass = [];
 
     if (password.length < 8) {
-        mostrarMensaje('La contraseña debe tener al menos 8 caracteres.');
+        erroresPass.push('Mínimo 8 caracteres');
+    }
+    if (!regexMayuscula.test(password)) {
+        erroresPass.push('Una letra mayúscula');
+    }
+    if (!regexMinuscula.test(password)) {
+        erroresPass.push('Una letra minúscula');
+    }
+    if (!regexNumero.test(password)) {
+        erroresPass.push('Un número');
+    }
+    if (!regexEspecial.test(password)) {
+        erroresPass.push('Un carácter especial (ej: @, -, !, %, ?, _)');
+    }
+
+    if (erroresPass.length > 0) {
+        mostrarMensaje(`<b>La contraseña debe incluir:</b><br> - ${erroresPass.join('<br> - ')}`);
         return;
     }
 
