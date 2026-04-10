@@ -7,6 +7,9 @@ from fake_useragent import UserAgent
 from django.utils import timezone
 from datetime import timedelta
 
+# Caché global en memoria RAM para evitar saturar SQLite con consultas repetitivas
+CACHE_PRODUCTOS_BD = {}
+
 # --- CONFIGURACIÓN DE PROXY ---
 # Solo usar proxy cuando sea algo real (IPRoyal, Webshare, Smartproxy o BrightData)
 USAR_PROXY = False  
@@ -598,7 +601,18 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
 
     productos_guardados_exitosamente = 0
     UMBRAL_SIMILITUD = 70
-    productos_existentes = list(Producto.objects.filter(categoria=categoria_db))
+    global CACHE_PRODUCTOS_BD
+    
+    # Si es la primera vez que buscamos esta categoría (ej. 'CPU'), vamos a la BD
+    if categoria_db not in CACHE_PRODUCTOS_BD:
+        print(f"💾 [Caché] Cargando la categoría '{categoria_db}' desde SQLite a la memoria RAM...")
+        # Guardamos en el diccionario la lista de productos de esa categoría
+        CACHE_PRODUCTOS_BD[categoria_db] = list(Producto.objects.filter(categoria=categoria_db))
+    else:
+        print(f"⚡ [Caché] Leyendo la categoría '{categoria_db}' directamente desde la RAM.")
+
+    # Apuntamos nuestra variable a la caché en memoria
+    productos_existentes = CACHE_PRODUCTOS_BD[categoria_db]
 
     with transaction.atomic():
         for item in productos_extraidos:
@@ -2269,6 +2283,18 @@ def escanearAmazon():
 if __name__ == "__main__":
     print("🚀 INICIANDO ESCANEO MASIVO EN PARALELO (MULTITHREADING)...")
     total_general = 0
+
+    # =============================
+    #      PRECARGA DEL CACHÉ
+    # =============================
+
+    # Estas son todas las categorías_db que usas en tus llamadas a escanear_catalogo_*
+    categorias_usadas = ['CPU', 'MB', 'RAM', 'CASE', 'AIR', 'LIQ', 'GPU', 'PSU', 'SSD', 'MON']
+    
+    print("\n📚 Precargando productos de la BD en la memoria RAM para evitar bloqueos SQLite...")
+    for cat in categorias_usadas:
+        CACHE_PRODUCTOS_BD[cat] = list(Producto.objects.filter(categoria=cat))
+    print(f"✅ Caché cargada con éxito. Listo para lanzar los hilos.\n")
 
     # Lista de las funciones que queremos ejecutar al mismo tiempo
     funciones_scrapers = [
