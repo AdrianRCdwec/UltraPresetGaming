@@ -1313,20 +1313,34 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
             except:
                 pass  
 
+            intentos_fallidos = 0
+            MAX_REINTENTOS = 3
+
             # Bucle para pulsar "Cargar Más" hasta que desaparezca
             while True:
                 try:
                     boton_cargar_mas = page.locator('#yith-infs-button')
-                    if boton_cargar_mas.is_visible(timeout=2000):
+
+                    if boton_cargar_mas.is_visible(timeout=1000):
                         boton_cargar_mas.scroll_into_view_if_needed()
                         boton_cargar_mas.click()
+                        
                         print("⏳ Cargando más productos...")
-                        page.wait_for_timeout(2500)
+                        
+                        page.wait_for_timeout(1500)
+                        
+                        intentos_fallidos = 0
                     else:
                         print("✅ Catálogo completo desplegado.")
                         break
-                except Exception:
-                    break
+                except Exception as e:
+                    intentos_fallidos += 1
+                    if intentos_fallidos <= MAX_REINTENTOS:
+                        print(f"⚠️ Interferencia detectada al pulsar 'Cargar Más' (Intento {intentos_fallidos}/{MAX_REINTENTOS}). Reintentando en 2s...")
+                        page.wait_for_timeout(250)
+                    else:
+                        print(f"❌ Imposible pulsar el botón tras {MAX_REINTENTOS} reintentos. Asumiendo fin del catálogo. Error: {str(e)}")
+                        break
 
             # Extraer TODOS los productos de golpe ahora que la página está entera
             datos_pagina = extraer_productos_de_pagina_lifeinformatica(page)

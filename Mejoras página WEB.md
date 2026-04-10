@@ -13,7 +13,7 @@
 
 6. ###### Scraping Headless puro (sin GPU): Asegúrate de tener flags como --disable-gpu, --disable-dev-shm-usage y --no-sandbox si corres esto en un servidor Linux o Docker.
 
-7. **Reintentos automáticos (Retries) a nivel de página: Si Playwright falla al hacer click en "Cargar Más", pon un bloque try/except que intente de nuevo tras 2 segundos antes de dar la página por perdida.**
+7. ~~Reintentos automáticos (Retries) a nivel de página: Si Playwright falla al hacer click en "Cargar Más", pon un bloque try/except que intente de nuevo tras 2 segundos antes de dar la página por perdida.~~
 
 
 
