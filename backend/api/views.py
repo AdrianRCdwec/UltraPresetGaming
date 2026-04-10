@@ -16,12 +16,13 @@ class PaginacionProductos(PageNumberPagination):
     max_page_size = 100
 
 class ProductoViewSet(viewsets.ModelViewSet):
-    queryset = Producto.objects.all().order_by('id')
     serializer_class = ProductoSerializer
     pagination_class = PaginacionProductos # Activar paginación
     
     def get_queryset(self):
-        queryset = Producto.objects.all().order_by('id')
+        # 1. Filtramos para traer solo productos que tengan alguna oferta DISPONIBLE
+        queryset = Producto.objects.filter(oferta__disponible=True).distinct().order_by('id')
+        
         search = self.request.query_params.get('search', None)
         categoria = self.request.query_params.get('categoria', None)
         tipo = self.request.query_params.get('tipo', None)
@@ -44,7 +45,8 @@ class TiendaViewSet(viewsets.ModelViewSet):
     serializer_class = TiendaSerializer
 
 class OfertaViewSet(viewsets.ModelViewSet):
-    queryset = Oferta.objects.all()
+    # En lugar de objects.all(), filtramos el Soft Delete
+    queryset = Oferta.objects.filter(disponible=True)
     serializer_class = OfertaSerializer
 
 class RegisterView(APIView):

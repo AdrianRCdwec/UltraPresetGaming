@@ -21,13 +21,16 @@ class OfertaSerializer(serializers.ModelSerializer):
             ]
 
 class ProductoSerializer(serializers.ModelSerializer):
-    # Anidamos las ofertas para que al pedir un producto, nos lleguen todos sus precios
-    ofertas = OfertaSerializer(source='oferta_set', many=True, read_only=True)
+    ofertas = serializers.SerializerMethodField()
 
     class Meta:
         model = Producto
         fields = ['id', 'nombre', 'tipo', 'categoria', 'descripcion', 'imagen', 'ofertas']
 
+    def get_ofertas(self, obj):
+        # Solo serializa y devuelve al frontend las ofertas que no hayan sufrido Soft Delete
+        ofertas_activas = obj.oferta_set.filter(disponible=True)
+        return OfertaSerializer(ofertas_activas, many=True).data
 
 class ItemGuardadoSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.ReadOnlyField(source='producto.nombre')

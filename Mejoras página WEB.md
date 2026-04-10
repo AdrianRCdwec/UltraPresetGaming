@@ -24,9 +24,9 @@
 
 2. ###### Índices en la Base de Datos: Añade db\_index=True en tu modelo de Django para los campos nombre y categoria. Las búsquedas volarán.
 
-3. **Caché en Redis: En lugar de un diccionario global en RAM, podrías levantar un contenedor de Redis. Es la forma estándar y profesional en la industria para caché.**
+3. ###### Caché en Redis: En lugar de un diccionario global en RAM, podrías levantar un contenedor de Redis. Es la forma estándar y profesional en la industria para caché.
 
-4. **Borrado lógico (Soft Delete): En desactivar\_ofertas\_obsoletas, en vez de borrar el producto de la BD, ponle un campo activo=False. Así no pierdes el histórico de precios.**
+4. ~~Borrado lógico (Soft Delete): En desactivar\_ofertas\_obsoletas, en vez de borrar el producto de la BD, ponle un campo activo=False. Así no pierdes el histórico de precios.~~
 
 5. ###### Limpieza de strings más eficiente: Tu función limpiar\_nombre\_producto usa muchas sentencias replace(). Podrías unificarlas usando expresiones regulares más potentes y compiladas (re.compile).
 
