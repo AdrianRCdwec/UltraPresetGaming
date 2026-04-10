@@ -7,6 +7,23 @@ from fake_useragent import UserAgent
 from django.utils import timezone
 from datetime import timedelta
 
+# --- CONFIGURACIÓN DE TRACKERS ---
+TRACKERS_Y_ADS = [
+    'google-analytics',
+    'googletagmanager',
+    'googleadservices',
+    'doubleclick',
+    'facebook.com/tr',
+    'connect.facebook.net',
+    'clarity.ms',
+    'hotjar',
+    'criteo',
+    'adzerk',
+    'analytics',
+    'tracking'
+]
+
+# --- CONFIGURACIÓN DE CACHÉ ---
 # Caché global en memoria RAM para evitar saturar SQLite con consultas repetitivas
 CACHE_PRODUCTOS_BD = {}
 
@@ -448,12 +465,24 @@ def obtener_perfil_navegador():
 
 # --- CONFIGURACIÓN PARA MAYOR VELOCIDAD ---
 def bloquear_recursos_innecesarios(route):
-    """Evita que Playwright descargue imágenes, CSS y fuentes para ir más rápido."""
-    tipo = route.request.resource_type
-    if tipo in ['image', 'stylesheet', 'font', 'media']:
+    """Bloquea imágenes/CSS y aborta peticiones a servicios de analíticas y ads"""
+    peticion = route.request
+    tipo = peticion.resource_type
+    url = peticion.url.lower()
+
+    # 1. Bloquear por tipo de recurso (lo que ya tenías + ping/beacon que usan los trackers)
+    if tipo in ['image', 'stylesheet', 'font', 'media', 'ping', 'beacon', 'csp_report']:
         route.abort()
-    else:
-        route.continue_()
+        return
+
+    # 2. Bloquear por coincidencia en la URL (Trackers y Ads)
+    if any(tracker in url for tracker in TRACKERS_Y_ADS):
+        # Opcional: print(f"🚫 Tracker bloqueado: {url}")
+        route.abort()
+        return
+
+    # Si pasa los filtros, dejamos que la petición continúe
+    route.continue_()
 
 # --- CONFIGURACIÓN DE DJANGO ---
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

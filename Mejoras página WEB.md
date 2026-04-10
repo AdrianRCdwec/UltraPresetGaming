@@ -7,7 +7,7 @@
 
 3. Implementar rotación de Proxies por petición: Si te bloquean mucho, cambia de proxy cada vez que pidas una nueva página, no solo al inicio.
 
-4. ###### **Bloquear endpoints de Analytics y Trackers: Aparte de imágenes, bloquea peticiones a Google Analytics o Facebook Pixel usando page.route para ganar velocidad.**
+4. ###### ~~Bloquear endpoints de Analytics y Trackers: Aparte de imágenes, bloquea peticiones a Google Analytics o Facebook Pixel usando page.route para ganar velocidad.~~
 
 5. ###### **Ajustar dinámicamente el max\_workers: Haz que el script analice cuánta RAM tienes libre y la CPU disponible usando psutil y fije el límite de hilos automáticamente.**
 
