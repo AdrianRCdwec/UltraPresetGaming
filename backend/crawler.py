@@ -825,7 +825,7 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
                 # Cookies en la primera página
                 if pagina_actual == 1:
                     try:
-                        btn_cookies = page.locator('#cookiesAcceptAll').first
+                        btn_cookies = page.locator('#cookiesrejectAll').first
                         if btn_cookies.is_visible(timeout=3000):
                             btn_cookies.click()
                             page.wait_for_timeout(1000)
@@ -987,11 +987,11 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
 
         context = browser.new_context(
             viewport={'width': ancho_viewport, 'height': alto_viewport},
-            user_agent=perfil["user_agent"], # <-- Aquí usamos el User-Agent del perfil
+            user_agent=perfil["user_agent"],
             locale='es-ES',
             timezone_id='Europe/Madrid',
             proxy=obtener_configuracion_proxy(),
-            extra_http_headers=headers_completos # <-- Y aquí los headers perfectamente sincronizados
+            extra_http_headers=headers_completos
         )
         page = context.new_page()
         
@@ -1035,8 +1035,8 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
                 # Aceptamos cookies solo en la primera página
                 if pagina_actual == 1:
                     try:
-                        # Botón estándar de cookies (ajusta si Coolmod cambia el selector)
-                        btn_cookies = page.locator('button.accept-cookies, #acceptAllCookies').first
+                        # Botón estándar de cookies
+                        btn_cookies = page.locator('#CybotCookiebotDialogBodyButtonDecline').first
                         if btn_cookies.is_visible(timeout=3000):
                             btn_cookies.click()
                             page.wait_for_timeout(1000)
@@ -1242,9 +1242,9 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
             except:
                 pass
 
-            # Aceptar cookies (vital para que no tape el botón Cargar Más)
+            # Rechazar cookies (vital para que no tape el botón Cargar Más)
             try:
-                btn_cookies = page.locator('#cf_consent-buttons__accept-all, button.cf_button--accept').first
+                btn_cookies = page.locator('#cf_consent-buttons__reject-all').first
                 if btn_cookies.is_visible(timeout=3000):
                     btn_cookies.click()
                     page.wait_for_timeout(1000)
@@ -1426,11 +1426,11 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
 
         context = browser.new_context(
             viewport={'width': ancho_viewport, 'height': alto_viewport},
-            user_agent=perfil["user_agent"], # <-- Aquí usamos el User-Agent del perfil
+            user_agent=perfil["user_agent"],
             locale='es-ES',
             timezone_id='Europe/Madrid',
             proxy=obtener_configuracion_proxy(),
-            extra_http_headers=headers_completos # <-- Y aquí los headers perfectamente sincronizados
+            extra_http_headers=headers_completos
         )
         page = context.new_page()
         
@@ -1471,7 +1471,7 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
                 # Cookies (Solo en la primera página)
                 if pagina_actual == 1:
                     try:
-                        btn_cookies = page.locator('#cookie-notice-button-agree').first
+                        btn_cookies = page.locator('#deny').first
                         if btn_cookies.is_visible(timeout=3000):
                             btn_cookies.click()
                             print("🍪 Cookies aceptadas en Alternate.")
@@ -1699,7 +1699,7 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
                 if pagina_actual == 1:
                     try:
                         # Botón estándar de cookies de su módulo, o el genérico de PrestaShop
-                        btn_cookies = page.locator('#btn-cookie-accept, .cb-accept').first
+                        btn_cookies = page.locator('.cookiesplus-reject').first
                         if btn_cookies.is_visible(timeout=3000):
                             btn_cookies.click()
                             print("🍪 Cookies aceptadas en NeoByte.")
@@ -1868,7 +1868,7 @@ def escanear_catalogo_amazon(url_catalogo_base, categoria_db, tipo_db, precio_mi
                 
                 if pagina_actual == 1:
                     try:
-                        btn_cookies = page.locator('#sp-cc-accept').first
+                        btn_cookies = page.locator('#sp-cc-rejectall-link').first
                         if btn_cookies.is_visible(timeout=3000):
                             btn_cookies.click()
                             page.wait_for_timeout(1000)
