@@ -92,10 +92,9 @@ cliente_ia = AsyncOpenAI(
     api_key='ollama',
 )
 
-async def es_mismo_producto_ia(nombre_base, nombre_oferta):
-    """
-    Agente de IA que decide si dos textos de hardware se refieren EXACTAMENTE al mismo producto.
-    """
+async def es_mismo_producto_ia_batch(nombre_base, nombre_oferta):
+    if not lista_candidatos:
+        return []
     prompt_sistema = """
     Eres un sistema estricto de validación de productos de hardware de PC.
 Tu única tarea es decidir si dos nombres de producto describen EXACTAMENTE el mismo producto base.
@@ -402,24 +401,23 @@ Respuesta correcta:
 {"mismo_producto": true}
 
 ==================================================
-7) FORMATO DE SALIDA
+7) FORMATO DE SALIDA (BATCH)
 ==================================================
 
-Devuelve ÚNICAMENTE un JSON válido.
-No expliques nada.
-No uses markdown.
-No añadas texto adicional.
+    7. FORMATO DE SALIDA (BATCH)
+    Vas a recibir un "Producto Base" y una lista numerada de "Candidatos".
+    Debes evaluar el Producto Base contra CADA UNO de los candidatos.
+    Devuelve ÚNICAMENTE un JSON válido donde las claves sean el ID numérico del candidato y el valor sea true o false (booleano).
+    Ejemplo de salida:
+    {
+        "0": false,
+        "1": true,
+        "2": false
+    }"""
 
-Formato exacto:
-{"mismo_producto": true}
+    candidatos_str = "\n".join([f"[{i}] {nombre}" for i, nombre in enumerate(lista_candidatos)])
+    prompt_usuario = f"Producto Base: {nombre_base}\nCandidatos a evaluar:\n{candidatos_str}"
 
-o
-
-{"mismo_producto": false}
-"""
-
-    prompt_usuario = f"Producto 1: '{nombre_base}'\nProducto 2: '{nombre_oferta}'"
-    
     try:
         respuesta = await cliente_ia.chat.completions.create(
             model="llama3",
@@ -434,11 +432,16 @@ o
         # Leemos el JSON que nos devuelve Llama 3
         contenido = respuesta.choices[0].message.content
         datos_json = json.loads(contenido)
-        return datos_json.get("mismo_producto", False)
         
+        resultados = []
+        for i in range(len(lista_candidatos)):
+            es_match = datos_json.get(str(i), False)
+            resultados.append(es_match)
+            
+        return resultados
     except Exception as e:
-        print(f"⚠️ Aviso: Error consultando a Ollama ({e}). Se asume False por seguridad.")
-        return False
+        print(f"⚠️ Aviso: Error consultando a Ollama ({e}). Se asume False para todos.")
+        return [False] * len(lista_candidatos)
 
 # --- CONFIGURACIÓN PARA AGENTE ALEATORIO ---
 USER_AGENTS_MODERNOS = [
@@ -699,6 +702,8 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
             producto_asociado = None
             mejor_score = 0
             
+            candidatos_dudosos = []
+            
             for prod_bd in productos_existentes:
                 datos_bd = limpiar_nombre_producto(prod_bd.nombre)
                 nombre_bd_limpio = datos_bd['texto_limpio']
@@ -725,10 +730,15 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                         mejor_score = score
                         producto_asociado = prod_bd
                 elif score > 60:
-                    if asyncio.run(es_mismo_producto_ia(nombre_original, prod_bd.nombre)):
-                        mejor_score = score
-                        producto_asociado = prod_bd
-                        break
+                    candidatos_dudosos.append(prod_bd)
+                    if not producto_asociado and candidatos_dudosos:
+                        candidatos_top = candidatos_dudosos[:5]
+                        nombres_candidatos = [c.nombre for c in candidatos_top]
+                        resultados_ia = asyncio.run(es_mismo_producto_ia_batch(nombre_original, nombres_candidatos))
+                        for idx, es_match in enumerate(resultados_ia):
+                            if es_match:
+                                producto_asociado = candidatos_top[idx]
+                                break
 
             # --- DECISIÓN: CREAR O ACTUALIZAR ---
             if not producto_asociado:
