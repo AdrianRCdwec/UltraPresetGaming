@@ -68,3 +68,8 @@ class PerfilSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+class AlertaPrecioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertaPrecio
+        fields = '__all__'
