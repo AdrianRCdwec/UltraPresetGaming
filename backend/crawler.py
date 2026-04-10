@@ -1,4 +1,4 @@
-import sys, os, django, re, random, openai, json, concurrent.futures, logging
+import sys, os, django, re, random, openai, json, concurrent.futures, logging, psutil
 
 from playwright.sync_api import sync_playwright
 from fuzzywuzzy import fuzz
@@ -51,6 +51,39 @@ logging.basicConfig(
     level=logging.ERROR, 
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
+# --- CONFIGURACIÓN PARA OPTIMIZAR EL RENDIMIENTO ---
+def calcular_hilos_optimos():
+    """
+    Calcula el número ideal de max_workers para el ThreadPoolExecutor
+    basado en la RAM libre y los núcleos de CPU disponibles.
+    """
+    # 1. Obtener la RAM disponible (en Gigabytes)
+    memoria_virtual = psutil.virtual_memory()
+    ram_libre_gb = memoria_virtual.available / (1024 ** 3)
+    
+    # 2. Obtener los núcleos reales de tu procesador
+    nucleos_cpu = psutil.cpu_count(logical=False) or 2 # Fallback a 2 si no lo detecta
+    
+    # 3. Regla de negocio: Playwright consume ~500MB (0.5GB) por hilo pesado.
+    # Dejamos siempre 1.5GB de RAM libres como margen de seguridad para el Sistema Operativo
+    ram_utilizable_gb = ram_libre_gb - 1.5 
+    
+    if ram_utilizable_gb <= 0:
+        return 1 # Si estamos al límite de RAM, forzamos 1 solo hilo
+        
+    # Calculamos cuántos hilos caben en la RAM utilizable
+    hilos_por_ram = int(ram_utilizable_gb / 0.5)
+    
+    # 4. El número de hilos será el MENOR entre:
+    # - Los hilos que soporte la RAM
+    # - El número de núcleos físicos de tu CPU (para no colapsar el procesador)
+    # Limitamos a un máximo absoluto de 5 para no ser baneados por las tiendas por exceso de peticiones
+    
+    hilos_optimos = min(hilos_por_ram, nucleos_cpu, 5)
+    
+    # Aseguramos que al menos haya 1 hilo
+    return max(1, hilos_optimos)
 
 # --- CONFIGURACIÓN DEL AGENTE OLLAMA (LOCAL) ---
 cliente_ia = openai.OpenAI(
@@ -2335,9 +2368,11 @@ if __name__ == "__main__":
         escanearNeoByte
     ]
 
-    # max_workers=3 significa que abrirá 3 navegadores (tiendas) al mismo tiempo.
-    # No pongas 10 o tu ordenador se quedará sin memoria RAM. 3 o 4 es perfecto.
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    # Calculamos los hilos dinámicamente según el hardware
+    hilos_dinamicos = calcular_hilos_optimos()
+    print(f"📊 HARDWARE DETECTADO: {psutil.virtual_memory().available / (1024**3):.1f} GB RAM libre. Asignando {hilos_dinamicos} hilos concurrentes.")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=hilos_dinamicos) as executor:
         # Iniciamos todas las funciones en paralelo
         futuros = {executor.submit(func): func.__name__ for func in funciones_scrapers}
         

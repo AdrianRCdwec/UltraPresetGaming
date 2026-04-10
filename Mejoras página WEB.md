@@ -9,7 +9,7 @@
 
 4. ###### ~~Bloquear endpoints de Analytics y Trackers: Aparte de imágenes, bloquea peticiones a Google Analytics o Facebook Pixel usando page.route para ganar velocidad.~~
 
-5. ###### **Ajustar dinámicamente el max\_workers: Haz que el script analice cuánta RAM tienes libre y la CPU disponible usando psutil y fije el límite de hilos automáticamente.**
+5. ###### ~~Ajustar dinámicamente el max\_workers: Haz que el script analice cuánta RAM tienes libre y la CPU disponible usando psutil y fije el límite de hilos automáticamente.~~
 
 6. Scraping Headless puro (sin GPU): Asegúrate de tener flags como --disable-gpu, --disable-dev-shm-usage y --no-sandbox si corres esto en un servidor Linux o Docker.
 
