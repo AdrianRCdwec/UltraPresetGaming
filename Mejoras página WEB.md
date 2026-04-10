@@ -35,7 +35,7 @@
 # Inteligencia Artificial (LLM / Ollama)
 
 
-1. **Habilitar modo asíncrono para llamadas a IA: Si estás validando productos con la IA, hazlo asíncrono (async/await) para no bloquear el hilo de Python mientras Ollama piensa.**
+1. ~~Habilitar modo asíncrono para llamadas a IA: Si estás validando productos con la IA, hazlo asíncrono (async/await) para no bloquear el hilo de Python mientras Ollama piensa.~~
 
 2. **Agrupación de prompts (Batching): En vez de enviarle a la IA un producto contra otro, mándale un listado de 5 o 10 y que te devuelva un JSON con todos los emparejamientos de golpe.**
 

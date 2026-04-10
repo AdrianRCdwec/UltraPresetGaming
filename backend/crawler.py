@@ -1,4 +1,4 @@
-import sys, os, django, re, random, openai, json, concurrent.futures, logging, psutil
+import sys, os, django, re, random, openai, json, concurrent.futures, logging, psutil, asyncio
 
 from playwright.sync_api import sync_playwright
 from fuzzywuzzy import fuzz
@@ -6,6 +6,7 @@ from django.db import transaction
 from fake_useragent import UserAgent
 from django.utils import timezone
 from datetime import timedelta
+from openai import AsyncOpenAI
 
 # --- CONFIGURACIÓN DE TRACKERS ---
 TRACKERS_Y_ADS = [
@@ -86,12 +87,12 @@ def calcular_hilos_optimos():
     return max(1, hilos_optimos)
 
 # --- CONFIGURACIÓN DEL AGENTE OLLAMA (LOCAL) ---
-cliente_ia = openai.OpenAI(
-    base_url="http://localhost:11434/v1",
-    api_key="ollama"
+cliente_ia = AsyncOpenAI(
+    base_url='http://localhost:11434/v1',
+    api_key='ollama',
 )
 
-def es_mismo_producto_ia(nombre_base, nombre_oferta):
+async def es_mismo_producto_ia(nombre_base, nombre_oferta):
     """
     Agente de IA que decide si dos textos de hardware se refieren EXACTAMENTE al mismo producto.
     """
@@ -420,7 +421,7 @@ o
     prompt_usuario = f"Producto 1: '{nombre_base}'\nProducto 2: '{nombre_oferta}'"
     
     try:
-        respuesta = cliente_ia.chat.completions.create(
+        respuesta = await cliente_ia.chat.completions.create(
             model="llama3",
             messages=[
                 {"role": "system", "content": prompt_sistema},
@@ -724,7 +725,7 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                         mejor_score = score
                         producto_asociado = prod_bd
                 elif score > 60:
-                    if es_mismo_producto_ia(nombre_original, prod_bd.nombre):
+                    if asyncio.run(es_mismo_producto_ia(nombre_original, prod_bd.nombre)):
                         mejor_score = score
                         producto_asociado = prod_bd
                         break
