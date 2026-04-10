@@ -547,9 +547,6 @@ def limpiar_precio(texto):
             
     return float(num_str)
 
-# =================================================================
-# NUEVA FUNCIÓN UNIVERSAL PARA GUARDAR EN LA BD (Sirve para TODAS las tiendas)
-# =================================================================
 def limpiar_nombre_producto(nombre):
     nombre_limpio = nombre.lower()
     
@@ -650,130 +647,154 @@ def limpiar_nombre_producto(nombre):
         "modelo_clave": modelo_extraido
     }
 
+# =================================================================
+# NUEVA FUNCIÓN UNIVERSAL PARA GUARDAR EN LA BD (Sirve para TODAS las tiendas)
+# =================================================================
 def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda, categoria_db, tipo_db):
     if not productos_extraidos:
         return 0
+        
+    global CACHE_PRODUCTOS_BD
 
     print(f"\n💾 Guardando {len(productos_extraidos)} productos en la BD para la tienda {nombre_tienda}...\n")
-
-    tienda_db, _ = Tienda.objects.get_or_create(
-        nombre=nombre_tienda, 
-        defaults={'url_base': url_base_tienda}
-    )
-
+    
+    tienda_db, _ = Tienda.objects.get_or_create(nombre=nombre_tienda, defaults={'url_base': url_base_tienda})
     productos_guardados_exitosamente = 0
     UMBRAL_SIMILITUD = 70
-    global CACHE_PRODUCTOS_BD
     
-    # Si es la primera vez que buscamos esta categoría (ej. 'CPU'), vamos a la BD
+    # 1. CARGA DE CACHÉ
     if categoria_db not in CACHE_PRODUCTOS_BD:
-        print(f"💾 [Caché] Cargando la categoría '{categoria_db}' desde SQLite a la memoria RAM...")
-        # Guardamos en el diccionario la lista de productos de esa categoría
+        print(f"🔄 [Caché] Cargando la categoría '{categoria_db}' desde SQLite a la memoria RAM...")
         CACHE_PRODUCTOS_BD[categoria_db] = list(Producto.objects.filter(categoria=categoria_db))
     else:
         print(f"⚡ [Caché] Leyendo la categoría '{categoria_db}' directamente desde la RAM.")
-
-    # Apuntamos nuestra variable a la caché en memoria
+        
     productos_existentes = CACHE_PRODUCTOS_BD[categoria_db]
+    
+    # 2. LISTAS PARA EL BULK (Operaciones Masivas)
+    nuevos_productos_a_crear = []  # Lista de tuplas: (Producto, precio, link)
+    ofertas_a_actualizar = []      # Lista de objetos Oferta
+    ofertas_a_crear = []           # Lista de objetos Oferta
+    
+    # Pre-cargamos las ofertas existentes de esta tienda en un diccionario para acceso instantáneo (O(1))
+    ofertas_existentes_dict = {
+        oferta.producto_id: oferta 
+        for oferta in Oferta.objects.filter(tienda=tienda_db, producto__categoria=categoria_db)
+    }
 
-    with transaction.atomic():
-        for item in productos_extraidos:
-            try:
-                nombre_original = item['nombre'].strip().replace('"', '').replace("'", "")
-                precio_float = limpiar_precio(item['precio'])
-                
-                if precio_float <= 0:
-                    continue
-                    
-                # Obtenemos el diccionario con el texto normal y el modelo extraído por Regex
-                datos_comparar = limpiar_nombre_producto(nombre_original)
-                nombre_para_comparar = datos_comparar["texto_limpio"]
-                modelo_para_comparar = datos_comparar["modelo_clave"]
-                
-                producto_asociado = None
-                mejor_score = 0
-                
-                for prod_bd in productos_existentes:
-                    # Hacemos lo mismo con los productos que ya tenemos en la base de datos
-                    datos_bd = limpiar_nombre_producto(prod_bd.nombre)
-                    nombre_bd_limpio = datos_bd["texto_limpio"]
-                    modelo_bd = datos_bd["modelo_clave"]
-                    
-                    # REGLA DE ORO MULTICATEGORÍA
-                    if modelo_para_comparar and modelo_bd:
-                        # Si ambos tienen modelo extraído y es distinto (ej: rtx4060 vs rx7800xt o i512400 vs ultra7265k)
-                        if modelo_para_comparar != modelo_bd:
-                            continue # Rechazo instantáneo, pasamos al siguiente
-                        else:
-                            # Tienen el mismo modelo exacto extraído por Regex (ej: ambos son rtx4060ti)
-                            score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
-                            
-                            if score == 100:
-                                mejor_score = score
-                                producto_asociado = prod_bd
-                                break
-                            
-                            # Como Regex confirmó que el chip/modelo es igual, 
-                            # usamos un umbral más bajo (60) para no perder asociaciones comerciales válidas
-                            if score >= 60: 
-                                if es_mismo_producto_ia(nombre_original, prod_bd.nombre):
-                                    mejor_score = score
-                                    producto_asociado = prod_bd
-                                    break
-                            continue # Si no superó la IA o el Fuzzy bajito, descartamos pero NO seguimos la iteración normal
+    # 3. PROCESAMIENTO EN MEMORIA (Fuera de la base de datos)
+    for item in productos_extraidos:
+        try:
+            nombre_original = item['nombre'].strip().replace('"', '').replace("'", "")
+            precio_float = limpiar_precio(item['precio'])
+            
+            if precio_float <= 0:
+                continue
 
-                    # Si llegamos aquí, es porque uno o ambos NO tienen modelo extraíble (ej: cajas de pc, ratones)
-                    # 1. Primer filtro: FuzzyWuzzy matemático (rápido y gratis) con umbral normal (70)
-                    score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
-                    
-                    if score == 100:
-                        mejor_score = score
-                        producto_asociado = prod_bd
-                        break
-                    
-                    if score >= UMBRAL_SIMILITUD:
-                        # 2. Segundo filtro: El Juez de IA (Ollama)
-                        if es_mismo_producto_ia(nombre_original, prod_bd.nombre):
+            datos_comparar = limpiar_nombre_producto(nombre_original)
+            nombre_para_comparar = datos_comparar['texto_limpio']
+            modelo_para_comparar = datos_comparar['modelo_clave']
+            
+            producto_asociado = None
+            mejor_score = 0
+            
+            for prod_bd in productos_existentes:
+                datos_bd = limpiar_nombre_producto(prod_bd.nombre)
+                nombre_bd_limpio = datos_bd['texto_limpio']
+                modelo_bd = datos_bd['modelo_clave']
+
+                if modelo_para_comparar and modelo_bd:
+                    if modelo_para_comparar != modelo_bd:
+                        continue  # Rechazo instantáneo
+                    else:
+                        score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
+                        if score == 100:
                             mejor_score = score
                             producto_asociado = prod_bd
                             break
 
-                creado_prod = False
-                # Si el FuzzyWuzzy supera el umbral (o la regla de oro) y la IA dio el ok, unimos la oferta
-                if mejor_score > 0 and producto_asociado:
-                    producto = producto_asociado
-                else:
-                    # Si no supera los filtros, creamos un producto nuevo "base" en la BD
-                    producto = Producto.objects.create(
-                        nombre=nombre_original,
-                        tipo=tipo_db,
-                        categoria=categoria_db
-                    )
-                    productos_existentes.append(producto)
-                    creado_prod = True
+                score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
+                if score == 100:
+                    mejor_score = score
+                    producto_asociado = prod_bd
+                    break
 
-                oferta, creado_oferta = Oferta.objects.update_or_create(
-                    producto=producto,
-                    tienda=tienda_db,
-                    defaults={
-                        'precio_base': precio_float,
-                        'enlace_compra': item['link'],
-                        'gastos_envio': 0.00,
-                        'descuento_porcentaje': 0.00,
-                        'disponible': True
-                    }
+                if score > UMBRAL_SIMILITUD:
+                    if score > mejor_score:
+                        mejor_score = score
+                        producto_asociado = prod_bd
+                elif score > 60:
+                    if es_mismo_producto_ia(nombre_original, prod_bd.nombre):
+                        mejor_score = score
+                        producto_asociado = prod_bd
+                        break
+
+            # --- DECISIÓN: CREAR O ACTUALIZAR ---
+            if not producto_asociado:
+                nuevo_prod = Producto(
+                    nombre=nombre_original,
+                    tipo=tipo_db,
+                    categoria=categoria_db,
+                    descripcion=item.get('link', ''),
+                    imagen=item.get('imagen', '')  # Guardamos la imagen si la extrajiste
                 )
-
-                productos_guardados_exitosamente += 1
-
-                if creado_prod:
-                    print(f"[NUEVO] {nombre_original} (Max Score Rechazado: {mejor_score}%) - {precio_float}€")
+                nuevos_productos_a_crear.append((nuevo_prod, precio_float, item.get('link', '')))
+                productos_existentes.append(nuevo_prod)  # Actualiza la caché en vivo
+            else:
+                if producto_asociado.id and producto_asociado.id in ofertas_existentes_dict:
+                    oferta_existente = ofertas_existentes_dict[producto_asociado.id]
+                    if oferta_existente.precio_base != precio_float or oferta_existente.enlace_compra != item.get('link', ''):
+                        oferta_existente.precio_base = precio_float
+                        oferta_existente.enlace_compra = item.get('link', '')
+                        oferta_existente.fecha_actualizacion = timezone.now()
+                        ofertas_a_actualizar.append(oferta_existente)
                 else:
-                    print(f"[OFERTA] {nombre_original} -> {producto.nombre} ({mejor_score}%) - {precio_float}€")
+                    nueva_oferta = Oferta(
+                        producto=producto_asociado,
+                        tienda=tienda_db,
+                        precio_base=precio_float,
+                        enlace_compra=item.get('link', '')
+                    )
+                    ofertas_a_crear.append(nueva_oferta)
+                    
+            productos_guardados_exitosamente += 1
+            
+        except Exception as e:
+            print(f"⚠️ Error procesando item: {e}")
+            continue
 
-            except Exception as db_error:
-                print(f"❌ Error guardando {item.get('nombre', 'Desconocido')}: {db_error}")
-                logging.error(f"[BASE DE DATOS] Error guardando productos de {nombre_tienda}: {str(db_error)}")
+    # 4. TRANSACCIÓN MASIVA FINAL (Solo entra a SQLite 1 vez)
+    with transaction.atomic():
+        # A) Crear Productos Nuevos
+        if nuevos_productos_a_crear:
+            productos_solo = [p[0] for p in nuevos_productos_a_crear]
+            # bulk_create devuelve los objetos con sus IDs en SQLite (Django > 2.2)
+            productos_creados = Producto.objects.bulk_create(productos_solo, batch_size=500)
+            
+            nuevas_ofertas_masivas = []
+            for i, prod_creado in enumerate(productos_creados):
+                _, precio, link = nuevos_productos_a_crear[i]
+                nuevas_ofertas_masivas.append(Oferta(
+                    producto=prod_creado,
+                    tienda=tienda_db,
+                    precio_base=precio,
+                    enlace_compra=link
+                ))
+            Oferta.objects.bulk_create(nuevas_ofertas_masivas, batch_size=500)
+
+        # B) Crear Ofertas Nuevas (para productos que ya existían pero no estaban en esta tienda)
+        if ofertas_a_crear:
+            # Filtramos aquellas ofertas que tienen un producto sin ID (por un edge case de la caché asíncrona)
+            ofertas_a_crear_validas = [o for o in ofertas_a_crear if o.producto.id is not None]
+            Oferta.objects.bulk_create(ofertas_a_crear_validas, batch_size=500)
+
+        # C) Actualizar Ofertas Existentes
+        if ofertas_a_actualizar:
+            Oferta.objects.bulk_update(
+                ofertas_a_actualizar, 
+                ['precio_base', 'enlace_compra', 'fecha_actualizacion'], 
+                batch_size=500
+            )
 
     return productos_guardados_exitosamente
 

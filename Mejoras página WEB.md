@@ -20,7 +20,7 @@
 # Base de Datos y Caché (Django/SQLite)
 
 
-1. **Inserción en bloque (Bulk Create/Update): En lugar de guardar o actualizar los productos de uno en uno, acumúlalos en una lista y usa Producto.objects.bulk\_create() y bulk\_update().**
+1. ~~Inserción en bloque (Bulk Create/Update): En lugar de guardar o actualizar los productos de uno en uno, acumúlalos en una lista y usa Producto.objects.bulk\_create() y bulk\_update().~~
 
 2. ###### Índices en la Base de Datos: Añade db\_index=True en tu modelo de Django para los campos nombre y categoria. Las búsquedas volarán.
 
