@@ -411,9 +411,37 @@ USER_AGENTS_MODERNOS = [
     "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ]
 
-def obtener_user_agent_aleatorio():
-    """Devuelve un User-Agent realista de nuestra lista segura."""
-    return random.choice(USER_AGENTS_MODERNOS)
+def obtener_perfil_navegador():
+    perfiles = [
+        {
+            # Perfil 1: Chrome 124 en Windows (Perfectamente coherente)
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "headers": {
+                'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"'
+            }
+        },
+        {
+            # Perfil 2: Edge 124 en Windows
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
+            "headers": {
+                'Sec-Ch-Ua': '"Chromium";v="124", "Microsoft Edge";v="124", "Not-A.Brand";v="99"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"'
+            }
+        },
+        {
+            # Perfil 3: Chrome 124 en macOS
+            "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "headers": {
+                'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"macOS"'
+            }
+        }
+    ]
+    return random.choice(perfiles)
 
 # --- CONFIGURACIÓN PARA MAYOR VELOCIDAD ---
 def bloquear_recursos_innecesarios(route):
@@ -716,28 +744,33 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
             ]
         )
 
-        nuevo_user_agent = obtener_user_agent_aleatorio()
         ancho_viewport = random.randint(1366, 1920)
         alto_viewport = random.randint(768, 1080)
 
+        # Sacamos un perfil coherente
+        perfil = obtener_perfil_navegador()
+
+        # Preparamos los headers base
+        headers_base = {
+            'Accept-Language': 'es-ES,es;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
+        }
+
+        # Fusionamos los headers base con los del perfil falso
+        headers_completos = {**headers_base, **perfil["headers"]}
+
         context = browser.new_context(
             viewport={'width': ancho_viewport, 'height': alto_viewport},
-            user_agent=nuevo_user_agent, 
-            locale="es-ES",
-            timezone_id="Europe/Madrid",
+            user_agent=perfil["user_agent"], # <-- Aquí usamos el User-Agent del perfil
+            locale='es-ES',
+            timezone_id='Europe/Madrid',
             proxy=obtener_configuracion_proxy(),
-            extra_http_headers={
-                "Accept-Language": "es-ES,es;q=0.9",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-                "Sec-Ch-Ua-Mobile": "?0",
-                "Sec-Ch-Ua-Platform": '"Windows"',
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1"
-            }
+            extra_http_headers=headers_completos # <-- Y aquí los headers perfectamente sincronizados
         )
         page = context.new_page()
         
@@ -918,28 +951,33 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
             ]
         )
         
-        nuevo_user_agent = obtener_user_agent_aleatorio()
         ancho_viewport = random.randint(1366, 1920)
         alto_viewport = random.randint(768, 1080)
-        
+
+        # Sacamos un perfil coherente
+        perfil = obtener_perfil_navegador()
+
+        # Preparamos los headers base
+        headers_base = {
+            'Accept-Language': 'es-ES,es;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
+        }
+
+        # Fusionamos los headers base con los del perfil falso
+        headers_completos = {**headers_base, **perfil["headers"]}
+
         context = browser.new_context(
             viewport={'width': ancho_viewport, 'height': alto_viewport},
-            user_agent=nuevo_user_agent, 
-            locale="es-ES",
-            timezone_id="Europe/Madrid",
+            user_agent=perfil["user_agent"], # <-- Aquí usamos el User-Agent del perfil
+            locale='es-ES',
+            timezone_id='Europe/Madrid',
             proxy=obtener_configuracion_proxy(),
-            extra_http_headers={
-                "Accept-Language": "es-ES,es;q=0.9",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-                "Sec-Ch-Ua-Mobile": "?0",
-                "Sec-Ch-Ua-Platform": '"Windows"',
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1"
-            }
+            extra_http_headers=headers_completos # <-- Y aquí los headers perfectamente sincronizados
         )
         page = context.new_page()
         
@@ -1129,28 +1167,33 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
             ]
         )
         
-        nuevo_user_agent = obtener_user_agent_aleatorio()
         ancho_viewport = random.randint(1366, 1920)
         alto_viewport = random.randint(768, 1080)
-        
+
+        # Sacamos un perfil coherente
+        perfil = obtener_perfil_navegador()
+
+        # Preparamos los headers base
+        headers_base = {
+            'Accept-Language': 'es-ES,es;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
+        }
+
+        # Fusionamos los headers base con los del perfil falso
+        headers_completos = {**headers_base, **perfil["headers"]}
+
         context = browser.new_context(
             viewport={'width': ancho_viewport, 'height': alto_viewport},
-            user_agent=nuevo_user_agent, 
-            locale="es-ES",
-            timezone_id="Europe/Madrid",
+            user_agent=perfil["user_agent"],
+            locale='es-ES',
+            timezone_id='Europe/Madrid',
             proxy=obtener_configuracion_proxy(),
-            extra_http_headers={
-                "Accept-Language": "es-ES,es;q=0.9",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-                "Sec-Ch-Ua-Mobile": "?0",
-                "Sec-Ch-Ua-Platform": '"Windows"',
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1"
-            }
+            extra_http_headers=headers_completos
         )
         page = context.new_page()
         page.route("**/*", bloquear_recursos_innecesarios)
@@ -1347,28 +1390,33 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
             ]
         )
         
-        nuevo_user_agent = obtener_user_agent_aleatorio()
         ancho_viewport = random.randint(1366, 1920)
         alto_viewport = random.randint(768, 1080)
-        
+
+        # Sacamos un perfil coherente
+        perfil = obtener_perfil_navegador()
+
+        # Preparamos los headers base
+        headers_base = {
+            'Accept-Language': 'es-ES,es;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
+        }
+
+        # Fusionamos los headers base con los del perfil falso
+        headers_completos = {**headers_base, **perfil["headers"]}
+
         context = browser.new_context(
             viewport={'width': ancho_viewport, 'height': alto_viewport},
-            user_agent=nuevo_user_agent, 
-            locale="es-ES",
-            timezone_id="Europe/Madrid",
+            user_agent=perfil["user_agent"], # <-- Aquí usamos el User-Agent del perfil
+            locale='es-ES',
+            timezone_id='Europe/Madrid',
             proxy=obtener_configuracion_proxy(),
-            extra_http_headers={
-                "Accept-Language": "es-ES,es;q=0.9",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-                "Sec-Ch-Ua-Mobile": "?0",
-                "Sec-Ch-Ua-Platform": '"Windows"',
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1"
-            }
+            extra_http_headers=headers_completos # <-- Y aquí los headers perfectamente sincronizados
         )
         page = context.new_page()
         
@@ -1569,28 +1617,33 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
             ]
         )
         
-        nuevo_user_agent = obtener_user_agent_aleatorio()
         ancho_viewport = random.randint(1366, 1920)
         alto_viewport = random.randint(768, 1080)
-        
+
+        # Sacamos un perfil coherente
+        perfil = obtener_perfil_navegador()
+
+        # Preparamos los headers base
+        headers_base = {
+            'Accept-Language': 'es-ES,es;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1'
+        }
+
+        # Fusionamos los headers base con los del perfil falso
+        headers_completos = {**headers_base, **perfil["headers"]}
+
         context = browser.new_context(
             viewport={'width': ancho_viewport, 'height': alto_viewport},
-            user_agent=nuevo_user_agent, 
-            locale="es-ES",
-            timezone_id="Europe/Madrid",
+            user_agent=perfil["user_agent"],
+            locale='es-ES',
+            timezone_id='Europe/Madrid',
             proxy=obtener_configuracion_proxy(),
-            extra_http_headers={
-                "Accept-Language": "es-ES,es;q=0.9",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-                "Sec-Ch-Ua-Mobile": "?0",
-                "Sec-Ch-Ua-Platform": '"Windows"',
-                "Sec-Fetch-Dest": "document",
-                "Sec-Fetch-Mode": "navigate",
-                "Sec-Fetch-Site": "none",
-                "Sec-Fetch-User": "?1",
-                "Upgrade-Insecure-Requests": "1"
-            }
+            extra_http_headers=headers_completos
         )
         page = context.new_page()
         
