@@ -1,5 +1,5 @@
-from .models import Tienda, Producto, Oferta, ItemGuardado, Perfil
-from .serializers import TiendaSerializer, ProductoSerializer, OfertaSerializer, ItemGuardadoSerializer, PerfilSerializer
+from .models import Tienda, Producto, Oferta, ItemGuardado, Perfil, AlertaPrecio
+from .serializers import TiendaSerializer, ProductoSerializer, OfertaSerializer, ItemGuardadoSerializer, PerfilSerializer, AlertaPrecioSerializer
 from rest_framework import viewsets, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView
@@ -136,6 +136,17 @@ class ItemGuardadoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return ItemGuardado.objects.filter(usuario=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)
+
+class AlertaPrecioViewSet(viewsets.ModelViewSet):
+    serializer_class = AlertaPrecioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Solo devuelve las alertas del usuario logueado
+        return AlertaPrecio.objects.filter(usuario=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)

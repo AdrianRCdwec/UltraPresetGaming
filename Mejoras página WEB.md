@@ -20,17 +20,15 @@
 # Base de Datos y Caché (Django/SQLite)
 
 
-1. **Migrar a PostgreSQL: SQLite es fantástico, pero si tu comparador crece y recibe usuarios concurrentes, PostgreSQL maneja el acceso multihilo de forma nativa.**
+1. **Inserción en bloque (Bulk Create/Update): En lugar de guardar o actualizar los productos de uno en uno, acumúlalos en una lista y usa Producto.objects.bulk\_create() y bulk\_update().**
 
-2. **Inserción en bloque (Bulk Create/Update): En lugar de guardar o actualizar los productos de uno en uno, acumúlalos en una lista y usa Producto.objects.bulk\_create() y bulk\_update().**
+2. ###### Índices en la Base de Datos: Añade db\_index=True en tu modelo de Django para los campos nombre y categoria. Las búsquedas volarán.
 
-3. ###### Índices en la Base de Datos: Añade db\_index=True en tu modelo de Django para los campos nombre y categoria. Las búsquedas volarán.
+3. **Caché en Redis: En lugar de un diccionario global en RAM, podrías levantar un contenedor de Redis. Es la forma estándar y profesional en la industria para caché.**
 
-4. **Caché en Redis: En lugar de un diccionario global en RAM, podrías levantar un contenedor de Redis. Es la forma estándar y profesional en la industria para caché.**
+4. **Borrado lógico (Soft Delete): En desactivar\_ofertas\_obsoletas, en vez de borrar el producto de la BD, ponle un campo activo=False. Así no pierdes el histórico de precios.**
 
-5. **Borrado lógico (Soft Delete): En desactivar\_ofertas\_obsoletas, en vez de borrar el producto de la BD, ponle un campo activo=False. Así no pierdes el histórico de precios.**
-
-6. ###### Limpieza de strings más eficiente: Tu función limpiar\_nombre\_producto usa muchas sentencias replace(). Podrías unificarlas usando expresiones regulares más potentes y compiladas (re.compile).
+5. ###### Limpieza de strings más eficiente: Tu función limpiar\_nombre\_producto usa muchas sentencias replace(). Podrías unificarlas usando expresiones regulares más potentes y compiladas (re.compile).
 
 
 
