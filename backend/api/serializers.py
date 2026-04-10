@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Tienda, Producto, Oferta, ItemGuardado, Perfil
+from .models import Tienda, Producto, Oferta, ItemGuardado, Perfil, AlertaPrecio
 from django.contrib.auth.models import User
 
 class TiendaSerializer(serializers.ModelSerializer):
@@ -68,3 +68,8 @@ class PerfilSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+class AlertaPrecioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertaPrecio
+        fields = '__all__'

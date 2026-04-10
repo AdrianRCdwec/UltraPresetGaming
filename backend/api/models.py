@@ -92,3 +92,21 @@ class Perfil(models.Model):
 def crear_perfil_usuario(sender, instance, created, **kwargs):
     if created:
         Perfil.objects.create(usuario=instance)
+
+class AlertaPrecio(models.Model):
+    # RELACIÓN N:M TERNARIA PERFECTA (Conecta Usuario, Producto y Tienda)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='alertas')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    tienda = models.ForeignKey(Tienda, on_delete=models.CASCADE)
+    
+    # Datos extra de la relación
+    precio_objetivo = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    activa = models.BooleanField(default=True)
+
+    class Meta:
+        # Evita que un usuario cree dos alertas idénticas para el mismo producto y tienda
+        unique_together = ('usuario', 'producto', 'tienda')
+
+    def __str__(self):
+        return f"Alerta de {self.usuario.username} para {self.producto.nombre} en {self.tienda.nombre} (< {self.precio_objetivo}€)"
