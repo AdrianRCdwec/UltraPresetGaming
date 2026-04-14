@@ -8,6 +8,8 @@ from django.utils import timezone
 from datetime import timedelta
 from openai import AsyncOpenAI
 
+DEBUG = True
+
 # --- CONFIGURACIÓN DE TRACKERS ---
 TRACKERS_Y_ADS = [
     'google-analytics',
@@ -92,7 +94,7 @@ cliente_ia = AsyncOpenAI(
     api_key='ollama',
 )
 
-async def es_mismo_producto_ia_batch(nombre_base, nombre_oferta):
+async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
     if not lista_candidatos:
         return []
     prompt_sistema = """
@@ -590,13 +592,13 @@ def limpiar_nombre_producto(nombre):
     match_ram = re.search(r'(ddr[45])\s*(\d{2}gb)?\s*(\d{4})(?:\s*cl\d+)?', nombre_limpio)
 
     # -- SSD --
-    match_ssd = re.search(r'(\d{1,2}(?:tb|gb))\s*(?:nvme|pcie\s*4\.0|pcie\s*5\.0|sata)?', nombre_limpio)
+    match_ssd = re.search(r'(\d{1,2}(?:tb|gb))\s*(nvme|pcie\s*4\.0|pcie\s*5\.0|sata)?', nombre_limpio)
 
     # -- FUENTES DE ALIMENTACIÓN --
-    match_psu = re.search(r'(\d{3,4}w)\s*(?:bronze|silver|gold|platinum|titanium)?', nombre_limpio)
+    match_psu = re.search(r'(\d{3,4}w)\s*(bronze|silver|gold|platinum|titanium)?', nombre_limpio)
 
     # -- MONITORES --
-    match_monitor = re.search(r'(\d{2})\s*(?:pulgadas?)?\s*(?:[24]k|1080p|1440p|uhd)?\s*(\d{2,3}hz)?', nombre_limpio)
+    match_monitor = re.search(r'(\d{2})\s*(?:pulgadas?)?\s*([24]k|1080p|1440p|uhd)?\s*(\d{2,3}hz)?', nombre_limpio)
 
     # -- REFRIGERACIÓN LÍQUIDA --
     match_aio = re.search(r'(?:aio|liquida)\s*(\d{3})', nombre_limpio)
@@ -841,7 +843,19 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(
+        if DEBUG:
+            browser = p.chromium.launch(
+                headless=False, 
+                args=[
+                    "--start-maximized",
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu"
+                ]
+            )
+        else:
+            browser = p.chromium.launch(
             headless=True, 
             args=[
                 "--start-maximized",
@@ -1048,7 +1062,19 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(
+        if DEBUG:
+            browser = p.chromium.launch(
+                headless=False, 
+                args=[
+                    "--start-maximized",
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu"
+                ]
+            )
+        else:
+            browser = p.chromium.launch(
             headless=True, 
             args=[
                 "--start-maximized",
@@ -1264,7 +1290,19 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
     todos_los_productos_extraidos = []
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(
+        if DEBUG:
+            browser = p.chromium.launch(
+                headless=False, 
+                args=[
+                    "--start-maximized",
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu"
+                ]
+            )
+        else:
+            browser = p.chromium.launch(
             headless=True, 
             args=[
                 "--start-maximized",
@@ -1341,7 +1379,7 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
                 btn_cookies = page.locator('#cf_consent-buttons__reject-all').first
                 if btn_cookies.is_visible(timeout=3000):
                     btn_cookies.click()
-                    page.wait_for_timeout(1000)
+                    page.wait_for_timeout(2000)
             except:
                 pass  
 
@@ -1353,13 +1391,13 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
                 try:
                     boton_cargar_mas = page.locator('#yith-infs-button')
 
-                    if boton_cargar_mas.is_visible(timeout=1000):
+                    if boton_cargar_mas.is_visible(timeout=2000):
                         boton_cargar_mas.scroll_into_view_if_needed()
                         boton_cargar_mas.click()
                         
                         print("⏳ Cargando más productos...")
                         
-                        page.wait_for_timeout(1500)
+                        page.wait_for_timeout(2500)
                         
                         intentos_fallidos = 0
                     else:
@@ -1501,7 +1539,19 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(
+        if DEBUG:
+            browser = p.chromium.launch(
+                headless=False, 
+                args=[
+                    "--start-maximized",
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu"
+                ]
+            )
+        else:
+            browser = p.chromium.launch(
             headless=True, 
             args=[
                 "--start-maximized",
@@ -1728,7 +1778,19 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
     hay_mas_paginas = True
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(
+        if DEBUG:
+            browser = p.chromium.launch(
+                headless=False, 
+                args=[
+                    "--start-maximized",
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu"
+                ]
+            )
+        else:
+            browser = p.chromium.launch(
             headless=True, 
             args=[
                 "--start-maximized",
@@ -2444,6 +2506,15 @@ if __name__ == "__main__":
 # if __name__ == '__main__':
 #     print("🚀 INICIANDO ESCANEO MASIVO DEL CATÁLOGO DE HARDWARE...")
     
+#     # Estas son todas las categorías_db que usas en tus llamadas a escanear_catalogo_*
+#     categorias_usadas = ['CPU', 'MB', 'RAM', 'CASE', 'AIR', 'LIQ', 'GPU', 'PSU', 'SSD', 'MON']
+    
+#     print("\n📚 Precargando productos de la BD en la memoria RAM para evitar bloqueos SQLite...")
+#     for cat in categorias_usadas:
+#         CACHE_PRODUCTOS_BD[cat] = list(Producto.objects.filter(categoria=cat))
+#     print(f"✅ Caché cargada con éxito. Listo para lanzar los hilos.\n")
+    
+    
 #     total_general = 0
 #     # Escaneamos las tiendas y sumamos al total general
     
@@ -2460,3 +2531,5 @@ if __name__ == "__main__":
 #     total_general += escanearNeoByte()
     
 #     print(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS EN LA BASE DE DATOS.")
+    
+#     desactivar_ofertas_obsoletas()
