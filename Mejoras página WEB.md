@@ -58,7 +58,7 @@
 
 4. ~~Scraping de imágenes: Guarda la URL de la imagen en alta calidad y asóciala al modelo en la base de datos para que tu comparador sea visualmente atractivo.~~
 
-5. **Simular comportamiento humano avanzado: Añade movimientos de ratón curvos y pausas aleatorias irregulares (de 0.3 a 1.2 segundos) entre clics para ser indetectable.**
+5. ~~Simular comportamiento humano avanzado: Añade movimientos de ratón curvos y pausas aleatorias irregulares (de 0.3 a 1.2 segundos) entre clics para ser indetectable.~~
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 

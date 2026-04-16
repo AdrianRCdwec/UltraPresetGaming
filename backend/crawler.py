@@ -1,4 +1,4 @@
-import sys, os, django, re, random, openai, json, concurrent.futures, logging, psutil, asyncio, requests
+import sys, os, django, re, random, openai, json, concurrent.futures, logging, psutil, asyncio, requests, math
 
 from playwright.sync_api import sync_playwright
 from fuzzywuzzy import fuzz
@@ -650,6 +650,34 @@ def limpiar_nombre_producto(nombre):
         "modelo_clave": modelo_extraido
     }
 
+# SCROLL HUMANO
+def scroll_humano_avanzado(page, repeticiones=5, max_y=1500):
+    """
+    Simula a un humano haciendo scroll por una tienda:
+    - Distancias de scroll irregulares.
+    - Tiempos de pausa caóticos entre "ruedazos".
+    - Movimientos parásitos del ratón mientras lee.
+    """
+    for _ in range(repeticiones):
+        # 1. Scroll aleatorio: el humano a veces gira mucho la rueda, a veces poco
+        distancia_scroll = random.randint(300, max_y)
+        page.mouse.wheel(0, distancia_scroll)
+        
+        # 2. Pausa de lectura biométrica (entre 0.3s y 1.2s como pedía tu requisito)
+        tiempo_lectura = random.uniform(300, 1200)
+        page.wait_for_timeout(tiempo_lectura)
+        
+        # 3. Comportamiento parásito: el 30% de las veces, el humano mueve el ratón sin motivo
+        if random.random() < 0.3:
+            x_origen = random.randint(100, 800)
+            y_origen = random.randint(100, 600)
+            x_destino = x_origen + random.randint(-200, 200)
+            y_destino = y_origen + random.randint(-200, 200)
+            
+            # Movimiento curvo/suave simulado con pasos
+            page.mouse.move(x_origen, y_origen)
+            page.mouse.move(x_destino, y_destino, steps=random.randint(5, 15))
+
 # =================================================================
 # NUEVA FUNCIÓN UNIVERSAL PARA GUARDAR EN LA BD (Sirve para TODAS las tiendas)
 # =================================================================
@@ -1049,8 +1077,7 @@ def extraer_productos_de_pagina_pcc(page):
     intentos_sin_crecer = 0
 
     for _ in range(10):
-        page.mouse.wheel(0, 1500)
-        page.wait_for_timeout(150)
+        scroll_humano_avanzado(page, repeticiones=1, max_y=1800)
 
         conteo_actual = page.locator('a[data-testid="normal-link"]').count()
 
@@ -1086,8 +1113,7 @@ def extraer_productos_de_pagina_pcc(page):
                     precioStr = precioEl ? precioEl.innerText : null;
                 }
 
-                // La imagen la intentamos sacar, pero al haberlas bloqueado, probablemente venga null o un placeholder.
-                // Está bien, tu comparador prioriza el texto.
+                // El comentario antiguo se puede borrar o dejar, las imágenes ya funcionan
                 let imgEl = tarjeta.querySelector('img');
                 let imgUrl = imgEl ? imgEl.src : null;
 
@@ -1291,8 +1317,7 @@ def extraer_productos_de_pagina_coolmod(page):
     intentos_sin_crecer = 0
     
     for _ in range(10):
-        page.mouse.wheel(0, 1500)
-        page.wait_for_timeout(150)
+        scroll_humano_avanzado(page, repeticiones=1, max_y=1800)
 
         conteo_actual = page.locator('article.product-card').count()
         if conteo_actual > ultimo_conteo:
@@ -1464,7 +1489,18 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
 
                     if boton_cargar_mas.is_visible(timeout=2000):
                         boton_cargar_mas.scroll_into_view_if_needed()
-                        boton_cargar_mas.click()
+                        box = boton_cargar_mas.bounding_box()
+                        if box:
+                            # Movemos el ratón hacia el botón en pasos (curva)
+                            centro_x = box['x'] + box['width'] / 2
+                            centro_y = box['y'] + box['height'] / 2
+                            page.mouse.move(centro_x, centro_y, steps=random.randint(8, 15))
+                            
+                            # Pausa de duda antes de hacer clic
+                            page.wait_for_timeout(random.uniform(100, 350))
+                            page.mouse.click(centro_x, centro_y)
+                        else:
+                            boton_cargar_mas.click()
                         
                         print("⏳ Cargando más productos...")
                         
@@ -1525,8 +1561,7 @@ def extraer_productos_de_pagina_lifeinformatica(page):
     intentos_sin_crecer = 0
     
     for _ in range(10):
-        page.mouse.wheel(0, 1500)
-        page.wait_for_timeout(150)
+        scroll_humano_avanzado(page, repeticiones=1, max_y=1800)
 
         conteo_actual = page.locator('li.product.type-product').count()
         if conteo_actual > ultimo_conteo:
@@ -1768,8 +1803,7 @@ def extraer_productos_de_pagina_alternate(page):
     intentos_sin_crecer = 0
     
     for _ in range(10):
-        page.mouse.wheel(0, 1500)
-        page.wait_for_timeout(150)
+        scroll_humano_avanzado(page, repeticiones=1, max_y=1800)
 
         conteo_actual = page.locator('a.productBox').count()
         if conteo_actual > ultimo_conteo:
@@ -2011,8 +2045,7 @@ def extraer_productos_de_pagina_neobyte(page):
     intentos_sin_crecer = 0
     
     for _ in range(10):
-        page.mouse.wheel(0, 1500)
-        page.wait_for_timeout(150)
+        scroll_humano_avanzado(page, repeticiones=1, max_y=1800)
 
         conteo_actual = page.locator('article.product-miniature').count()
         if conteo_actual > ultimo_conteo:
