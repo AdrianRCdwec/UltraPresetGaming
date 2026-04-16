@@ -407,62 +407,50 @@ async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
         print(f"⚠️ Aviso: Error consultando a Ollama: {e}. Se asume False para todos.")
         return [False] * len(lista_candidatos)
 
-# --- CONFIGURACIÓN PARA AGENTE ALEATORIO ---
-USER_AGENTS_MODERNOS = [
-    # Chrome en Windows
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, likeাজী Gecko) Chrome/123.0.0.0 Safari/537.36",
-    
-    # Chrome en macOS
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    
-    # Edge en Windows (Edge está basado en Chromium, así que es seguro)
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0",
-    
-    # Edge en macOS
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0",
-
-    # Chrome en Linux
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-]
-
 def obtener_perfil_navegador():
-    perfiles = [
-        {
-            # Perfil 1: Chrome 124 en Windows (Perfectamente coherente)
-            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            "headers": {
-                'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-                'Sec-Ch-Ua-Mobile': '?0',
-                'Sec-Ch-Ua-Platform': '"Windows"'
-            }
-        },
-        {
-            # Perfil 2: Edge 124 en Windows
-            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
-            "headers": {
-                'Sec-Ch-Ua': '"Chromium";v="124", "Microsoft Edge";v="124", "Not-A.Brand";v="99"',
-                'Sec-Ch-Ua-Mobile': '?0',
-                'Sec-Ch-Ua-Platform': '"Windows"'
-            }
-        },
-        {
-            # Perfil 3: Chrome 124 en macOS
-            "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            "headers": {
-                'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-                'Sec-Ch-Ua-Mobile': '?0',
-                'Sec-Ch-Ua-Platform': '"macOS"'
-            }
+    """
+    Obtiene un User-Agent aleatorio consumiendo un listado vivo,
+    y genera los headers de Client-Hints (Sec-Ch-Ua) obligatorios para Cloudflare.
+    """
+    # 1. Consumimos los datos para obtener un UA muy reciente (Chrome/Edge en Windows/Mac)
+    # min_percentage=1.0 asegura que solo nos dé navegadores muy populares hoy en día
+    ua = UserAgent(os=['windows', 'macos'], browsers=['chrome', 'edge'], min_percentage=1.0)
+    random_ua = ua.random
+
+    # 2. Extraer el nombre del navegador y la versión mayor (ej: "124" de "Chrome/124.0.0.0")
+    match_version = re.search(r'(Chrome|Edg)/(\d+)\.', random_ua)
+    
+    if match_version:
+        navegador = match_version.group(1)
+        version = match_version.group(2)
+        
+        # 3. Construir los Client Hints dinámicos y coherentes
+        if navegador == 'Chrome':
+            sec_ch_ua = f'"Chromium";v="{version}", "Google Chrome";v="{version}", "Not-A.Brand";v="99"'
+        else: # Edge
+            sec_ch_ua = f'"Chromium";v="{version}", "Microsoft Edge";v="{version}", "Not-A.Brand";v="99"'
+            
+        plataforma = '"Windows"' if 'Windows' in random_ua else '"macOS"'
+        
+        headers = {
+            "Sec-Ch-Ua": sec_ch_ua,
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": plataforma,
+            "Upgrade-Insecure-Requests": "1"
         }
-    ]
-    return random.choice(perfiles)
+    else:
+        # Fallback de seguridad ultra-robusto por si toca un string atípico
+        headers = {
+            "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Upgrade-Insecure-Requests": "1"
+        }
+        
+    return {
+        "user_agent": random_ua,
+        "headers": headers
+    }
 
 # --- CONFIGURACIÓN PARA MAYOR VELOCIDAD ---
 def bloquear_recursos_innecesarios(route):

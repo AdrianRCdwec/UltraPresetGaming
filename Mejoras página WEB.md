@@ -50,7 +50,7 @@
 # Específico de Scrapers y Web
 
 
-1. **Rotación de User-Agents basada en APIs: En vez de una lista fija en tu código, consume una API gratuita que te dé los User-Agents más comunes del día de hoy.**
+1. ~~Rotación de User-Agents basada en APIs: En vez de una lista fija en tu código, consume una API gratuita que te dé los User-Agents más comunes del día de hoy.~~
 
 2. **Resolución de Captchas: Contempla integrar servicios como 2Captcha o CapSolver por si Alternate o PcComponentes te bloquean con un Cloudflare Turnstile.**
 
