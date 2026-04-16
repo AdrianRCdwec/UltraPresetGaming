@@ -56,7 +56,7 @@
 
 3. ###### Extraer el Stock real: Si es posible, no guardes solo el precio, sino si está "En stock", "Sin stock", o "Recíbelo mañana". Es información valiosísima para el usuario.
 
-4. **Scraping de imágenes: Guarda la URL de la imagen en alta calidad y asóciala al modelo en la base de datos para que tu comparador sea visualmente atractivo.**
+4. ~~Scraping de imágenes: Guarda la URL de la imagen en alta calidad y asóciala al modelo en la base de datos para que tu comparador sea visualmente atractivo.~~
 
 5. **Simular comportamiento humano avanzado: Añade movimientos de ratón curvos y pausas aleatorias irregulares (de 0.3 a 1.2 segundos) entre clics para ser indetectable.**
 

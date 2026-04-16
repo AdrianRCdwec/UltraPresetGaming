@@ -1,13 +1,15 @@
-import sys, os, django, re, random, openai, json, concurrent.futures, logging, psutil, asyncio
+import sys, os, django, re, random, openai, json, concurrent.futures, logging, psutil, asyncio, requests
 
 from playwright.sync_api import sync_playwright
 from fuzzywuzzy import fuzz
 from django.db import transaction
-from fake_useragent import UserAgent
 from django.utils import timezone
+from django.core.files.base import ContentFile
+from api.models import Producto, Tienda, Oferta, DecisionIA
+from fake_useragent import UserAgent
 from datetime import timedelta
 from openai import AsyncOpenAI
-from api.models import Producto, Tienda, Oferta, DecisionIA
+from urllib.parse import urlparse
 
 DEBUG = True
 
@@ -460,7 +462,7 @@ def bloquear_recursos_innecesarios(route):
     url = peticion.url.lower()
 
     # 1. Bloquear por tipo de recurso (lo que ya tenías + ping/beacon que usan los trackers)
-    if tipo in ['image', 'stylesheet', 'font', 'media', 'ping', 'beacon', 'csp_report']:
+    if tipo in ['stylesheet', 'font', 'media', 'ping', 'beacon', 'csp_report']:
         route.abort()
         return
 
@@ -728,56 +730,57 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                         producto_asociado = prod_bd
                 elif score > 60:
                     candidatos_dudosos.append(prod_bd)
-                if not producto_asociado and candidatos_dudosos:
-                    candidatos_top = candidatos_dudosos[:5]
-                    nombres_candidatos = [c.nombre for c in candidatos_top]
+
+            if not producto_asociado and candidatos_dudosos:
+                candidatos_top = candidatos_dudosos[:5]
+                nombres_candidatos = [c.nombre for c in candidatos_top]
+                
+                # 1. Comprobar si ya existe la decisión en la BD para evitar llamar a la IA
+                decisiones_guardadas = DecisionIA.objects.filter(
+                    nombre_tienda=nombre_original,
+                    nombre_candidato_db__in=nombres_candidatos
+                )
+                
+                # 2. Diccionario para acceso rápido O(1)
+                cache_decisiones = {d.nombre_candidato_db: d.es_mismo_producto for d in decisiones_guardadas}
+                
+                candidatos_para_ia = []
+                indices_para_ia = []
+                resultados_finales = [False] * len(nombres_candidatos)
+                
+                for idx, nombre_cand in enumerate(nombres_candidatos):
+                    if nombre_cand in cache_decisiones:
+                        # Usamos el valor guardado en BD
+                        resultados_finales[idx] = cache_decisiones[nombre_cand]
+                    else:
+                        # Requiere consulta a Llama 3
+                        candidatos_para_ia.append(nombre_cand)
+                        indices_para_ia.append(idx)
+                
+                # 3. Llamar a Ollama solo para los nuevos
+                if candidatos_para_ia:
+                    resultados_ia = asyncio.run(es_mismo_producto_ia_batch(nombre_original, candidatos_para_ia))
                     
-                    # 1. Comprobar si ya existe la decisión en la BD para evitar llamar a la IA
-                    decisiones_guardadas = DecisionIA.objects.filter(
-                        nombre_tienda=nombre_original,
-                        nombre_candidato_db__in=nombres_candidatos
-                    )
-                    
-                    # 2. Diccionario para acceso rápido O(1)
-                    cache_decisiones = {d.nombre_candidato_db: d.es_mismo_producto for d in decisiones_guardadas}
-                    
-                    candidatos_para_ia = []
-                    indices_para_ia = []
-                    resultados_finales = [False] * len(nombres_candidatos)
-                    
-                    for idx, nombre_cand in enumerate(nombres_candidatos):
-                        if nombre_cand in cache_decisiones:
-                            # Usamos el valor guardado en BD
-                            resultados_finales[idx] = cache_decisiones[nombre_cand]
-                        else:
-                            # Requiere consulta a Llama 3
-                            candidatos_para_ia.append(nombre_cand)
-                            indices_para_ia.append(idx)
-                    
-                    # 3. Llamar a Ollama solo para los nuevos
-                    if candidatos_para_ia:
-                        resultados_ia = asyncio.run(es_mismo_producto_ia_batch(nombre_original, candidatos_para_ia))
+                    decisiones_a_guardar = []
+                    for i, resultado in enumerate(resultados_ia):
+                        idx_original = indices_para_ia[i]
+                        resultados_finales[idx_original] = resultado
                         
-                        decisiones_a_guardar = []
-                        for i, resultado in enumerate(resultados_ia):
-                            idx_original = indices_para_ia[i]
-                            resultados_finales[idx_original] = resultado
-                            
-                            decisiones_a_guardar.append(DecisionIA(
-                                nombre_tienda=nombre_original,
-                                nombre_candidato_db=candidatos_para_ia[i],
-                                es_mismo_producto=resultado
-                            ))
-                        
-                        # 4. Guardar masivamente en BD (usando ignore_conflicts por si hay repetidos)
-                        if decisiones_a_guardar:
-                            DecisionIA.objects.bulk_create(decisiones_a_guardar, ignore_conflicts=True)
+                        decisiones_a_guardar.append(DecisionIA(
+                            nombre_tienda=nombre_original,
+                            nombre_candidato_db=candidatos_para_ia[i],
+                            es_mismo_producto=resultado
+                        ))
                     
-                    # 5. Asignar producto si hubo coincidencia en Caché o en IA
-                    for idx, es_match in enumerate(resultados_finales):
-                        if es_match:
-                            producto_asociado = candidatos_top[idx]
-                            break
+                    # 4. Guardar masivamente en BD (usando ignore_conflicts por si hay repetidos)
+                    if decisiones_a_guardar:
+                        DecisionIA.objects.bulk_create(decisiones_a_guardar, ignore_conflicts=True)
+                
+                # 5. Asignar producto si hubo coincidencia en Caché o en IA
+                for idx, es_match in enumerate(resultados_finales):
+                    if es_match:
+                        producto_asociado = candidatos_top[idx]
+                        break
 
             # --- DECISIÓN: CREAR O ACTUALIZAR ---
             if not producto_asociado:
@@ -786,8 +789,30 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                     tipo=tipo_db,
                     categoria=categoria_db,
                     descripcion=item.get('link', ''),
-                    imagen=item.get('imagen', '')  # Guardamos la imagen si la extrajiste
                 )
+                
+                # --- NUEVO: DESCARGAR Y GUARDAR IMAGEN ---
+                url_imagen = item.get('imagen')
+                if url_imagen and url_imagen.startswith('http'):
+                    try:
+                        # Hacer la petición GET a la imagen
+                        headers_img = obtener_perfil_navegador()['headers']
+                        respuesta_img = requests.get(url_imagen, headers=headers_img, timeout=5)
+                        
+                        if respuesta_img.status_code == 200:
+                            # Extraer la extensión original (jpg, png, webp)
+                            parsed_url = urlparse(url_imagen)
+                            nombre_archivo = os.path.basename(parsed_url.path)
+                            if not nombre_archivo or '.' not in nombre_archivo:
+                                nombre_archivo = "imagen_producto.jpg"
+                                
+                            # Guardar en el ImageField usando ContentFile
+                            nuevo_prod.imagen.save(nombre_archivo, ContentFile(respuesta_img.content), save=False)
+                            # print(f"📸 Imagen descargada para: {nombre_original[:30]}...") # Comentado para no saturar consola
+                    except Exception as e:
+                        # Fallo silencioso para no parar el crawler si la imagen no carga
+                        pass
+
                 nuevos_productos_a_crear.append((nuevo_prod, precio_float, item.get('link', '')))
                 productos_existentes.append(nuevo_prod)  # Actualiza la caché en vivo
             else:
