@@ -43,7 +43,7 @@
 
 4. ###### Prompt Engineering para formato JSON estricto: Añade un validador que compruebe que el JSON que escupe Llama 3 tiene la estructura exacta. Si falla, que pida una corrección automática sin fallar el proceso.
 
-5. **Fallback a modelo más rápido: Si Llama 3 tarda mucho, podrías tener un modelo minúsculo como Qwen o Phi-3 para decisiones fáciles y dejar Llama para casos con dudas.**
+5. ~~Fallback a modelo más rápido: Si Llama 3 tarda mucho, podrías tener un modelo minúsculo como Qwen o Phi-3 para decisiones fáciles y dejar Llama para casos con dudas.~~
 
 
 
