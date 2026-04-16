@@ -39,7 +39,7 @@
 
 2. ~~Agrupación de prompts (Batching): En vez de enviarle a la IA un producto contra otro, mándale un listado de 5 o 10 y que te devuelva un JSON con todos los emparejamientos de golpe.~~
 
-3. **Caché de decisiones de IA: Guarda en la BD las decisiones que ya tomó la IA ("Producto A es igual a Producto B: True"). Si vuelven a cruzarse, no llamas a la IA, consultas la BD.**
+3. ~~Caché de decisiones de IA: Guarda en la BD las decisiones que ya tomó la IA ("Producto A es igual a Producto B: True"). Si vuelven a cruzarse, no llamas a la IA, consultas la BD.~~
 
 4. ###### Prompt Engineering para formato JSON estricto: Añade un validador que compruebe que el JSON que escupe Llama 3 tiene la estructura exacta. Si falla, que pida una corrección automática sin fallar el proceso.
 
