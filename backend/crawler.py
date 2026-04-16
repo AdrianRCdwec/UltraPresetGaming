@@ -473,6 +473,53 @@ def bloquear_recursos_innecesarios(route):
     # Si pasa los filtros, dejamos que la petición continúe
     route.continue_()
 
+def resolver_captcha_cloudflare(page):
+    try:
+        # 1. Detectar si estamos en la pantalla de Cloudflare
+        # Cloudflare suele inyectar un iframe o un div con id="cf-turnstile" o similar
+        # También el título de la página suele ser "Just a moment..."
+        
+        titulo = page.title()
+        if "Just a moment" not in titulo and not page.locator('#cf-please-wait').is_visible(timeout=1000):
+            return True # No hay captcha, todo en orden
+            
+        print("🛡️ [Anti-Bot] Detectado desafío Cloudflare Turnstile. Intentando resolver...")
+        
+        # 2. Esperar a que el widget interactivo cargue completamente (hasta 10s)
+        checkbox = page.locator('input[type="checkbox"], #cf-stage iframe, .ctp-checkbox-label').first
+        
+        if checkbox.is_visible(timeout=10000):
+            # 3. Simular comportamiento humano (movimiento del ratón previo)
+            box = checkbox.bounding_box()
+            if box:
+                # Mover el ratón desde una posición aleatoria hacia el centro del botón
+                x_inicio = random.randint(100, 800)
+                y_inicio = random.randint(100, 600)
+                page.mouse.move(x_inicio, y_inicio)
+                page.wait_for_timeout(random.uniform(500, 1500))
+                
+                # Mover al centro del checkbox
+                x_centro = box['x'] + box['width'] / 2
+                y_centro = box['y'] + box['height'] / 2
+                
+                # steps=10 hace que el ratón no se teletransporte, sino que se deslice en 10 pasos
+                page.mouse.move(x_centro, y_centro, steps=10)
+                page.wait_for_timeout(random.uniform(300, 800))
+                
+                # Hacer clic
+                page.mouse.click(x_centro, y_centro, delay=random.uniform(50, 150))
+                print("🖱️ [Anti-Bot] Clic humano simulado en Turnstile.")
+        
+        # 4. Esperar a que el título cambie o el elemento de Cloudflare desaparezca (hasta 15s)
+        # Si resolvemos el captcha, Cloudflare nos redirige a la web real.
+        page.wait_for_function('document.title !== "Just a moment..."', timeout=15000)
+        print("✅ [Anti-Bot] Desafío superado. Entrando a la web...")
+        return True
+        
+    except Exception as e:
+        print(f"❌ [Anti-Bot] Imposible resolver Cloudflare. El scraper podría fallar: {e}")
+        return False
+
 # --- CONFIGURACIÓN DE DJANGO ---
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'comparador.settings') 
@@ -903,6 +950,9 @@ def escanear_catalogo_pcc(url_catalogo_base, categoria_db, tipo_db):
                 for intento in range(3):
                     try:
                         page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+
+                        resolver_captcha_cloudflare(page)
+
                         exito_carga = True
                         break
                     except Exception as e:
@@ -1125,6 +1175,9 @@ def escanear_catalogo_coolmod(url_catalogo_base, categoria_db, tipo_db, excluir_
                 for intento in range(3):
                     try:
                         page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+
+                        resolver_captcha_cloudflare(page)
+
                         exito_carga = True
                         break
                     except Exception as e:
@@ -1343,6 +1396,9 @@ def escanear_catalogo_lifeinformatica(url_catalogo_base, categoria_db, tipo_db, 
         for intento in range(3):
             try:
                 page.goto(url_catalogo_base, timeout=40000, wait_until="domcontentloaded")
+
+                resolver_captcha_cloudflare(page)
+
                 exito_carga = True
                 break 
             except Exception as e:
@@ -1599,6 +1655,9 @@ def escanear_catalogo_alternate(url_catalogo_base, categoria_db, tipo_db, exclui
                 for intento in range(3):
                     try:
                         page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+
+                        resolver_captcha_cloudflare(page)
+
                         exito_carga = True
                         break
                     except Exception as e:
@@ -1838,6 +1897,9 @@ def escanear_catalogo_neobyte(url_catalogo_base, categoria_db, tipo_db, excluir_
                 for intento in range(3):
                     try:
                         page.goto(url_con_paginacion, timeout=40000, wait_until="domcontentloaded")
+
+                        resolver_captcha_cloudflare(page)
+
                         exito_carga = True
                         break
                     except Exception as e:
