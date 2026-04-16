@@ -7,6 +7,7 @@ from fake_useragent import UserAgent
 from django.utils import timezone
 from datetime import timedelta
 from openai import AsyncOpenAI
+from api.models import Producto, Tienda, Oferta, DecisionIA
 
 DEBUG = True
 
@@ -528,8 +529,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'comparador.settings') 
 django.setup()
 
-from api.models import Producto, Tienda, Oferta
-
 def limpiar_precio(texto):
     if not texto: return 0.0
     texto = str(texto).strip()
@@ -733,14 +732,56 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                         producto_asociado = prod_bd
                 elif score > 60:
                     candidatos_dudosos.append(prod_bd)
-                    if not producto_asociado and candidatos_dudosos:
-                        candidatos_top = candidatos_dudosos[:5]
-                        nombres_candidatos = [c.nombre for c in candidatos_top]
-                        resultados_ia = asyncio.run(es_mismo_producto_ia_batch(nombre_original, nombres_candidatos))
-                        for idx, es_match in enumerate(resultados_ia):
-                            if es_match:
-                                producto_asociado = candidatos_top[idx]
-                                break
+                if not producto_asociado and candidatos_dudosos:
+                    candidatos_top = candidatos_dudosos[:5]
+                    nombres_candidatos = [c.nombre for c in candidatos_top]
+                    
+                    # 1. Comprobar si ya existe la decisión en la BD para evitar llamar a la IA
+                    decisiones_guardadas = DecisionIA.objects.filter(
+                        nombre_tienda=nombre_original,
+                        nombre_candidato_db__in=nombres_candidatos
+                    )
+                    
+                    # 2. Diccionario para acceso rápido O(1)
+                    cache_decisiones = {d.nombre_candidato_db: d.es_mismo_producto for d in decisiones_guardadas}
+                    
+                    candidatos_para_ia = []
+                    indices_para_ia = []
+                    resultados_finales = [False] * len(nombres_candidatos)
+                    
+                    for idx, nombre_cand in enumerate(nombres_candidatos):
+                        if nombre_cand in cache_decisiones:
+                            # Usamos el valor guardado en BD
+                            resultados_finales[idx] = cache_decisiones[nombre_cand]
+                        else:
+                            # Requiere consulta a Llama 3
+                            candidatos_para_ia.append(nombre_cand)
+                            indices_para_ia.append(idx)
+                    
+                    # 3. Llamar a Ollama solo para los nuevos
+                    if candidatos_para_ia:
+                        resultados_ia = asyncio.run(es_mismo_producto_ia_batch(nombre_original, candidatos_para_ia))
+                        
+                        decisiones_a_guardar = []
+                        for i, resultado in enumerate(resultados_ia):
+                            idx_original = indices_para_ia[i]
+                            resultados_finales[idx_original] = resultado
+                            
+                            decisiones_a_guardar.append(DecisionIA(
+                                nombre_tienda=nombre_original,
+                                nombre_candidato_db=candidatos_para_ia[i],
+                                es_mismo_producto=resultado
+                            ))
+                        
+                        # 4. Guardar masivamente en BD (usando ignore_conflicts por si hay repetidos)
+                        if decisiones_a_guardar:
+                            DecisionIA.objects.bulk_create(decisiones_a_guardar, ignore_conflicts=True)
+                    
+                    # 5. Asignar producto si hubo coincidencia en Caché o en IA
+                    for idx, es_match in enumerate(resultados_finales):
+                        if es_match:
+                            producto_asociado = candidatos_top[idx]
+                            break
 
             # --- DECISIÓN: CREAR O ACTUALIZAR ---
             if not producto_asociado:

@@ -110,3 +110,20 @@ class AlertaPrecio(models.Model):
 
     def __str__(self):
         return f"Alerta de {self.usuario.username} para {self.producto.nombre} en {self.tienda.nombre} (< {self.precio_objetivo}€)"
+    
+class DecisionIA(models.Model):
+    nombre_tienda = models.CharField(max_length=500)
+    nombre_candidato_db = models.CharField(max_length=500)
+    es_mismo_producto = models.BooleanField()
+    fecha_decision = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Asegura que no guardemos la misma pregunta dos veces
+        unique_together = ('nombre_tienda', 'nombre_candidato_db')
+        indexes = [
+            models.Index(fields=['nombre_tienda', 'nombre_candidato_db']),
+        ]
+
+    def __str__(self):
+        coincide = "==" if self.es_mismo_producto else "!="
+        return f"[{coincide}] {self.nombre_tienda} | {self.nombre_candidato_db}"
