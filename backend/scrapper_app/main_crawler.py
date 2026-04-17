@@ -58,16 +58,21 @@ def escanearPcComponentes():
             f"\n✅ [Discos Duros] Se han guardado un total de {total} discos duros." if cat == 'SSD' else
             f"\n✅ [Monitores] Se han guardado un total de {total} monitores.")
 
-    escanear("https://www.pccomponentes.com/procesadores", 'CPU', 'HW')
-    escanear("https://www.pccomponentes.com/placas-base", 'MB', 'HW')
-    escanear("https://www.pccomponentes.com/memorias-ram", 'RAM', 'HW')
-    escanear("https://www.pccomponentes.com/cajas-pc", 'CASE', 'HW')
-    escanear("https://www.pccomponentes.com/ventiladores-cpu", 'AIR', 'HW')
-    escanear("https://www.pccomponentes.com/refrigeracion-liquida/kit-refrigeracion-liquida", 'LIQ', 'HW')
-    escanear("https://www.pccomponentes.com/tarjetas-graficas", 'GPU', 'HW')
-    escanear("https://www.pccomponentes.com/fuentes-alimentacion", 'PSU', 'HW')
-    escanear("https://www.pccomponentes.com/discos-duros", 'SSD', 'HW')
-    escanear("https://www.pccomponentes.com/monitores", 'MON', 'HW')
+    scraper.iniciar_navegador()
+
+    try:
+        escanear("https://www.pccomponentes.com/procesadores", 'CPU', 'HW')
+        escanear("https://www.pccomponentes.com/placas-base", 'MB', 'HW')
+        escanear("https://www.pccomponentes.com/memorias-ram", 'RAM', 'HW')
+        escanear("https://www.pccomponentes.com/cajas-pc", 'CASE', 'HW')
+        escanear("https://www.pccomponentes.com/ventiladores-cpu", 'AIR', 'HW')
+        escanear("https://www.pccomponentes.com/refrigeracion-liquida/kit-refrigeracion-liquida", 'LIQ', 'HW')
+        escanear("https://www.pccomponentes.com/tarjetas-graficas", 'GPU', 'HW')
+        escanear("https://www.pccomponentes.com/fuentes-alimentacion", 'PSU', 'HW')
+        escanear("https://www.pccomponentes.com/discos-duros", 'SSD', 'HW')
+        escanear("https://www.pccomponentes.com/monitores", 'MON', 'HW')
+    finally:
+        scraper.cerrar_navegador()
 
     logger.info(f"\n✅ [PcComponentes FIN] Se han guardado un total de {total_pcc} productos.")
     return total_pcc
@@ -92,20 +97,25 @@ def escanearCoolmod():
             f"\n✅ [Discos Duros] Se han guardado un total de {total} discos duros." if cat == 'SSD' else
             f"\n✅ [Monitores] Se han guardado un total de {total} monitores.")
 
-    escanear("https://www.coolmod.com/componentes-pc-procesadores/", 'CPU', 'HW')
-    escanear("https://www.coolmod.com/componentes-pc-placas-base/", 'MB', 'HW')
-    escanear("https://www.coolmod.com/componentes-pc-memorias-ram/", 'RAM', 'HW')
-    escanear("https://www.coolmod.com/componentes-pc-torres-cajas/", 'CASE', 'HW')
-    escanear("https://www.coolmod.com/componentes-pc-disipadores-ventiladores/", 'AIR', 'HW', 
-            excluir=[
-                '240', '280', '360', '420', 'refrigeracion liquida', 
-                'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
-            ])
-    escanear("https://www.coolmod.com/refrigeracion-liquida-kits-liquida/", 'LIQ', 'HW')
-    escanear("https://www.coolmod.com/tarjetas-graficas/", 'GPU', 'HW')
-    escanear("https://www.coolmod.com/componentes-pc-fuentes-alimentacion/", 'PSU', 'HW')
-    escanear("https://www.coolmod.com/componentes-pc-discos-duros/", 'SSD', 'HW')
-    escanear("https://www.coolmod.com/perifericos-monitores/", 'MON', 'HW')
+    scraper.iniciar_navegador()
+
+    try:
+        escanear("https://www.coolmod.com/componentes-pc-procesadores/", 'CPU', 'HW')
+        escanear("https://www.coolmod.com/componentes-pc-placas-base/", 'MB', 'HW')
+        escanear("https://www.coolmod.com/componentes-pc-memorias-ram/", 'RAM', 'HW')
+        escanear("https://www.coolmod.com/componentes-pc-torres-cajas/", 'CASE', 'HW')
+        escanear("https://www.coolmod.com/componentes-pc-disipadores-ventiladores/", 'AIR', 'HW', 
+                excluir=[
+                    '240', '280', '360', '420', 'refrigeracion liquida', 
+                    'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
+                ])
+        escanear("https://www.coolmod.com/refrigeracion-liquida-kits-liquida/", 'LIQ', 'HW')
+        escanear("https://www.coolmod.com/tarjetas-graficas/", 'GPU', 'HW')
+        escanear("https://www.coolmod.com/componentes-pc-fuentes-alimentacion/", 'PSU', 'HW')
+        escanear("https://www.coolmod.com/componentes-pc-discos-duros/", 'SSD', 'HW')
+        escanear("https://www.coolmod.com/perifericos-monitores/", 'MON', 'HW')
+    finally:
+        scraper.cerrar_navegador()
 
     logger.info(f"\n✅ [Coolmod FIN] Se han guardado un total de {total_coolmod} productos.")
     return total_coolmod
@@ -130,20 +140,25 @@ def escanearLifeInformatica():
             f"\n✅ [Discos Duros] Se han guardado un total de {total} discos duros." if cat == 'SSD' else
             f"\n✅ [Monitores] Se han guardado un total de {total} monitores.")
 
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/procesadores/", 'CPU', 'HW')
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/placas-base/", 'MB', 'HW')
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/memorias-ram/", 'RAM', 'HW')
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/cajas-y-accesorios/cajas/", 'CASE', 'HW')
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/refrigeracion/disipadores-de-cpu/", 'AIR', 'HW', 
-            excluir=[
-                '240', '280', '360', '420', 'refrigeracion liquida', 
-                'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
-            ])
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/refrigeracion/kits-de-refrigeracion-liquida/", 'LIQ', 'HW')
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/tarjetas-graficas/", 'GPU', 'HW')
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/fuentes-de-alimentacion-y-accesorios/fuentes-de-alimentacion/", 'PSU', 'HW')
-    escanear("https://lifeinformatica.com/categoria-producto/componentes/discos-duros/", 'SSD', 'HW')
-    escanear("https://lifeinformatica.com/categoria-producto/perifericos/monitores-y-accesorios/monitores/", 'MON', 'HW')
+    scraper.iniciar_navegador()
+
+    try:
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/procesadores/", 'CPU', 'HW')
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/placas-base/", 'MB', 'HW')
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/memorias-ram/", 'RAM', 'HW')
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/cajas-y-accesorios/cajas/", 'CASE', 'HW')
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/refrigeracion/disipadores-de-cpu/", 'AIR', 'HW', 
+                excluir=[
+                    '240', '280', '360', '420', 'refrigeracion liquida', 
+                    'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
+                ])
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/refrigeracion/kits-de-refrigeracion-liquida/", 'LIQ', 'HW')
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/tarjetas-graficas/", 'GPU', 'HW')
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/fuentes-de-alimentacion-y-accesorios/fuentes-de-alimentacion/", 'PSU', 'HW')
+        escanear("https://lifeinformatica.com/categoria-producto/componentes/discos-duros/", 'SSD', 'HW')
+        escanear("https://lifeinformatica.com/categoria-producto/perifericos/monitores-y-accesorios/monitores/", 'MON', 'HW')
+    finally:
+        scraper.cerrar_navegador()
 
     logger.info(f"\n✅ [Life Informática FIN] Se han guardado un total de {total_life} productos.")
     return total_life
@@ -168,20 +183,25 @@ def escanearAlternate():
             f"\n✅ [Discos Duros] Se han guardado un total de {total} discos duros." if cat == 'SSD' else
             f"\n✅ [Monitores] Se han guardado un total de {total} monitores.")
 
-    escanear("https://www.alternate.es/Procesadores", 'CPU', 'HW')
-    escanear("https://www.alternate.es/Placas-base", 'MB', 'HW')
-    escanear("https://www.alternate.es/Memoria-RAM", 'RAM', 'HW')
-    escanear("https://www.alternate.es/Cajas-de-PC", 'CASE', 'HW')
-    escanear("https://www.alternate.es/Disipadores-de-CPU", 'AIR', 'HW', 
-            excluir=[
-                '240', '280', '360', '420', 'refrigeracion liquida', 
-                'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
-            ])
-    escanear("https://www.alternate.es/Refrigeraci%C3%B3n-l%C3%ADquida", 'LIQ', 'HW')
-    escanear("https://www.alternate.es/Tarjetas-gr%C3%A1ficas", 'GPU', 'HW')
-    escanear("https://www.alternate.es/Fuentes-de-alimentaci%C3%B3n", 'PSU', 'HW')
-    escanear("https://www.alternate.es/SSD", 'SSD', 'HW')
-    escanear("https://www.alternate.es/Monitores", 'MON', 'HW')
+    scraper.iniciar_navegador()
+
+    try:
+        escanear("https://www.alternate.es/Procesadores", 'CPU', 'HW')
+        escanear("https://www.alternate.es/Placas-base", 'MB', 'HW')
+        escanear("https://www.alternate.es/Memoria-RAM", 'RAM', 'HW')
+        escanear("https://www.alternate.es/Cajas-de-PC", 'CASE', 'HW')
+        escanear("https://www.alternate.es/Disipadores-de-CPU", 'AIR', 'HW', 
+                excluir=[
+                    '240', '280', '360', '420', 'refrigeracion liquida', 
+                    'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
+                ])
+        escanear("https://www.alternate.es/Refrigeraci%C3%B3n-l%C3%ADquida", 'LIQ', 'HW')
+        escanear("https://www.alternate.es/Tarjetas-gr%C3%A1ficas", 'GPU', 'HW')
+        escanear("https://www.alternate.es/Fuentes-de-alimentaci%C3%B3n", 'PSU', 'HW')
+        escanear("https://www.alternate.es/SSD", 'SSD', 'HW')
+        escanear("https://www.alternate.es/Monitores", 'MON', 'HW')
+    finally:
+        scraper.cerrar_navegador()
 
     logger.info(f"\n✅ [Alternate FIN] Se han guardado un total de {total_alternate} productos.")
     return total_alternate
@@ -206,20 +226,25 @@ def escanearNeoByte():
             f"\n✅ [Discos Duros] Se han guardado un total de {total} discos duros." if cat == 'SSD' else
             f"\n✅ [Monitores] Se han guardado un total de {total} monitores.")
 
-    escanear("https://www.neobyte.es/procesadores-107", 'CPU', 'HW')
-    escanear("https://www.neobyte.es/placas-base-106", 'MB', 'HW')
-    escanear("https://www.neobyte.es/memorias-ram-108", 'RAM', 'HW')
-    escanear("https://www.neobyte.es/cajas-de-ordenador-112", 'CASE', 'HW')
-    escanear("https://www.neobyte.es/ventiladores-cpu-138", 'AIR', 'HW', 
-            excluir=[
-                '240', '280', '360', '420', 'refrigeracion liquida', 
-                'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
-            ])
-    escanear("https://www.neobyte.es/refrigeracion-liquida-139", 'LIQ', 'HW')
-    escanear("https://www.neobyte.es/tarjetas-graficas-111", 'GPU', 'HW')
-    escanear("https://www.neobyte.es/fuentes-de-alimentacion-113", 'PSU', 'HW')
-    escanear("https://www.neobyte.es/discos-duros-110", 'SSD', 'HW')
-    escanear("https://www.neobyte.es/monitores-169", 'MON', 'HW')
+    scraper.iniciar_navegador()
+    
+    try:
+        escanear("https://www.neobyte.es/procesadores-107", 'CPU', 'HW')
+        escanear("https://www.neobyte.es/placas-base-106", 'MB', 'HW')
+        escanear("https://www.neobyte.es/memorias-ram-108", 'RAM', 'HW')
+        escanear("https://www.neobyte.es/cajas-de-ordenador-112", 'CASE', 'HW')
+        escanear("https://www.neobyte.es/ventiladores-cpu-138", 'AIR', 'HW', 
+                excluir=[
+                    '240', '280', '360', '420', 'refrigeracion liquida', 
+                    'refrigeración líquida', 'líquida', 'liquida', 'aio', 'water'
+                ])
+        escanear("https://www.neobyte.es/refrigeracion-liquida-139", 'LIQ', 'HW')
+        escanear("https://www.neobyte.es/tarjetas-graficas-111", 'GPU', 'HW')
+        escanear("https://www.neobyte.es/fuentes-de-alimentacion-113", 'PSU', 'HW')
+        escanear("https://www.neobyte.es/discos-duros-110", 'SSD', 'HW')
+        escanear("https://www.neobyte.es/monitores-169", 'MON', 'HW')
+    finally:
+        scraper.cerrar_navegador()
 
     logger.info(f"\n✅ [NeoByte FIN] Se han guardado un total de {total_neobyte} productos.")
     return total_neobyte

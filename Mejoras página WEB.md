@@ -1,11 +1,11 @@
 # Rendimiento y Scraping (Playwright)
 
 
-1. ###### Reutilizar contextos de Playwright: En lugar de lanzar un nuevo browser.new\_context() en cada categoría, pasa el mismo contexto a todas las iteraciones de la misma tienda.
+1. ~~Reutilizar contextos de Playwright: En lugar de lanzar un nuevo browser.new\_context() en cada categoría, pasa el mismo contexto a todas las iteraciones de la misma tienda.~~
 
-2. ###### Deshabilitar la carga de JavaScript donde no sea necesario: Si ves que una tienda (como Coolmod) tiene los datos en el HTML puro, bloquea los scripts.
+2. Deshabilitar la carga de JavaScript donde no sea necesario: Si ves que una tienda (como Coolmod) tiene los datos en el HTML puro, bloquea los scripts.
 
-3. ###### Implementar rotación de Proxies por petición: Si te bloquean mucho, cambia de proxy cada vez que pidas una nueva página, no solo al inicio.
+3. Implementar rotación de Proxies por petición: Si te bloquean mucho, cambia de proxy cada vez que pidas una nueva página, no solo al inicio.
 
 4. ~~Bloquear endpoints de Analytics y Trackers: Aparte de imágenes, bloquea peticiones a Google Analytics o Facebook Pixel usando page.route para ganar velocidad.~~
 
@@ -24,7 +24,7 @@
 
 2. ###### Índices en la Base de Datos: Añade db\_index=True en tu modelo de Django para los campos nombre y categoria. Las búsquedas volarán.
 
-3. ###### Caché en Redis: En lugar de un diccionario global en RAM, podrías levantar un contenedor de Redis. Es la forma estándar y profesional en la industria para caché.
+3. Caché en Redis: En lugar de un diccionario global en RAM, podrías levantar un contenedor de Redis. Es la forma estándar y profesional en la industria para caché.
 
 4. ~~Borrado lógico (Soft Delete): En desactivar\_ofertas\_obsoletas, en vez de borrar el producto de la BD, ponle un campo activo=False. Así no pierdes el histórico de precios.~~
 
@@ -54,7 +54,7 @@
 
 2. ~~Resolución de Captchas: Contempla integrar servicios como 2Captcha o CapSolver por si Alternate o PcComponentes te bloquean con un Cloudflare Turnstile.~~
 
-3. ###### Extraer el Stock real: Si es posible, no guardes solo el precio, sino si está "En stock", "Sin stock", o "Recíbelo mañana". Es información valiosísima para el usuario.
+3. Extraer el Stock real: Si es posible, no guardes solo el precio, sino si está "En stock", "Sin stock", o "Recíbelo mañana". Es información valiosísima para el usuario.
 
 4. ~~Scraping de imágenes: Guarda la URL de la imagen en alta calidad y asóciala al modelo en la base de datos para que tu comparador sea visualmente atractivo.~~
 
@@ -69,7 +69,7 @@
 
 2. ~~Implementar Patrón Factory: Para inicializar las tiendas, crea una clase TiendaScraperBase y que las demás (Coolmod, PcComponentes) hereden de ella sobrescribiendo solo los selectores CSS.~~
 
-3. ###### Pruebas Unitarias (Pytest): Como tienes formación en QA, escribe tests unitarios para funciones críticas como limpiar\_precio o limpiar\_nombre\_producto.
+3. Pruebas Unitarias (Pytest): Como tienes formación en QA, escribe tests unitarios para funciones críticas como limpiar\_precio o limpiar\_nombre\_producto.
 
 4. ~~Sistema de Logging Profesional: Cambia los print() por logging.info(), logging.warning(), etc. Así podrás guardar el historial de la ejecución en un archivo scraper.log.~~
 
@@ -78,6 +78,6 @@
 # Manejo de Errores y Robustez
 
 
-1. ###### Notificaciones por Telegram/Discord: Si el scraper de PcComponentes "revienta", que el bloque except envíe un mensaje a tu móvil avisando del fallo y el error.
+1. Notificaciones por Telegram/Discord: Si el scraper de PcComponentes "revienta", que el bloque except envíe un mensaje a tu móvil avisando del fallo y el error.
 
 2. ###### Graceful Shutdown: Captura señales como Ctrl+C (KeyboardInterrupt) para que, si cancelas el script, guarde en la BD lo que lleva hasta ese momento en vez de perderlo
