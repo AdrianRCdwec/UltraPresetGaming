@@ -65,9 +65,9 @@
 # Calidad de Código y Arquitectura (QA / Dev)
 
 
-1. **Separar la lógica en varios archivos: Saca la lógica de IA a ia\_matcher.py, la lógica de Playwright a scrapers.py y la lógica de base de datos a db\_manager.py.**
+1. ~~Separar la lógica en varios archivos: Saca la lógica de IA a ia\_matcher.py, la lógica de Playwright a scrapers.py y la lógica de base de datos a db\_manager.py.~~
 
-2. **Implementar Patrón Factory: Para inicializar las tiendas, crea una clase TiendaScraperBase y que las demás (Coolmod, PcComponentes) hereden de ella sobrescribiendo solo los selectores CSS.**
+2. ~~Implementar Patrón Factory: Para inicializar las tiendas, crea una clase TiendaScraperBase y que las demás (Coolmod, PcComponentes) hereden de ella sobrescribiendo solo los selectores CSS.~~
 
 3. ###### Pruebas Unitarias (Pytest): Como tienes formación en QA, escribe tests unitarios para funciones críticas como limpiar\_precio o limpiar\_nombre\_producto.
 
