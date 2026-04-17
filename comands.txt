@@ -29,7 +29,7 @@ RESET DE LA BASE DE DATOS:
 
 
 --------------------------------------------------------------
-TODO DENTRO DEL ENTORNO:
+COMANDOS DENTRO DEL ENTORNO:
 --------------------------------------------------------------
     EJECUTAR CRAWLER (ACTUALIZAR/AÑADIR PRODUCTOS):
         python scrapper_app/main_crawler.py
@@ -37,8 +37,8 @@ TODO DENTRO DEL ENTORNO:
     ENCENDER SERVIDOR:
         python manage.py runserver
 
-    CREAR/ACTUALIZAR ARCHIVO REQUIREMENTS.TXT:
-        pip freeze > requirements.txt
+    CREAR/ACTUALIZAR ARCHIVO DEPENDENCIES.TXT:
+        pip freeze > dependencies.txt
 
     VACIAR DATOS SIN BORRAR LA ESTRUCTURA:
         python manage.py flush
@@ -49,8 +49,17 @@ TODO DENTRO DEL ENTORNO:
     ACTUALIZAR TODAS LAS DEPENDENCIAS:
         pip-review --auto
 
+--------------------------------------------------------------
+COMANDOS IMPORTANTES:
+--------------------------------------------------------------
     DESHACER UN COMMIT PUSHEADO (EL NÚMERO ES EL NÚMERO DE COMMITS A DESHACER)
         git reset HEAD~1
 
     DESHACER UN COMMIT NO PUSHEADO (EL NÚMERO ES EL NÚMERO DE COMMITS A DESHACER)
         git reset --soft HEAD~1
+    
+    GENERAR EL ÁRBOL
+        tr
+    
+    GENERAR EL ÁRBOL SIN ARCHIVOS
+        tr -f

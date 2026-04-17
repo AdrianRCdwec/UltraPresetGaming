@@ -1,0 +1,88 @@
+/*  =========================================================
+        BOTONES (COMPONENTE .start + VARIANTE .blue)
+    ========================================================= */
+
+.start {
+    align-items: center;
+    appearance: none;
+    background-color: #9814f1;
+    border-radius: 25px;
+    border-width: 0;
+    box-shadow:
+        rgba(45, 35, 66, 0.2) 0 2px 4px,
+        rgba(45, 35, 66, 0.15) 0 7px 13px -3px,
+        #9814f1 0 -3px 0 inset;
+    cursor: pointer;
+    display: inline-flex;
+    height: 48px;
+    justify-content: center;
+    overflow: hidden;
+    padding-left: 16px;
+    padding-right: 16px;
+    position: relative;
+    text-decoration: none;
+    transition:
+        box-shadow 0.15s,
+        transform 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+    font-size: 18px;
+    margin: 20px 20px 20px 0;
+    color: white;
+}
+
+/* Estados botón */
+.start:focus {
+    box-shadow:
+        #9814f1 0 0 0 1.5px inset,
+        rgba(45, 35, 66, 0.4) 0 2px 4px,
+        rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
+        #9814f1 0 -3px 0 inset;
+}
+
+.start:hover {
+    box-shadow:
+        rgba(45, 35, 66, 0.3) 0 4px 8px,
+        rgba(45, 35, 66, 0.2) 0 7px 13px -3px,
+        #9814f1 0 -3px 0 inset;
+    transform: translateY(-2px);
+}
+
+.start:active {
+    box-shadow: #9814f1 0 3px 7px inset;
+    transform: translateY(2px);
+}
+
+/* Variante azul */
+.blue {
+    background-color: #2c65ee;
+    box-shadow:
+        rgba(45, 35, 66, 0.2) 0 2px 4px,
+        rgba(45, 35, 66, 0.15) 0 7px 13px -3px,
+        #2c65ee 0 -3px 0 inset;
+}
+
+.blue:focus {
+    box-shadow:
+        #2c65ee 0 0 0 1.5px inset,
+        rgba(45, 35, 66, 0.4) 0 2px 4px,
+        rgba(45, 35, 66, 0.3) 0 7px 13px -3px,
+        #2c65ee 0 -3px 0 inset;
+}
+
+.blue:hover {
+    box-shadow:
+        rgba(45, 35, 66, 0.3) 0 4px 8px,
+        rgba(45, 35, 66, 0.2) 0 7px 13px -3px,
+        #2c65ee 0 -3px 0 inset;
+}
+
+.blue:active {
+    box-shadow: #2c65ee 0 3px 7px inset;
+}
+
+.centrar {
+    display: block;
+    margin: 0 auto;
+}

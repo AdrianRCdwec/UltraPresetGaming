@@ -1,0 +1,93 @@
+/*  =========================================================
+                    PIE DE PÁGINA (FOOTER)
+    ========================================================= */
+
+/* Wrapper principal (para empujar footer abajo) */
+.cuerpo {
+    flex: 1;
+    padding: 20px 0;
+}
+
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    background-color: #eaf0fd;
+    padding: 20px;
+    color: black;
+    text-align: center;
+    gap: 10px;
+}
+
+/* Columnas del footer */
+.footer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.footer-section h3 {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* Links footer */
+.footer-section a {
+    color: #2c65ee;
+    text-decoration: none;
+}
+
+.footer-section a:hover {
+    text-decoration: underline;
+}
+
+/* Select moneda */
+.footer-section select {
+    margin-top: 5px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #888;
+    background-color: white;
+}
+
+#moneda:hover {
+    border: 1px solid black;
+}
+
+/* Redes sociales */
+.social{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;      
+    flex-wrap: wrap;
+}
+
+.social-link{
+    width: 54px;
+    height: 54px;
+    border: 1px solid black;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.social-link:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px rgba(16, 24, 40, 0.14);
+}
+
+.social-link img{
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    display: block;
+}
+
+.donate-link{
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+

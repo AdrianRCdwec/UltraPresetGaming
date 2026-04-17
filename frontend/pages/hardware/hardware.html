@@ -9,11 +9,15 @@
     <title>UltraPresetGaming</title>
 
     <!-- Icono -->
-    <link rel="icon" type="image/x-icon" href="../images/Logo pag web.ico">
+    <link rel="icon" type="image/x-icon" href="../../assets/favicon.ico">
 
     <!-- CSS -->
-    <link rel="stylesheet" href="./Montador_hardware.css" type="text/css">
-    <link rel="stylesheet" href="../../Base/Base.css" type="text/css">
+    <link rel="stylesheet" href="hardware.css" type="text/css">
+    <link rel="stylesheet" href="../../shared/css/reset.css" type="text/css">
+    <link rel="stylesheet" href="../../shared/css/header.css" type="text/css">
+    <link rel="stylesheet" href="../../shared/css/footer.css" type="text/css">
+    <link rel="stylesheet" href="../../shared/css/profile.css" type="text/css">
+    <link rel="stylesheet" href="../../shared/css/button.css" type="text/css">
 
     <!-- Fuentes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,23 +31,23 @@
     <!-- ========================= -->
     <header>
       <!-- Logo -->
-      <a class="logo" href="../Proyecto_5_pagina.html">
-        <img src="../images/Logo_Comparador_Absoluto.png" alt="Logotipo" title="Inicio" width="150px" height="auto">
+      <a class="logo" href="../home/index.html">
+        <img src="../../assets/images/misc/logo.png" alt="Logotipo" title="Inicio" width="150px" height="auto">
       </a>
 
       <!-- BOTÓN HAMBURGUESA (pantalla pequeña) -->
       <input type="checkbox" id="nav-toggle" class="nav-toggle">
       <label for="nav-toggle" class="nav-burger" aria-label="Abrir menú">
-        <img class="nav-burger-icon" src="../images/menu.svg" alt="">
+        <img class="nav-burger-icon" src="../../assets/images/icons/menu.svg" alt="">
       </label>
 
       <!-- Navegación principal -->
       <nav>
-          <a class="activo" href="../Montador de hardware/Montador_hardware.html">Hardware</a>
-          <a href="../Compra de videojuegos/compra_videojuegos.html">Videojuegos</a>
-          <a href="../Comparador de precios/comparador.html">Precios</a>
-          <a href="../Modeador recomendado/modeador.html">Mods</a>
-          <a href="../Novedades/novedades.html">Novedades</a>
+          <a class="activo" href="../hardware/hardware.html">Hardware</a>
+          <a href="../videogames/videogames.html">Videojuegos</a>
+          <a href="../prices/prices.html">Precios</a>
+          <a href="../mods/mods.html">Mods</a>
+          <a href="../news/news.html">Novedades</a>
       </nav>
 
       <!-- Botones de acción: Carrito y Login -->
@@ -131,7 +135,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/procesador.png" alt="Procesador" class="hw-icon">
+              <img src="../../assets/images/hardware/cpu.png" alt="Procesador" class="hw-icon">
             </a>
           </div>
 
@@ -144,7 +148,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/motherboard.png" alt="Placa Base" class="hw-icon">
+              <img src="../../assets/images/hardware/motherboard.png" alt="Placa Base" class="hw-icon">
             </a>
           </div>
 
@@ -157,7 +161,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/ram.png" alt="Memoria RAM" class="hw-icon">
+              <img src="../../assets/images/hardware/ram.png" alt="Memoria RAM" class="hw-icon">
             </a>
           </div>
 
@@ -170,7 +174,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/caja.png" alt="Caja o torre" class="hw-icon">
+              <img src="../../assets/images/hardware/box.png" alt="Caja o torre" class="hw-icon">
             </a>
           </div>
 
@@ -183,7 +187,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/aire.png" alt="Refrigeración por aire" class="hw-icon">
+              <img src="../../assets/images/hardware/air.png" alt="Refrigeración por aire" class="hw-icon">
             </a>
           </div>
 
@@ -196,7 +200,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/liquida.png" alt="Refrigeración Líquida" class="hw-icon">
+              <img src="../../assets/images/hardware/liquid.png" alt="Refrigeración Líquida" class="hw-icon">
             </a>
           </div>
 
@@ -209,7 +213,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/gpu.png" alt="Tarjeta Gráfica" class="hw-icon">
+              <img src="../../assets/images/hardware/gpu.png" alt="Tarjeta Gráfica" class="hw-icon">
             </a>
           </div>
 
@@ -222,7 +226,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/psu.png" alt="Fuente de alimentación" class="hw-icon">
+              <img src="../../assets/images/hardware/psu.png" alt="Fuente de alimentación" class="hw-icon">
             </a>
           </div>
 
@@ -235,7 +239,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/almacenamiento.png" alt="Disco Duro" class="hw-icon">
+              <img src="../../assets/images/hardware/storage.png" alt="Disco Duro" class="hw-icon">
             </a>
           </div>
 
@@ -248,7 +252,7 @@
         <section class="hw-item">
           <div class="hw-media">
             <a class="hw-media-link" href="#" target="_blank" rel="noopener">
-              <img src="../images/monitor.png" alt="Monitor" class="hw-icon">
+              <img src="../../assets/images/hardware/monitor.png" alt="Monitor" class="hw-icon">
             </a>
           </div>
 
@@ -329,16 +333,16 @@
         <!-- Redes sociales -->
         <div class="social">
           <a class="social-link" href="https://www.instagram.com/olamohcib/" target="_blank">
-            <img src="../images/instagram.svg" alt="Instagram">
+            <img src="../../assets/images/icons/instagram.svg" alt="Instagram">
           </a>
           <a class="social-link" href="https://www.youtube.com/@olaMohciB" target="_blank">
-            <img src="../images/youtube.svg" alt="YouTube">
+            <img src="../../assets/images/icons/youtube.svg" alt="YouTube">
           </a>
           <a class="social-link" href="https://x.com/olaMohciB" target="_blank">
-            <img src="../images/x.svg" alt="X">
+            <img src="../../assets/images/icons/x.svg" alt="X">
           </a>
           <a class="social-link" href="https://www.tiktok.com/@olamohcib?is_from_webapp=1&sender_device=pc" target="_blank">
-            <img src="../images/tiktok.svg" alt="TikTok">
+            <img src="../../assets/images/icons/tiktok.svg" alt="TikTok">
           </a>
         </div>
 
@@ -348,7 +352,7 @@
         </a>
       </div>
     </footer>
-    <script src="Montador_hardware.js"></script>
-    <script src="../../Base/auth_header.js"></script>
+    <script src="hardware.js"></script>
+    <script src="../../shared/js/auth-header.js"></script>
   </body>
 </html>
