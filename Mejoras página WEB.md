@@ -80,4 +80,4 @@
 
 1. Notificaciones por Telegram/Discord: Si el scraper de PcComponentes "revienta", que el bloque except envíe un mensaje a tu móvil avisando del fallo y el error.
 
-2. ###### Graceful Shutdown: Captura señales como Ctrl+C (KeyboardInterrupt) para que, si cancelas el script, guarde en la BD lo que lleva hasta ese momento en vez de perderlo
+2. ~~Graceful Shutdown: Captura señales como Ctrl+C (KeyboardInterrupt) para que, si cancelas el script, guarde en la BD lo que lleva hasta ese momento en vez de perderlo.~~

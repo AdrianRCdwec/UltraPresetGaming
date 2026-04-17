@@ -1,6 +1,6 @@
 import random
 from playwright.sync_api import sync_playwright
-
+from main_crawler import shutdown_event
 from .base_scraper import BaseScraper
 from .factory import ScraperFactory
 from scrapper_app.utils.stealth import (
@@ -70,6 +70,9 @@ class NeoByteScraper(BaseScraper):
 
         try:
             while hay_mas_paginas:
+                if shutdown_event.is_set():
+                    logger.warning(f"  🛑 Apagado seguro detectado. Saliendo de {url_catalogo_base}...")
+                    break
                 url_con_paginacion = f"{url_catalogo_base}?page={pagina_actual}"
                 logger.info(f"  📄 Entrando a la página {pagina_actual}... ({url_con_paginacion})")
                 

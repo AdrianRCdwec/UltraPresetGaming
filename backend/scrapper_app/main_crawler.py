@@ -1,4 +1,4 @@
-import sys, os, concurrent.futures, psutil
+import sys, os, concurrent.futures, psutil, signal, threading
 from scrapper_app.utils.logger import logger
 
 # CONFIGURACIÓN DE DJANGO
@@ -20,6 +20,24 @@ import scrapper_app.shops.hardware.alternate
 import scrapper_app.shops.hardware.neobyte
 # import scrapper_app.shops.hardware.amazon
 
+# --- VARIABLE GLOBAL PARA GRACEFUL SHUTDOWN ---
+shutdown_event = threading.Event()
+
+# --- MANEJADOR DE SEÑALES (Ctrl+C o SIGTERM) ---
+def signal_handler(sig, frame):
+    if not shutdown_event.is_set():
+        logger.warning("\n⚠️  [GRACEFUL SHUTDOWN] Señal de interrupción recibida (Ctrl+C).")
+        logger.warning("Deteniendo nuevos escaneos. Esperando a que los hilos actuales guarden en BD y cierren Playwright...")
+        shutdown_event.set()
+    else:
+        logger.error("\n❌ [FORCED KILL] Segunda señal recibida. Forzando apagado...")
+        sys.exit(1)
+
+# Registramos las señales (Windows soporta SIGINT, Linux SIGINT y SIGTERM)
+signal.signal(signal.SIGINT, signal_handler)
+if os.name != 'nt':
+    signal.signal(signal.SIGTERM, signal_handler)
+
 # --- CONFIGURACIÓN PARA OPTIMIZAR EL RENDIMIENTO ---
 def calcular_hilos_optimos():
     """Calcula el número ideal de max_workers para el ThreadPoolExecutor."""
@@ -39,11 +57,13 @@ def calcular_hilos_optimos():
         logger.error(f"Error calculando hilos: {e}")
         return 2
 
+# --- FUNCIONES DE ESCANEO PARA CADA TIENDA ---
 def escanearPcComponentes():
     total_pcc = 0
     scraper = ScraperFactory.obtener_scraper("pccomponentes", debug=False)
 
     def escanear(url, cat, tipo, excluir=None):
+        if shutdown_event.is_set(): return
         nonlocal total_pcc
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_pcc += total
@@ -83,6 +103,7 @@ def escanearCoolmod():
     scraper = ScraperFactory.obtener_scraper("coolmod", debug=False)
 
     def escanear(url, cat, tipo, excluir=None):
+        if shutdown_event.is_set(): return
         nonlocal total_coolmod
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_coolmod += total
@@ -126,6 +147,7 @@ def escanearLifeInformatica():
     scraper = ScraperFactory.obtener_scraper("lifeinformatica", debug=False)
 
     def escanear(url, cat, tipo, excluir=None):
+        if shutdown_event.is_set(): return
         nonlocal total_life
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_life += total
@@ -169,6 +191,7 @@ def escanearAlternate():
     scraper = ScraperFactory.obtener_scraper("alternate", debug=False)
 
     def escanear(url, cat, tipo, excluir=None):
+        if shutdown_event.is_set(): return
         nonlocal total_alternate
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_alternate += total
@@ -212,6 +235,7 @@ def escanearNeoByte():
     scraper = ScraperFactory.obtener_scraper("neobyte", debug=False)
 
     def escanear(url, cat, tipo, excluir=None):
+        if shutdown_event.is_set(): return
         nonlocal total_neobyte
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_neobyte += total
@@ -256,6 +280,7 @@ def escanearNeoByte():
 # =================================================================
 if __name__ == "__main__":
     logger.info("🚀 INICIANDO ESCANEO MASIVO EN PARALELO (MULTITHREADING)...")
+    logger.info("ℹ️  Puedes pulsar Ctrl+C en cualquier momento para un apagado seguro (Graceful Shutdown).")
     total_general = 0
 
     # =============================
@@ -283,20 +308,27 @@ if __name__ == "__main__":
     hilos_dinamicos = calcular_hilos_optimos()
     logger.info(f"📊 HARDWARE DETECTADO: {psutil.virtual_memory().available / (1024**3):.1f} GB RAM libre. Asignando {hilos_dinamicos} hilos concurrentes.")
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=hilos_dinamicos) as executor:
-        # Iniciamos todas las funciones en paralelo
-        futuros = {executor.submit(func): func.__name__ for func in funciones_scrapers}
-        
-        # A medida que cada tienda va terminando, recogemos su total y lo sumamos
-        for futuro in concurrent.futures.as_completed(futuros):
-            nombre_funcion = futuros[futuro]
-            try:
-                resultado = futuro.result()
-                total_general += resultado
-                logger.info(f"✅ {nombre_funcion} ha terminado y sumado {resultado} productos.")
-            except Exception as e:
-                logger.error(f"❌ Error crítico en {nombre_funcion}: {e}")
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=hilos_dinamicos) as executor:
+            # Iniciamos todas las funciones en paralelo
+            futuros = {executor.submit(func): func.__name__ for func in funciones_scrapers}
+            
+            # A medida que cada tienda va terminando, recogemos su total y lo sumamos
+            for futuro in concurrent.futures.as_completed(futuros):
+                nombre_funcion = futuros[futuro]
+                try:
+                    resultado = futuro.result()
+                    total_general += resultado
+                    logger.info(f"✅ {nombre_funcion} ha terminado y sumado {resultado} productos.")
+                except Exception as e:
+                    logger.error(f"❌ Error crítico en {nombre_funcion}: {e}")
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if shutdown_event.is_set():
+            logger.warning(f"\n🛑 APAGADO SEGURO COMPLETADO. Se guardaron {total_general} productos antes de abortar.")
+        else:
+            logger.info(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS.")
 
-    logger.info(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS.")
-
-    desactivar_ofertas_obsoletas()
+    if not shutdown_event.is_set():
+        desactivar_ofertas_obsoletas()

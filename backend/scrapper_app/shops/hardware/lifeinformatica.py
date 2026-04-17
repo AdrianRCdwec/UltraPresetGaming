@@ -1,6 +1,6 @@
 import random
 from playwright.sync_api import sync_playwright
-
+from main_crawler import shutdown_event
 from .base_scraper import BaseScraper
 from .factory import ScraperFactory
 from scrapper_app.utils.stealth import (
@@ -105,6 +105,9 @@ class LifeInformaticaScraper(BaseScraper):
 
             # Bucle para pulsar "Cargar Más" hasta que desaparezca
             while True:
+                if shutdown_event.is_set():
+                    logger.warning(f"  🛑 Apagado seguro detectado. Saliendo de {url_catalogo_base}...")
+                    break
                 try:
                     boton_cargar_mas = self.page.locator('#yith-infs-button')
 
