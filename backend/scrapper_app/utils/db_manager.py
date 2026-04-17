@@ -1,4 +1,4 @@
-import os, django, sys, re, requests, asyncio
+import os, django, sys, re, requests
 from fuzzywuzzy import fuzz
 from urllib.parse import urlparse
 from django.core.files.base import ContentFile
@@ -10,6 +10,41 @@ from .stealth import obtener_perfil_navegador
 from .ia_matcher import evaluar_productos_ia_sync
 from scrapper_app.utils.logger import logger
 
+# CONFIGURACIÓN DE PATRONES DE LIMPIEZA
+PALABRAS_BASURA = [
+    "procesador", "tarjeta grafica", "tarjeta gráfica", "placa base", "memoria ram",
+    "disco duro", "fuente de alimentacion", "fuente de alimentación", "caja de pc",
+    "caja pc", "torre", "refrigeracion liquida", "refrigeración líquida", "kit",
+    "disipador", "ventilador", "sin ventilador", "no cooler", "box", "tray",
+    "edition", "oem", "retail", "v2", "v3", "reacondicionado", "refurbished",
+    "frecuencia", "base", "turbo", "gráficos", "graficos", "overclocking",
+    "núcleos", "nucleos", "ghz", "ecc", "lga", "socket", "threads", "hilos",
+    "ia integrada", "intel ai boost", "npu", "radeon", "vega", "integrados"
+]
+
+PATRON_PALABRAS_BASURA = re.compile(
+    r'\b(?:' + '|'.join(re.escape(palabra) for palabra in PALABRAS_BASURA) + r')\b',
+    re.IGNORECASE
+)
+
+PATRON_CARACTERES_ESPECIALES = re.compile(r'[^a-z0-9\.\-\s]')
+PATRON_ESPACIOS_MULTIPLES = re.compile(r'\s+')
+
+PATRON_INTEL = re.compile(r'((?:i[3579]|ultra\s*[579])-?\s*\d{3,5}[a-z]*)', re.IGNORECASE)
+PATRON_AMD = re.compile(r'((?:ryzen\s*[3579]|r[3579])-?\s*\d{4}[a-z0-9]*)', re.IGNORECASE)
+PATRON_XEON = re.compile(r'(xeon\s+[a-z0-9\-]+)', re.IGNORECASE)
+PATRON_THREADRIPPER = re.compile(r'(threadripper\s*\d{4}[a-z]*)', re.IGNORECASE)
+
+PATRON_GPU_NVIDIA = re.compile(r'(rtx|gtx|quadro)\s*\d{4}\s*(?:ti|super)?[a-z]*', re.IGNORECASE)
+PATRON_GPU_AMD = re.compile(r'rx\s*\d{4}\s*(?:xtx|xt|super)?[a-z]*', re.IGNORECASE)
+PATRON_GPU_INTEL = re.compile(r'(arc\s*a\d{3})', re.IGNORECASE)
+
+PATRON_MB = re.compile(r'\b([zhbxab]\d{2,3}[a-z]*)\b', re.IGNORECASE)
+PATRON_RAM = re.compile(r'(ddr[45])\s*(\d{2}gb)?\s*(\d{4})(?:\s*cl\d+)?', re.IGNORECASE)
+PATRON_SSD = re.compile(r'(\d{1,2}(?:tb|gb))\s*(nvme|pcie\s*4\.0|pcie\s*5\.0|sata)?', re.IGNORECASE)
+PATRON_PSU = re.compile(r'(\d{3,4}w)\s*(bronze|silver|gold|platinum|titanium)?', re.IGNORECASE)
+PATRON_MONITOR = re.compile(r'(\d{2})\s*(?:pulgadas?)?\s*([24]k|1080p|1440p|uhd)?\s*(\d{2,3}hz)?', re.IGNORECASE)
+PATRON_AIO = re.compile(r'(?:aio|liquida)\s*(\d{3})', re.IGNORECASE)
 
 # CONFIGURACIÓN DE DJANGO
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -45,61 +80,32 @@ def limpiar_precio(texto):
 
 # LIMPIAR EL NOMBRE DEL PRODUCTO
 def limpiar_nombre_producto(nombre):
-    nombre_limpio = nombre.lower()
-    
-    # 1. Quitar palabras basura que no aportan al modelo base
-    palabras_basura = [
-        "procesador", "tarjeta grafica", "tarjeta gráfica", "placa base", "memoria ram", 
-        "disco duro", "fuente de alimentacion", "fuente de alimentación", "caja de pc", 
-        "caja pc", "torre", "refrigeracion liquida", "refrigeración líquida", "kit", 
-        "disipador", "ventilador", "sin ventilador", "no cooler", "box", "tray", 
-        "edition", "oem", "retail", "v2", "v3", "reacondicionado", "refurbished",
-        "frecuencia", "base", "turbo", "gráficos", "graficos", "overclocking", 
-        "núcleos", "nucleos", "ghz", "ecc", "lga", "socket", "threads", "hilos",
-        "ia integrada", "intel ai boost", "npu", "radeon", "vega", "integrados"
-    ]
-    for palabra in palabras_basura:
-        # Usamos \b para asegurar que borramos la palabra entera y no partes de otras
-        nombre_limpio = re.sub(rf'\b{palabra}\b', '', nombre_limpio)
+    nombre_limpio = str(nombre).lower().strip()
 
-    # 2. Expresiones regulares para capturar el "Corazón" del hardware
+    nombre_limpio = PATRON_PALABRAS_BASURA.sub(' ', nombre_limpio)
+
     modelo_extraido = ""
-    
-    # -- PROCESADORES INTEL Y AMD --
-    match_intel = re.search(r'((?:i[3579]|ultra\s*[579])-?\s*\d{3,5}[a-z]*)', nombre_limpio)
-    match_amd = re.search(r'((?:ryzen\s*[3579]|r[3579])-?\s*\d{4}[a-z0-9]*)', nombre_limpio)
-    match_xeon = re.search(r'(xeon\s+[a-z0-9\-]+)', nombre_limpio)
-    match_tr = re.search(r'(threadripper\s*\d{4}[a-z]*)', nombre_limpio)
-    
-    # -- TARJETAS GRÁFICAS --
-    match_gpu_nvidia = re.search(r'(rtx|gtx|quadro)\s*\d{4}\s*(?:ti|super)?[a-z]*', nombre_limpio)
-    match_gpu_amd = re.search(r'rx\s*\d{4}\s*(?:xtx|xt|super)?[a-z]*', nombre_limpio)
-    match_gpu_intel = re.search(r'(arc\s*a\d{3})', nombre_limpio)
 
-    # -- PLACAS BASE --
-    match_mb = re.search(r'\b([zhbxab]\d{2,3}[a-z]*)\b', nombre_limpio)
+    match_intel = PATRON_INTEL.search(nombre_limpio)
+    match_amd = PATRON_AMD.search(nombre_limpio)
+    match_xeon = PATRON_XEON.search(nombre_limpio)
+    match_tr = PATRON_THREADRIPPER.search(nombre_limpio)
 
-    # -- MEMORIA RAM --
-    match_ram = re.search(r'(ddr[45])\s*(\d{2}gb)?\s*(\d{4})(?:\s*cl\d+)?', nombre_limpio)
+    match_gpu_nvidia = PATRON_GPU_NVIDIA.search(nombre_limpio)
+    match_gpu_amd = PATRON_GPU_AMD.search(nombre_limpio)
+    match_gpu_intel = PATRON_GPU_INTEL.search(nombre_limpio)
 
-    # -- SSD --
-    match_ssd = re.search(r'(\d{1,2}(?:tb|gb))\s*(nvme|pcie\s*4\.0|pcie\s*5\.0|sata)?', nombre_limpio)
+    match_mb = PATRON_MB.search(nombre_limpio)
+    match_ram = PATRON_RAM.search(nombre_limpio)
+    match_ssd = PATRON_SSD.search(nombre_limpio)
+    match_psu = PATRON_PSU.search(nombre_limpio)
+    match_monitor = PATRON_MONITOR.search(nombre_limpio)
+    match_aio = PATRON_AIO.search(nombre_limpio)
 
-    # -- FUENTES DE ALIMENTACIÓN --
-    match_psu = re.search(r'(\d{3,4}w)\s*(bronze|silver|gold|platinum|titanium)?', nombre_limpio)
-
-    # -- MONITORES --
-    match_monitor = re.search(r'(\d{2})\s*(?:pulgadas?)?\s*([24]k|1080p|1440p|uhd)?\s*(\d{2,3}hz)?', nombre_limpio)
-
-    # -- REFRIGERACIÓN LÍQUIDA --
-    match_aio = re.search(r'(?:aio|liquida)\s*(\d{3})', nombre_limpio)
-
-    # Asignar el modelo extraído siguiendo un orden de prioridad
     if match_intel:
         modelo_extraido = match_intel.group(1).replace(" ", "").replace("-", "")
     elif match_amd:
         modelo_extraido = match_amd.group(1).replace(" ", "").replace("-", "")
-        # Normalizamos "r7" a "ryzen7" para unificar criterios
         if modelo_extraido.startswith("r") and not modelo_extraido.startswith("ryzen"):
             modelo_extraido = modelo_extraido.replace("r", "ryzen", 1)
     elif match_xeon:
@@ -135,9 +141,8 @@ def limpiar_nombre_producto(nombre):
     elif match_aio:
         modelo_extraido = f"aio-{match_aio.group(1)}mm"
 
-    # 3. Limpiar caracteres especiales para el Fuzzing
-    nombre_limpio = re.sub(r'[^a-z0-9\.\-\s]', ' ', nombre_limpio)
-    nombre_limpio = ' '.join(nombre_limpio.split()).strip()
+    nombre_limpio = PATRON_CARACTERES_ESPECIALES.sub(' ', nombre_limpio)
+    nombre_limpio = PATRON_ESPACIOS_MULTIPLES.sub(' ', nombre_limpio).strip()
 
     return {
         "texto_limpio": nombre_limpio,

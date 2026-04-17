@@ -28,7 +28,7 @@
 
 4. ~~Borrado lógico (Soft Delete): En desactivar\_ofertas\_obsoletas, en vez de borrar el producto de la BD, ponle un campo activo=False. Así no pierdes el histórico de precios.~~
 
-5. ###### Limpieza de strings más eficiente: Tu función limpiar\_nombre\_producto usa muchas sentencias replace(). Podrías unificarlas usando expresiones regulares más potentes y compiladas (re.compile).
+5. ~~Limpieza de strings más eficiente: Tu función limpiar\_nombre\_producto usa muchas sentencias replace(). Podrías unificarlas usando expresiones regulares más potentes y compiladas (re.compile).~~
 
 
 
