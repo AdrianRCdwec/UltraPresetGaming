@@ -36,11 +36,11 @@ class Producto(models.Model):
         ('VG_REC',  'VG - Recomendación'),
     ]
 
-    nombre      = models.CharField(max_length=200)
+    nombre      = models.CharField(max_length=200, db_index=True)
     tipo        = models.CharField(max_length=2, choices=TIPO_CHOICES, default='HW')
-    categoria   = models.CharField(max_length=7, choices=CATEGORIA_CHOICES, default='NONE')
+    categoria   = models.CharField(max_length=7, choices=CATEGORIA_CHOICES, default='NONE', db_index=True)
     descripcion = models.TextField(blank=True, null=True)
-    imagen      = models.ImageField(upload_to='productos/', blank=True, null=True)  # ← NUEVO
+    imagen      = models.ImageField(upload_to='productos/', blank=True, null=True)
     tiendas     = models.ManyToManyField(Tienda, through='Oferta')
 
     def __str__(self):

@@ -11,7 +11,7 @@
 
 5. ~~Ajustar dinámicamente el max\_workers: Haz que el script analice cuánta RAM tienes libre y la CPU disponible usando psutil y fije el límite de hilos automáticamente.~~
 
-6. ###### Scraping Headless puro (sin GPU): Asegúrate de tener flags como --disable-gpu, --disable-dev-shm-usage y --no-sandbox si corres esto en un servidor Linux o Docker.
+6. ~~Scraping Headless puro (sin GPU): Asegúrate de tener flags como --disable-gpu, --disable-dev-shm-usage y --no-sandbox si corres esto en un servidor Linux o Docker.~~
 
 7. ~~Reintentos automáticos (Retries) a nivel de página: Si Playwright falla al hacer click en "Cargar Más", pon un bloque try/except que intente de nuevo tras 2 segundos antes de dar la página por perdida.~~
 
@@ -22,7 +22,7 @@
 
 1. ~~Inserción en bloque (Bulk Create/Update): En lugar de guardar o actualizar los productos de uno en uno, acumúlalos en una lista y usa Producto.objects.bulk\_create() y bulk\_update().~~
 
-2. ###### Índices en la Base de Datos: Añade db\_index=True en tu modelo de Django para los campos nombre y categoria. Las búsquedas volarán.
+2. ~~Índices en la Base de Datos: Añade db\_index=True en tu modelo de Django para los campos nombre y categoria. Las búsquedas volarán.~~
 
 3. Caché en Redis: En lugar de un diccionario global en RAM, podrías levantar un contenedor de Redis. Es la forma estándar y profesional en la industria para caché.
 
