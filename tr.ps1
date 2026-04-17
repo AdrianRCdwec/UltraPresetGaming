@@ -24,7 +24,7 @@ function Get-TreeAscii {
                 $_.Name -notin $ExcluirDirectorios
             }
             else {
-                # Si el switch -f está presente, devolvemos $true y el archivo se incluye
+                # (-not $f.IsPresent) -and ($_.Extension -ne ".jpg") // Si queremos añadir que no se incluya una extensión específica se pone eso.
                 -not $f.IsPresent
             }
         } |

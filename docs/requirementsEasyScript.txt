@@ -12,28 +12,28 @@ notepad $PROFILE
 )
 
 # PONEMOS ESTO:
-    function tr {
-        $dir = (Get-Location).Path
+function tr {
+    $dir = (Get-Location).Path
 
-        while ($true) {
-            $scriptPath = Join-Path $dir "tr.ps1"
+    while ($true) {
+        $scriptPath = Join-Path $dir "tr.ps1"
 
-            if (Test-Path $scriptPath) {
-                & $scriptPath @args
-                return
-            }
-
-            $parent = Split-Path -Path $dir -Parent
-
-            if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $dir) {
-                break
-            }
-
-            $dir = $parent
+        if (Test-Path $scriptPath) {
+            & $scriptPath @args
+            return
         }
 
-        Write-Error "No se encontró tr.ps1 en esta carpeta ni en carpetas padre."
+        $parent = Split-Path -Path $dir -Parent
+
+        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $dir) {
+            break
+        }
+
+        $dir = $parent
     }
+
+    Write-Error "No se encontró tr.ps1 en esta carpeta ni en carpetas padre."
+}
 
 # GUARDAMOS EL ARCHIVO!!!
 ---------------------------------------------------------------
