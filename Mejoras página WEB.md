@@ -71,7 +71,7 @@
 
 3. ###### Pruebas Unitarias (Pytest): Como tienes formación en QA, escribe tests unitarios para funciones críticas como limpiar\_precio o limpiar\_nombre\_producto.
 
-4. **Sistema de Logging Profesional: Cambia los print() por logging.info(), logging.warning(), etc. Así podrás guardar el historial de la ejecución en un archivo scraper.log.**
+4. ~~Sistema de Logging Profesional: Cambia los print() por logging.info(), logging.warning(), etc. Así podrás guardar el historial de la ejecución en un archivo scraper.log.~~
 
 
 

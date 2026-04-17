@@ -8,6 +8,8 @@ from datetime import timedelta
 from api.models import Producto, Tienda, Oferta, DecisionIA
 from .stealth import obtener_perfil_navegador 
 from .ia_matcher import evaluar_productos_ia_sync
+from scrapper_app.utils.logger import logger
+
 
 # CONFIGURACIÓN DE DJANGO
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -148,7 +150,7 @@ def desactivar_ofertas_obsoletas():
     Busca ofertas que no se han visto en el último escaneo (más de 24 horas).
     Las marca como no disponibles para que no aparezcan productos fantasma o sin stock.
     """
-    print("\n🧹 Iniciando limpieza de ofertas caducadas/sin stock...")
+    logger.info("\n🧹 Iniciando limpieza de ofertas caducadas/sin stock...")
     limite = timezone.now() - timedelta(days=1)
     
     # Filtramos usando TU campo 'fecha_actualizacion'
@@ -157,9 +159,9 @@ def desactivar_ofertas_obsoletas():
     
     if cantidad > 0:
         ofertas_obsoletas.update(disponible=False)
-        print(f"✅ Se han marcado {cantidad} ofertas como NO disponibles (fuera de stock).")
+        logger.info(f"✅ Se han marcado {cantidad} ofertas como NO disponibles (fuera de stock).")
     else:
-        print("✅ Todas las ofertas están vigentes. No hay stock fantasma.")
+        logger.info("✅ Todas las ofertas están vigentes. No hay stock fantasma.")
 
 # GUARDAR PRODUCTOS EN LA BASE DE DATOS
 def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda, categoria_db, tipo_db):
@@ -168,7 +170,7 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
         
     global CACHE_PRODUCTOS_BD
 
-    print(f"\n💾 Guardando {len(productos_extraidos)} productos en la BD para la tienda {nombre_tienda}...\n")
+    logger.info(f"\n💾 Guardando {len(productos_extraidos)} productos en la BD para la tienda {nombre_tienda}...\n")
     
     tienda_db, _ = Tienda.objects.get_or_create(nombre=nombre_tienda, defaults={'url_base': url_base_tienda})
     productos_guardados_exitosamente = 0
@@ -176,10 +178,10 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
     
     # 1. CARGA DE CACHÉ
     if categoria_db not in CACHE_PRODUCTOS_BD:
-        print(f"🔄 [Caché] Cargando la categoría '{categoria_db}' desde SQLite a la memoria RAM...")
+        logger.info(f"🔄 [Caché] Cargando la categoría '{categoria_db}' desde SQLite a la memoria RAM...")
         CACHE_PRODUCTOS_BD[categoria_db] = list(Producto.objects.filter(categoria=categoria_db))
     else:
-        print(f"⚡ [Caché] Leyendo la categoría '{categoria_db}' directamente desde la RAM.")
+        logger.info(f"⚡ [Caché] Leyendo la categoría '{categoria_db}' directamente desde la RAM.")
         
     productos_existentes = CACHE_PRODUCTOS_BD[categoria_db]
     
@@ -317,7 +319,6 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                                 
                             # Guardar en el ImageField usando ContentFile
                             nuevo_prod.imagen.save(nombre_archivo, ContentFile(respuesta_img.content), save=False)
-                            # print(f"📸 Imagen descargada para: {nombre_original[:30]}...") # Comentado para no saturar consola
                     except Exception as e:
                         # Fallo silencioso para no parar el crawler si la imagen no carga
                         pass
@@ -344,7 +345,7 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
             productos_guardados_exitosamente += 1
             
         except Exception as e:
-            print(f"⚠️ Error procesando item: {e}")
+            logger.warning(f"⚠️ Error procesando item: {e}")
             continue
 
     # 4. TRANSACCIÓN MASIVA FINAL (Solo entra a SQLite 1 vez)

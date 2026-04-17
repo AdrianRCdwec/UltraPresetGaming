@@ -1,5 +1,4 @@
 import random
-import logging
 from playwright.sync_api import sync_playwright
 
 from .base_scraper import BaseScraper
@@ -12,6 +11,7 @@ from scrapper_app.utils.stealth import (
     obtener_configuracion_proxy
 )
 from scrapper_app.utils.db_manager import guardar_productos_en_db
+from scrapper_app.utils.logger import logger
 
 
 class LifeInformaticaScraper(BaseScraper):
@@ -96,7 +96,7 @@ class LifeInformaticaScraper(BaseScraper):
         return datos
 
     def escanear_catalogo(self, url_catalogo_base, categoria_db, tipo_db, excluir_palabras=None):
-        print(f"\n🕷️ [LIFE INFO] -> Escaneando: {url_catalogo_base}")
+        logger.info(f"\n🕷️ [LIFE INFO] -> Escaneando: {url_catalogo_base}")
         
         todos_los_productos_extraidos = []
 
@@ -154,11 +154,11 @@ class LifeInformaticaScraper(BaseScraper):
                     exito_carga = True
                     break 
                 except Exception as e:
-                    print(f"    ⚠️ Fallo de conexión en LifeInformatica. Intento {intento+1} de 3...")
+                    logger.warning(f"    ⚠️ Fallo de conexión en LifeInformatica. Intento {intento+1} de 3...")
                     page.wait_for_timeout(3000)
 
             if not exito_carga:
-                print(f"    ❌ Imposible cargar el catálogo {url_catalogo_base} tras 3 intentos. Abortando esta categoría.")
+                logger.error(f"    ❌ Imposible cargar el catálogo {url_catalogo_base} tras 3 intentos. Abortando esta categoría.")
                 context.close()
                 browser.close()
                 return 0
@@ -204,26 +204,26 @@ class LifeInformaticaScraper(BaseScraper):
                             else:
                                 boton_cargar_mas.click()
                             
-                            print("    ⏳ Cargando más productos...")
+                            logger.info("    ⏳ Cargando más productos...")
                             page.wait_for_timeout(2500)
                             intentos_fallidos = 0
                         else:
-                            print("    ✅ Catálogo completo desplegado.")
+                            logger.info("    ✅ Catálogo completo desplegado.")
                             break
                     except Exception as e:
                         intentos_fallidos += 1
                         if intentos_fallidos <= MAX_REINTENTOS:
-                            print(f"    ⚠️ Interferencia al pulsar 'Cargar Más' (Intento {intentos_fallidos}/{MAX_REINTENTOS}). Reintentando...")
+                            logger.warning(f"    ⚠️ Interferencia al pulsar 'Cargar Más' (Intento {intentos_fallidos}/{MAX_REINTENTOS}). Reintentando...")
                             page.wait_for_timeout(250)
                         else:
-                            print(f"    ❌ Imposible pulsar el botón tras {MAX_REINTENTOS} reintentos. Asumiendo fin del catálogo.")
+                            logger.error(f"    ❌ Imposible pulsar el botón tras {MAX_REINTENTOS} reintentos. Asumiendo fin del catálogo.")
                             break
 
                 # Extraer TODOS los productos de golpe ahora que la página está entera
                 datos_pagina = self.extraer_productos_de_pagina(page)
                 
                 if not datos_pagina:
-                    print(f"  ⚠️ No se encontraron productos.")
+                    logger.warning(f"  ⚠️ No se encontraron productos.")
                     return 0
 
                 # Aplicar filtro de palabras excluidas
@@ -235,13 +235,12 @@ class LifeInformaticaScraper(BaseScraper):
                             datos_filtrados.append(prod)
                     
                     datos_pagina = datos_filtrados
-                    print(f"  ✂️ Filtrados artículos no deseados. Quedan {len(datos_pagina)}.")
+                    logger.info(f"  ✂️ Filtrados artículos no deseados. Quedan {len(datos_pagina)}.")
                     
                 todos_los_productos_extraidos.extend(datos_pagina)
                 
             except Exception as e:
-                print(f"❌ Error interno procesando {url_catalogo_base}: {e}")
-                logging.error(f"[SCRAPER {url_catalogo_base}] Fallo crítico: {str(e)}")
+                logger.error(f"❌ Error crítico en Playwright [{url_catalogo_base}]: {e}")
             finally:
                 context.close()
                 browser.close()

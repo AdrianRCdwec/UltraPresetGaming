@@ -1,5 +1,6 @@
 import random, re
 from fake_useragent import UserAgent
+from scrapper_app.utils.logger import logger
 
 # --- CONFIGURACIÓN DE TRACKERS ---
 TRACKERS_Y_ADS = [
@@ -31,7 +32,6 @@ def bloquear_recursos_innecesarios(route):
 
     # 2. Bloquear por coincidencia en la URL (Trackers y Ads)
     if any(tracker in url for tracker in TRACKERS_Y_ADS):
-        # Opcional: print(f"🚫 Tracker bloqueado: {url}")
         route.abort()
         return
 
@@ -95,7 +95,7 @@ def resolver_captcha_cloudflare(page):
         if "Just a moment" not in titulo and not page.locator('#cf-please-wait').is_visible(timeout=1000):
             return True # No hay captcha, todo en orden
             
-        print("🛡️ [Anti-Bot] Detectado desafío Cloudflare Turnstile. Intentando resolver...")
+        logger.info("🛡️ [Anti-Bot] Detectado desafío Cloudflare Turnstile. Intentando resolver...")
         
         # 2. Esperar a que el widget interactivo cargue completamente (hasta 10s)
         checkbox = page.locator('input[type="checkbox"], #cf-stage iframe, .ctp-checkbox-label').first
@@ -120,16 +120,16 @@ def resolver_captcha_cloudflare(page):
                 
                 # Hacer clic
                 page.mouse.click(x_centro, y_centro, delay=random.uniform(50, 150))
-                print("🖱️ [Anti-Bot] Clic humano simulado en Turnstile.")
+                logger.info("🖱️ [Anti-Bot] Clic humano simulado en Turnstile.")
         
         # 4. Esperar a que el título cambie o el elemento de Cloudflare desaparezca (hasta 15s)
         # Si resolvemos el captcha, Cloudflare nos redirige a la web real.
         page.wait_for_function('document.title !== "Just a moment..."', timeout=15000)
-        print("✅ [Anti-Bot] Desafío superado. Entrando a la web...")
+        logger.info("✅ [Anti-Bot] Desafío superado. Entrando a la web...")
         return True
         
     except Exception as e:
-        print(f"❌ [Anti-Bot] Imposible resolver Cloudflare. El scraper podría fallar: {e}")
+        logger.error(f"❌ [Anti-Bot] Imposible resolver Cloudflare. El scraper podría fallar: {e}")
         return False
 
 # SCROLL HUMANO AVANZADO

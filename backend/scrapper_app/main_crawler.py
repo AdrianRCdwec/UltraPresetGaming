@@ -1,4 +1,5 @@
-import sys, os, concurrent.futures, logging, psutil
+import sys, os, concurrent.futures, psutil
+from scrapper_app.utils.logger import logger
 
 # CONFIGURACIÓN DE DJANGO
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,13 +20,6 @@ import scrapper_app.shops.hardware.alternate
 import scrapper_app.shops.hardware.neobyte
 # import scrapper_app.shops.hardware.amazon
 
-# --- CONFIGURACIÓN DE LOGGER ---
-logging.basicConfig(
-    filename='errores_scraper.log', 
-    level=logging.ERROR, 
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-
 # --- CONFIGURACIÓN PARA OPTIMIZAR EL RENDIMIENTO ---
 def calcular_hilos_optimos():
     """Calcula el número ideal de max_workers para el ThreadPoolExecutor."""
@@ -42,7 +36,7 @@ def calcular_hilos_optimos():
         
         return max(1, hilos_optimos)
     except Exception as e:
-        logging.error(f"Error calculando hilos: {e}")
+        logger.error(f"Error calculando hilos: {e}")
         return 2
 
 def escanearPcComponentes():
@@ -53,7 +47,7 @@ def escanearPcComponentes():
         nonlocal total_pcc
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_pcc += total
-        print(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
+        logger.info(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
             f"\n✅ [Placas Base] Se han guardado un total de {total} placas base." if cat == 'MB' else
             f"\n✅ [Memorias RAM] Se han guardado un total de {total} memorias RAM." if cat == 'RAM' else
             f"\n✅ [Cajas PC] Se han guardado un total de {total} cajas de pc." if cat == 'CASE' else
@@ -75,7 +69,7 @@ def escanearPcComponentes():
     escanear("https://www.pccomponentes.com/discos-duros", 'SSD', 'HW')
     escanear("https://www.pccomponentes.com/monitores", 'MON', 'HW')
 
-    print(f"\n✅ [PcComponentes FIN] Se han guardado un total de {total_pcc} productos.")
+    logger.info(f"\n✅ [PcComponentes FIN] Se han guardado un total de {total_pcc} productos.")
     return total_pcc
 
 
@@ -87,7 +81,7 @@ def escanearCoolmod():
         nonlocal total_coolmod
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_coolmod += total
-        print(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
+        logger.info(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
             f"\n✅ [Placas Base] Se han guardado un total de {total} placas base." if cat == 'MB' else
             f"\n✅ [Memorias RAM] Se han guardado un total de {total} memorias RAM." if cat == 'RAM' else
             f"\n✅ [Cajas PC] Se han guardado un total de {total} cajas de pc." if cat == 'CASE' else
@@ -113,7 +107,7 @@ def escanearCoolmod():
     escanear("https://www.coolmod.com/componentes-pc-discos-duros/", 'SSD', 'HW')
     escanear("https://www.coolmod.com/perifericos-monitores/", 'MON', 'HW')
 
-    print(f"\n✅ [Coolmod FIN] Se han guardado un total de {total_coolmod} productos.")
+    logger.info(f"\n✅ [Coolmod FIN] Se han guardado un total de {total_coolmod} productos.")
     return total_coolmod
 
 
@@ -125,7 +119,7 @@ def escanearLifeInformatica():
         nonlocal total_life
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_life += total
-        print(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
+        logger.info(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
             f"\n✅ [Placas Base] Se han guardado un total de {total} placas base." if cat == 'MB' else
             f"\n✅ [Memorias RAM] Se han guardado un total de {total} memorias RAM." if cat == 'RAM' else
             f"\n✅ [Cajas PC] Se han guardado un total de {total} cajas de pc." if cat == 'CASE' else
@@ -151,7 +145,7 @@ def escanearLifeInformatica():
     escanear("https://lifeinformatica.com/categoria-producto/componentes/discos-duros/", 'SSD', 'HW')
     escanear("https://lifeinformatica.com/categoria-producto/perifericos/monitores-y-accesorios/monitores/", 'MON', 'HW')
 
-    print(f"\n✅ [Life Informática FIN] Se han guardado un total de {total_life} productos.")
+    logger.info(f"\n✅ [Life Informática FIN] Se han guardado un total de {total_life} productos.")
     return total_life
 
 
@@ -163,7 +157,7 @@ def escanearAlternate():
         nonlocal total_alternate
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_alternate += total
-        print(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
+        logger.info(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
             f"\n✅ [Placas Base] Se han guardado un total de {total} placas base." if cat == 'MB' else
             f"\n✅ [Memorias RAM] Se han guardado un total de {total} memorias RAM." if cat == 'RAM' else
             f"\n✅ [Cajas PC] Se han guardado un total de {total} cajas de pc." if cat == 'CASE' else
@@ -189,7 +183,7 @@ def escanearAlternate():
     escanear("https://www.alternate.es/SSD", 'SSD', 'HW')
     escanear("https://www.alternate.es/Monitores", 'MON', 'HW')
 
-    print(f"\n✅ [Alternate FIN] Se han guardado un total de {total_alternate} productos.")
+    logger.info(f"\n✅ [Alternate FIN] Se han guardado un total de {total_alternate} productos.")
     return total_alternate
 
 
@@ -201,7 +195,7 @@ def escanearNeoByte():
         nonlocal total_neobyte
         total = scraper.escanear_catalogo(url, cat, tipo, excluir_palabras=excluir)
         total_neobyte += total
-        print(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
+        logger.info(f"\n✅ [Procesadores] Se han guardado un total de {total} procesadores." if cat == 'CPU' else 
             f"\n✅ [Placas Base] Se han guardado un total de {total} placas base." if cat == 'MB' else
             f"\n✅ [Memorias RAM] Se han guardado un total de {total} memorias RAM." if cat == 'RAM' else
             f"\n✅ [Cajas PC] Se han guardado un total de {total} cajas de pc." if cat == 'CASE' else
@@ -227,7 +221,7 @@ def escanearNeoByte():
     escanear("https://www.neobyte.es/discos-duros-110", 'SSD', 'HW')
     escanear("https://www.neobyte.es/monitores-169", 'MON', 'HW')
 
-    print(f"\n✅ [NeoByte FIN] Se han guardado un total de {total_neobyte} productos.")
+    logger.info(f"\n✅ [NeoByte FIN] Se han guardado un total de {total_neobyte} productos.")
     return total_neobyte
 
 # def escanearAmazon():
@@ -236,7 +230,7 @@ def escanearNeoByte():
 # INICIO DEL SCRIPT
 # =================================================================
 if __name__ == "__main__":
-    print("🚀 INICIANDO ESCANEO MASIVO EN PARALELO (MULTITHREADING)...")
+    logger.info("🚀 INICIANDO ESCANEO MASIVO EN PARALELO (MULTITHREADING)...")
     total_general = 0
 
     # =============================
@@ -246,10 +240,10 @@ if __name__ == "__main__":
     # Estas son todas las categorías_db que usas en tus llamadas a escanear_catalogo_*
     categorias_usadas = ['CPU', 'MB', 'RAM', 'CASE', 'AIR', 'LIQ', 'GPU', 'PSU', 'SSD', 'MON']
     
-    print("\n📚 Precargando productos de la BD en la memoria RAM para evitar bloqueos SQLite...")
+    logger.info("\n📚 Precargando productos de la BD en la memoria RAM para evitar bloqueos SQLite...")
     for cat in categorias_usadas:
         CACHE_PRODUCTOS_BD[cat] = list(Producto.objects.filter(categoria=cat))
-    print(f"✅ Caché cargada con éxito. Listo para lanzar los hilos.\n")
+    logger.info(f"✅ Caché cargada con éxito. Listo para lanzar los hilos.\n")
 
     # Lista de las funciones que queremos ejecutar al mismo tiempo
     funciones_scrapers = [
@@ -262,7 +256,7 @@ if __name__ == "__main__":
 
     # Calculamos los hilos dinámicamente según el hardware
     hilos_dinamicos = calcular_hilos_optimos()
-    print(f"📊 HARDWARE DETECTADO: {psutil.virtual_memory().available / (1024**3):.1f} GB RAM libre. Asignando {hilos_dinamicos} hilos concurrentes.")
+    logger.info(f"📊 HARDWARE DETECTADO: {psutil.virtual_memory().available / (1024**3):.1f} GB RAM libre. Asignando {hilos_dinamicos} hilos concurrentes.")
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=hilos_dinamicos) as executor:
         # Iniciamos todas las funciones en paralelo
@@ -274,11 +268,10 @@ if __name__ == "__main__":
             try:
                 resultado = futuro.result()
                 total_general += resultado
-                print(f"✅ {nombre_funcion} ha terminado y sumado {resultado} productos.")
+                logger.info(f"✅ {nombre_funcion} ha terminado y sumado {resultado} productos.")
             except Exception as e:
-                print(f"❌ Error crítico en {nombre_funcion}: {e}")
-                logging.error(f"[HILO PRINCIPAL] El scraper {nombre_funcion} reventó y se detuvo: {str(e)}")
+                logger.error(f"❌ Error crítico en {nombre_funcion}: {e}")
 
-    print(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS.")
+    logger.info(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS.")
 
     desactivar_ofertas_obsoletas()

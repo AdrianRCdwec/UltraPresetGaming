@@ -1,5 +1,6 @@
 import json, asyncio
 from openai import AsyncOpenAI
+from scrapper_app.utils.logger import logger
 
 # --- CONFIGURACIÓN DEL AGENTE OLLAMA (LOCAL) ---
 cliente_ia = AsyncOpenAI(
@@ -312,7 +313,7 @@ async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
             try:
                 datos_json_pesado = json.loads(contenido_pesado)
             except json.JSONDecodeError:
-                print("⚠️ [IA Llama3] Devolvió un formato inválido. Marcando dudas como False.")
+                logger.warning("⚠️ [IA Llama3] Devolvió un formato inválido. Marcando dudas como False.")
                 datos_json_pesado = {}
 
             for idx_relativo, idx_real in enumerate(indices_duda):
@@ -322,7 +323,7 @@ async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
         return resultados
 
     except Exception as e:
-        print(f"⚠️ Aviso: Error consultando a Ollama: {e}. Se asume False para todos.")
+        logger.warning(f"⚠️ Aviso: Error consultando a Ollama: {e}. Se asume False para todos.")
         return [False] * len(lista_candidatos)
 
 # EVALUAR PRODUCTOS DE FORMA SÍNCRONA

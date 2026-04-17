@@ -1,5 +1,4 @@
 import random
-import logging
 from playwright.sync_api import sync_playwright
 
 from .base_scraper import BaseScraper
@@ -12,6 +11,7 @@ from scrapper_app.utils.stealth import (
     obtener_configuracion_proxy
 )
 from scrapper_app.utils.db_manager import guardar_productos_en_db
+from scrapper_app.utils.logger import logger
 
 
 class CoolmodScraper(BaseScraper):
@@ -80,7 +80,7 @@ class CoolmodScraper(BaseScraper):
         return datos
 
     def escanear_catalogo(self, url_catalogo_base, categoria_db, tipo_db, excluir_palabras=None):
-        print(f"\n🕷️ [COOLMOD] -> Escaneando: {url_catalogo_base}")
+        logger.info(f"\n🕷️ [COOLMOD] -> Escaneando: {url_catalogo_base}")
         
         todos_los_productos_extraidos = []
         pagina_actual = 1
@@ -137,7 +137,7 @@ class CoolmodScraper(BaseScraper):
                     separador = "&" if "?" in url_catalogo_base else "?"
                     url_con_paginacion = f"{url_catalogo_base}{separador}pagina={pagina_actual}"
                     
-                    print(f"  📄 Entrando a la página {pagina_actual}...")
+                    logger.info(f"  📄 Entrando a la página {pagina_actual}...")
                     
                     exito_carga = False
                     for intento in range(3):
@@ -147,11 +147,11 @@ class CoolmodScraper(BaseScraper):
                             exito_carga = True
                             break
                         except Exception as e:
-                            print(f"    ⚠️ Fallo de conexión (Intento {intento+1}/3)...")
+                            logger.warning(f"    ⚠️ Fallo de conexión (Intento {intento+1}/3)...")
                             page.wait_for_timeout(3000)
 
                     if not exito_carga:
-                        print(f"    ❌ Imposible cargar la página {pagina_actual}. Cancelando catálogo.")
+                        logger.error(f"    ❌ Imposible cargar la página {pagina_actual}. Cancelando catálogo.")
                         break
 
                     try:
@@ -172,7 +172,7 @@ class CoolmodScraper(BaseScraper):
                     datos_pagina = self.extraer_productos_de_pagina(page)
                     
                     if not datos_pagina:
-                        print(f"  ⚠️ No se encontraron productos. Fin del catálogo.")
+                        logger.warning(f"  ⚠️ No se encontraron productos. Fin del catálogo.")
                         break
 
                     # Aplicar lógica de exclusión de palabras de tu código original
@@ -184,7 +184,7 @@ class CoolmodScraper(BaseScraper):
                                 datos_filtrados.append(prod)
                         
                         datos_pagina = datos_filtrados
-                        print(f"  ✂️ Filtrados artículos no deseados. Quedan {len(datos_pagina)} en esta página.")
+                        logger.info(f"  ✂️ Filtrados artículos no deseados. Quedan {len(datos_pagina)} en esta página.")
                         
                     todos_los_productos_extraidos.extend(datos_pagina)
                     
@@ -201,8 +201,7 @@ class CoolmodScraper(BaseScraper):
                         pagina_actual += 1
 
             except Exception as e:
-                print(f"❌ Error en Playwright: {e}")
-                logging.error(f"[SCRAPER {url_catalogo_base}] Fallo crítico: {str(e)}")
+                logger.error(f"❌ Error crítico en Playwright [{url_catalogo_base}]: {e}")
             finally:
                 context.close()
                 browser.close()
