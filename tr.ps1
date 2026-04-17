@@ -1,6 +1,6 @@
 param(
     [string]$Ruta = ".",
-    [string]$Salida = $(Join-Path $PSScriptRoot "structure.txt"),
+    [string]$Salida = $(Join-Path $PSScriptRoot "docs/structure.txt"),
     [string[]]$ExcluirDirectorios = @(".venv", "__pycache__", ".vscode", ".git"),
     [switch]$f
 )
