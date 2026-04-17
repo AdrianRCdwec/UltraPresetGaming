@@ -41,7 +41,7 @@
 
 3. ~~Caché de decisiones de IA: Guarda en la BD las decisiones que ya tomó la IA ("Producto A es igual a Producto B: True"). Si vuelven a cruzarse, no llamas a la IA, consultas la BD.~~
 
-4. ###### Prompt Engineering para formato JSON estricto: Añade un validador que compruebe que el JSON que escupe Llama 3 tiene la estructura exacta. Si falla, que pida una corrección automática sin fallar el proceso.
+4. ~~Prompt Engineering para formato JSON estricto: Añade un validador que compruebe que el JSON que escupe Llama 3 tiene la estructura exacta. Si falla, que pida una corrección automática sin fallar el proceso.~~
 
 5. ~~Fallback a modelo más rápido: Si Llama 3 tarda mucho, podrías tener un modelo minúsculo como Qwen o Phi-3 para decisiones fáciles y dejar Llama para casos con dudas.~~
 

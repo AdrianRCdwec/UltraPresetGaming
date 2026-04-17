@@ -8,6 +8,126 @@ cliente_ia = AsyncOpenAI(
     api_key='ollama',
 )
 
+# --- FUNCIONES DE VALIDACIÓN Y NORMALIZACIÓN DE JSON ---
+def normalizar_valor_json(valor, permitir_duda=True):
+    if isinstance(valor, bool):
+        return valor
+
+    if isinstance(valor, str):
+        valor_normalizado = valor.strip().lower()
+        if valor_normalizado == "true":
+            return True
+        if valor_normalizado == "false":
+            return False
+        if permitir_duda and valor_normalizado == "duda":
+            return "duda"
+
+    return None
+
+
+def validar_json_batch(datos_json, total_candidatos, permitir_duda=True):
+    if not isinstance(datos_json, dict):
+        return False
+
+    claves_esperadas = {str(i) for i in range(total_candidatos)}
+    claves_recibidas = set(datos_json.keys())
+
+    if claves_esperadas != claves_recibidas:
+        return False
+
+    for i in range(total_candidatos):
+        valor = normalizar_valor_json(datos_json.get(str(i)), permitir_duda=permitir_duda)
+        if valor is None:
+            return False
+
+    return True
+
+
+def convertir_json_a_resultados(datos_json, total_candidatos, permitir_duda=True):
+    resultados = []
+    for i in range(total_candidatos):
+        valor = normalizar_valor_json(datos_json.get(str(i)), permitir_duda=permitir_duda)
+        if valor is None:
+            valor = "duda" if permitir_duda else False
+        resultados.append(valor)
+    return resultados
+
+
+async def solicitar_correccion_json(modelo, contenido_invalido, total_candidatos, permitir_duda=True):
+    ejemplo = {str(i): "duda" if permitir_duda else False for i in range(total_candidatos)}
+
+    prompt_correccion = f"""
+Tu respuesta anterior no cumple el formato requerido.
+
+Debes devolver ÚNICAMENTE un JSON válido.
+No añadas explicaciones, texto extra, markdown ni comentarios.
+Las claves deben ser exactamente: {list(str(i) for i in range(total_candidatos))}
+
+Valores permitidos:
+- true
+- false
+{"- \"duda\"" if permitir_duda else ""}
+
+Corrige esta salida inválida:
+{contenido_invalido}
+
+Ejemplo válido:
+{json.dumps(ejemplo, ensure_ascii=False)}
+""".strip()
+
+    respuesta = await cliente_ia.chat.completions.create(
+        model=modelo,
+        messages=[
+            {"role": "system", "content": "Corrige la salida y devuelve solo JSON válido."},
+            {"role": "user", "content": prompt_correccion}
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.0
+    )
+
+    return respuesta.choices[0].message.content
+
+
+async def obtener_json_validado(modelo, prompt_sistema, prompt_usuario, total_candidatos, permitir_duda=True):
+    respuesta = await cliente_ia.chat.completions.create(
+        model=modelo,
+        messages=[
+            {"role": "system", "content": prompt_sistema},
+            {"role": "user", "content": prompt_usuario}
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.0
+    )
+
+    contenido = respuesta.choices[0].message.content
+
+    try:
+        datos_json = json.loads(contenido)
+        if validar_json_batch(datos_json, total_candidatos, permitir_duda=permitir_duda):
+            return datos_json
+    except json.JSONDecodeError:
+        pass
+
+    logger.warning(f"⚠️ [IA {modelo}] JSON inválido o mal estructurado. Intentando autocorrección...")
+
+    try:
+        contenido_corregido = await solicitar_correccion_json(
+            modelo=modelo,
+            contenido_invalido=contenido,
+            total_candidatos=total_candidatos,
+            permitir_duda=permitir_duda
+        )
+        datos_json_corregido = json.loads(contenido_corregido)
+
+        if validar_json_batch(datos_json_corregido, total_candidatos, permitir_duda=permitir_duda):
+            return datos_json_corregido
+
+        logger.warning(f"⚠️ [IA {modelo}] La autocorrección devolvió un JSON aún inválido.")
+    except Exception as e:
+        logger.warning(f"⚠️ [IA {modelo}] Falló la autocorrección del JSON: {e}")
+
+    return None
+
 # COMPARACIÓN DE PRODUCTOS
 async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
     if not lista_candidatos:
