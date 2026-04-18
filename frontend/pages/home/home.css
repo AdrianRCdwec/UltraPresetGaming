@@ -81,13 +81,18 @@
     ------------------------- */
 
 .recomend-text h2 span {
-  border-bottom: 4px dotted #2c65ee;
-  padding-bottom: 5px;
+  display: inline-block;
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #2c65ee;
+  text-decoration-thickness: 4px;
+  text-underline-offset: 6px;
 }
 
 .recomend-text h2 {
   font-size: 36px;
   margin-bottom: 20px;
+  line-height: 1.2;
 }
 
 .recomend-text p {
