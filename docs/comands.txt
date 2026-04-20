@@ -5,6 +5,8 @@ INICIO DEL PROYECTO EN UN NUEVO DISPOSITIVO:
     cd .\backend\
     py -m venv .venv
     .venv\Scripts\activate
+    cd ..
+    cd docs
     pip install -r dependencies.txt
     playwright install chromium
 
@@ -16,6 +18,8 @@ ACTUALIZAR EL PROYECTO AL DÍA:
     git pull
     cd .\backend\
     .venv\Scripts\activate
+    cd ..
+    cd docs
     pip install -r dependencies.txt
 
 
@@ -37,12 +41,6 @@ COMANDOS DENTRO DEL ENTORNO:    ( .venv\Scripts\activate )
     ENCENDER SERVIDOR:
         python manage.py runserver
 
-    CREAR/ACTUALIZAR ARCHIVO DEPENDENCIES.TXT:
-        pip freeze > dependencies.txt
-
-    INSTALAR TODAS LAS DEPENDENCIAS NECESARIAS:
-        pip install -r dependencies.txt
-
     VACIAR DATOS SIN BORRAR LA ESTRUCTURA:
         python manage.py flush
 
@@ -51,6 +49,15 @@ COMANDOS DENTRO DEL ENTORNO:    ( .venv\Scripts\activate )
 
     ACTUALIZAR TODAS LAS DEPENDENCIAS:
         pip-review --auto
+
+    --- DESDE DIRECTORIO RAÍZ ---
+        CREAR/ACTUALIZAR ARCHIVO DEPENDENCIES.TXT:
+            cd docs
+            pip freeze > dependencies.txt
+
+        INSTALAR TODAS LAS DEPENDENCIAS NECESARIAS:
+            cd docs
+            pip install -r dependencies.txt
 
 --------------------------------------------------------------
 COMANDOS IMPORTANTES:

@@ -1,4 +1,4 @@
-import json, requests
+import json, requests, time
 from scrapper_app.utils.logger import logger
 
 # --- CONFIGURACIÓN DEL AGENTE OLLAMA (LOCAL) ---
@@ -6,22 +6,22 @@ OLLAMA_URL = 'http://localhost:11434/api/generate'
 MODELO_RAPIDO = "phi3"
 MODELO_PESADO = "llama3"
 
-def consultar_ollama_sync(modelo, system_prompt, user_prompt):
+def consultar_ollama_sync(modelo, system_prompt, user_prompt, reintentos=3):
     prompt_completo = f"{system_prompt}\n\n{user_prompt}"
-    payload = {
-        "model": modelo,
-        "prompt": prompt_completo,
-        "stream": False,
-        "format": "json"
-    }
+    payload = {"model": modelo, "prompt": prompt_completo, "stream": False, "format": "json"}
     
-    try:
-        respuesta = requests.post(OLLAMA_URL, json=payload, timeout=300)
-        respuesta.raise_for_status()
-        return respuesta.json().get('response', '{}')
-    except requests.exceptions.RequestException as e:
-        logger.warning(f"⚠️ Error consultando a Ollama ({modelo}): {e}")
-        return "{}"
+    for intento in range(reintentos):
+        try:
+            respuesta = requests.post(OLLAMA_URL, json=payload, timeout=120)
+            respuesta.raise_for_status()
+            return respuesta.json().get('response', '{}')
+        except requests.exceptions.Timeout:
+            logger.warning(f"⚠️ [IA {modelo}] Timeout (Intento {intento+1}/{reintentos}). Esperando 8s...")
+            time.sleep(8)
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"⚠️ Error Ollama ({modelo}): {e}")
+            break
+    return "{}"
 
 # COMPARACIÓN DE PRODUCTOS
 def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):

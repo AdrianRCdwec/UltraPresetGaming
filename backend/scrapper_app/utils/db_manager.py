@@ -1,5 +1,4 @@
 import os, django, sys, re, requests
-from fuzzywuzzy import fuzz
 from urllib.parse import urlparse
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -11,6 +10,9 @@ from .ia_matcher import evaluar_productos_ia_sync
 from scrapper_app.utils.logger import logger
 import asyncio
 from asgiref.sync import sync_to_async
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
 # CONFIGURACIÓN DE PATRONES DE LIMPIEZA
 PALABRAS_BASURA = [
@@ -183,7 +185,6 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
     
     tienda_db, _ = Tienda.objects.get_or_create(nombre=nombre_tienda, defaults={'url_base': url_base_tienda})
     productos_guardados_exitosamente = 0
-    UMBRAL_SIMILITUD = 70
     
     # 1. CARGA DE CACHÉ
     if categoria_db not in CACHE_PRODUCTOS_BD:
@@ -194,10 +195,26 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
         
     productos_existentes = CACHE_PRODUCTOS_BD[categoria_db]
     
+    # --- TF-IDF VECTORIZATION ---
+    nombres_bd_limpios = []
+    modelos_bd = []
+    
+    for prod in productos_existentes:
+        datos = limpiar_nombre_producto(prod.nombre)
+        nombres_bd_limpios.append(datos['texto_limpio'])
+        modelos_bd.append(datos['modelo_clave'])
+
+    vectorizer = None
+    tfidf_matrix_bd = None
+
+    if nombres_bd_limpios:
+        vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(3, 5))
+        tfidf_matrix_bd = vectorizer.fit_transform(nombres_bd_limpios)
+
     # 2. LISTAS PARA EL BULK (Operaciones Masivas)
-    nuevos_productos_a_crear = []  # Lista de tuplas: (Producto, precio, link)
-    ofertas_a_actualizar = []      # Lista de objetos Oferta
-    ofertas_a_crear = []           # Lista de objetos Oferta
+    nuevos_productos_a_crear = []
+    ofertas_a_actualizar = []
+    ofertas_a_crear = []
     
     # Pre-cargamos las ofertas existentes de esta tienda en un diccionario para acceso instantáneo (O(1))
     ofertas_existentes_dict = {
@@ -205,7 +222,7 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
         for oferta in Oferta.objects.filter(tienda=tienda_db, producto__categoria=categoria_db)
     }
 
-    # 3. PROCESAMIENTO EN MEMORIA (Fuera de la base de datos)
+    # 3. PROCESAMIENTO EN MEMORIA
     for item in productos_extraidos:
         try:
             nombre_original = item['nombre'].strip().replace('"', '').replace("'", "")
@@ -219,65 +236,69 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
             modelo_para_comparar = datos_comparar['modelo_clave']
             
             producto_asociado = None
-            mejor_score = 0
-            
             candidatos_dudosos = []
             
-            for prod_bd in productos_existentes:
-                datos_bd = limpiar_nombre_producto(prod_bd.nombre)
-                nombre_bd_limpio = datos_bd['texto_limpio']
-                modelo_bd = datos_bd['modelo_clave']
-
-                if modelo_para_comparar and modelo_bd:
-                    if modelo_para_comparar != modelo_bd:
-                        continue  # Rechazo instantáneo
-                    else:
-                        score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
-                        if score == 100:
-                            mejor_score = score
-                            producto_asociado = prod_bd
-                            break
-
-                score = fuzz.token_set_ratio(nombre_para_comparar, nombre_bd_limpio)
-                if score == 100:
-                    mejor_score = score
-                    producto_asociado = prod_bd
-                    break
-
-                if score > UMBRAL_SIMILITUD:
-                    if score > mejor_score:
-                        mejor_score = score
-                        producto_asociado = prod_bd
-                elif score > 60:
-                    candidatos_dudosos.append(prod_bd)
-
-            if not producto_asociado and candidatos_dudosos:
-                candidatos_top = candidatos_dudosos[:5]
-                nombres_candidatos = [c.nombre for c in candidatos_top]
+            # --- MOTOR DE DECISIÓN EN CASCADA ---
+            if vectorizer is not None and tfidf_matrix_bd is not None:
+                # 1. Transformamos el producto nuevo al mismo espacio vectorial
+                tfidf_actual = vectorizer.transform([nombre_para_comparar])
                 
+                # 2. Calculamos similitud del coseno contra toda la base de datos de golpe
+                similitudes = cosine_similarity(tfidf_actual, tfidf_matrix_bd)[0]
+                
+                # 3. Obtenemos los índices de los 3 productos más parecidos
+                top_indices = np.argsort(similitudes)[-3:][::-1]
+                
+                for idx in top_indices:
+                    similitud = similitudes[idx] * 100
+                    prod_bd = productos_existentes[idx]
+                    modelo_bd_actual = modelos_bd[idx]
+
+                    # NIVEL 1: Regex Estricto (Match perfecto de modelo)
+                    if modelo_para_comparar and modelo_bd_actual:
+                        if modelo_para_comparar == modelo_bd_actual:
+                            # Tienen la misma Regex. Aseguramos que la similitud de texto también es alta (evitar colisiones raras)
+                            if similitud >= 60:
+                                producto_asociado = prod_bd
+                                break
+                        else:
+                            continue
+
+                    # NIVEL 2: Similitud Vectorial Alta (>88%)
+                    if similitud >= 88:
+                        producto_asociado = prod_bd
+                        break
+
+                    # NIVEL 3: Casos Dudosos (Entre 72% y 88%)
+                    elif similitud > 72:
+                        candidatos_dudosos.append(prod_bd)
+
+            # NIVEL 4: IA Local o Externa (Fallback Marginal)
+            if not producto_asociado and candidatos_dudosos:
+                # Tomamos solo los 3 mejores para no saturar a la IA
+                candidatos_top = candidatos_dudosos[:3]
+                nombres_candidatos = [c.nombre for c in candidatos_top]
+
                 # 1. Comprobar si ya existe la decisión en la BD para evitar llamar a la IA
                 decisiones_guardadas = DecisionIA.objects.filter(
                     nombre_tienda=nombre_original,
                     nombre_candidato_db__in=nombres_candidatos
                 )
-                
-                # 2. Diccionario para acceso rápido O(1)
+
                 cache_decisiones = {d.nombre_candidato_db: d.es_mismo_producto for d in decisiones_guardadas}
-                
+
                 candidatos_para_ia = []
                 indices_para_ia = []
                 resultados_finales = [False] * len(nombres_candidatos)
-                
+
                 for idx, nombre_cand in enumerate(nombres_candidatos):
                     if nombre_cand in cache_decisiones:
-                        # Usamos el valor guardado en BD
                         resultados_finales[idx] = cache_decisiones[nombre_cand]
                     else:
-                        # Requiere consulta a Llama 3
                         candidatos_para_ia.append(nombre_cand)
                         indices_para_ia.append(idx)
-                
-                # 3. Llamar a Ollama solo para los nuevos
+
+                # 3. Llamar a Ollama solo para los dudosos nuevos (Serán poquísimos gracias a TF-IDF)
                 if candidatos_para_ia:
                     resultados_ia = evaluar_productos_ia_sync(nombre_original, candidatos_para_ia)
 
@@ -292,17 +313,17 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                             es_mismo_producto=resultado
                         ))
 
-                    # 4. Guardar masivamente en BD (usando ignore_conflicts por si hay repetidos)
+                    # Guardar masivamente las nuevas decisiones
                     if decisiones_a_guardar:
                         DecisionIA.objects.bulk_create(decisiones_a_guardar, ignore_conflicts=True)
-                
-                # 5. Asignar producto si hubo coincidencia en Caché o en IA
+
+                # Asignar producto si la IA (o la caché de IA) dijo que Sí
                 for idx, es_match in enumerate(resultados_finales):
                     if es_match:
                         producto_asociado = candidatos_top[idx]
                         break
 
-            # --- DECISIÓN: CREAR O ACTUALIZAR ---
+            # --- DECISIÓN FINAL: CREAR O ACTUALIZAR ---
             if not producto_asociado:
                 nuevo_prod = Producto(
                     nombre=nombre_original,
@@ -311,25 +332,21 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                     descripcion=item.get('link', ''),
                 )
                 
-                # --- NUEVO: DESCARGAR Y GUARDAR IMAGEN ---
+                # --- DESCARGAR Y GUARDAR IMAGEN ---
                 url_imagen = item.get('imagen')
                 if url_imagen and url_imagen.startswith('http'):
                     try:
-                        # Hacer la petición GET a la imagen
                         headers_img = obtener_perfil_navegador()['headers']
                         respuesta_img = requests.get(url_imagen, headers=headers_img, timeout=5)
                         
                         if respuesta_img.status_code == 200:
-                            # Extraer la extensión original (jpg, png, webp)
                             parsed_url = urlparse(url_imagen)
                             nombre_archivo = os.path.basename(parsed_url.path)
                             if not nombre_archivo or '.' not in nombre_archivo:
                                 nombre_archivo = "imagen_producto.jpg"
                                 
-                            # Guardar en el ImageField usando ContentFile
                             nuevo_prod.imagen.save(nombre_archivo, ContentFile(respuesta_img.content), save=False)
                     except Exception as e:
-                        # Fallo silencioso para no parar el crawler si la imagen no carga
                         pass
 
                 nuevos_productos_a_crear.append((nuevo_prod, precio_float, item.get('link', '')))
@@ -357,12 +374,11 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
             logger.warning(f"⚠️ Error procesando item: {e}")
             continue
 
-    # 4. TRANSACCIÓN MASIVA FINAL (Solo entra a SQLite 1 vez)
+    # 4. TRANSACCIÓN MASIVA FINAL (Sin cambios, tu código exacto)
     with transaction.atomic():
         # A) Crear Productos Nuevos
         if nuevos_productos_a_crear:
             productos_solo = [p[0] for p in nuevos_productos_a_crear]
-            # bulk_create devuelve los objetos con sus IDs en SQLite (Django > 2.2)
             productos_creados = Producto.objects.bulk_create(productos_solo, batch_size=500)
             
             nuevas_ofertas_masivas = []
@@ -376,9 +392,8 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                 ))
             Oferta.objects.bulk_create(nuevas_ofertas_masivas, batch_size=500)
 
-        # B) Crear Ofertas Nuevas (para productos que ya existían pero no estaban en esta tienda)
+        # B) Crear Ofertas Nuevas (para productos que ya existían)
         if ofertas_a_crear:
-            # Filtramos aquellas ofertas que tienen un producto sin ID (por un edge case de la caché asíncrona)
             ofertas_a_crear_validas = [o for o in ofertas_a_crear if o.producto.id is not None]
             Oferta.objects.bulk_create(ofertas_a_crear_validas, batch_size=500)
 
