@@ -24,8 +24,7 @@ function Get-TreeAscii {
                 $_.Name -notin $ExcluirDirectorios
             }
             else {
-                # (-not $f.IsPresent) -and ($_.Extension -ne ".jpg") // Si queremos añadir que no se incluya una extensión específica se pone eso.
-                -not $f.IsPresent
+                (-not $f.IsPresent) -and ($_.Extension -ne ".jpg") -and ($_.Extension -ne ".png") -and ($_.Extension -ne ".webp")
             }
         } |
         Sort-Object @{ Expression = { -not $_.PSIsContainer } }, Name
