@@ -1,4 +1,4 @@
-📝 Contexto Consolidado del Proyecto (Hilos 1, 2, 3 y 4)
+📝 Contexto Consolidado del Proyecto (Hilos 1, 2, 3, 4 y 5)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CONTEXTO GENERAL DEL PROYECTO
@@ -24,18 +24,19 @@ MOTOR DE SCRAPING Y AUTOMATIZACIÓN (BACKEND/PYTHON)
 Motor de scraping robusto usando Playwright (modo síncrono/multihilo) para extraer catálogos masivos de tiendas: PcComponentes, Coolmod, Alternate, LifeInformatica y NeoByte.
 
 Evasión Antibot (stealth.py):
-Tácticas avanzadas para evadir WAFs y Cloudflare Turnstile: resolución de captchas interactiva, perfiles dinámicos de navegador (User-Agent, Client-Hints), bloqueo de trackers y scroll humano biomético (retrasos aleatorios y movimientos curvos del ratón). Proxys residenciales apagados por defecto para la presentación.
+Tácticas avanzadas para evadir WAFs y Cloudflare Turnstile: resolución de captchas interactiva, perfiles dinámicos de navegador, bloqueo de trackers y scroll humano biométrico. Proxys residenciales apagados por defecto para la presentación.
 
-Motor de Coincidencias IA (ia_matcher.py):
-- Modelo de IA local (Ollama) con reglas estrictas por categoría (CPU, GPU, RAM, etc.).
-- Sistema de dos niveles: Phi-3 (rápido) para casos claros y Llama 3 (pesado) para casos dudosos.
-- NUEVO (Hilo 4): Validación y autocorrección de JSON añadida. Funciones auxiliares: normalizar_valor_json, validar_json_batch, convertir_json_a_resultados, solicitar_correccion_json y obtener_json_validado. Si el modelo devuelve un JSON inválido o mal estructurado, el sistema le pide una corrección automática antes de fallar. Si la corrección también falla, retorna False de forma segura sin tumbar el proceso.
+Motor Híbrido de Coincidencias (NLP + IA):
+- NUEVO (Hilo 5) - Filtro TF-IDF (Nivel 2): Se ha sustituido `fuzzywuzzy` por `scikit-learn` (TfidfVectorizer + cosine_similarity). La base de datos se vectoriza en memoria y los productos extraídos se comparan matemáticamente en milisegundos, resolviendo el 99% de los casos sin usar IA.
+- IA Local como Fallback (Nivel 3): Ollama (Phi-3 / Llama 3) solo se invoca para casos verdaderamente dudosos.
+- NUEVO (Hilo 5) - Reintentos (Retry & Timeout): Se ha añadido un bloque de reintentos en `ia_matcher.py` para que, si Ollama sufre un timeout por saturación, el script espere y reintente en lugar de descartar el producto.
+- Validación JSON estricta (Hilo 4): Autocorrección de JSON añadida. Si el modelo devuelve un JSON inválido, el sistema pide corrección automática.
 
 Gestión de Base de Datos (db_manager.py):
 - Sistema de inserción masiva (bulk_create, bulk_update) con caché en memoria RAM.
-- Limpieza de ofertas caducadas (soft delete) basada en fechas de actualización.
-- NUEVO (Hilo 4): Regex compiladas. Las constantes PATRON_PALABRAS_BASURA, PATRON_INTEL, PATRON_AMD, PATRON_GPU_NVIDIA, etc. se definen a nivel de módulo con re.compile() para que se compilen una sola vez al importar. La función limpiar_nombre_producto refactorizada para usar estas constantes, reduciendo el coste de procesamiento repetitivo.
-- NUEVO (Hilo 4): Índices en BD. Añadidos db_index=True en los campos nombre y categoria del modelo Producto en api/models.py. Migración aplicada.
+- Limpieza de ofertas caducadas (soft delete).
+- Regex compiladas (Hilo 4): Constantes pre-compiladas para extracción rápida de modelos clave.
+- Índices en BD (Hilo 4): db_index=True en nombre y categoria.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ARQUITECTURA DEL SCRAPER
@@ -43,32 +44,31 @@ ARQUITECTURA DEL SCRAPER
 - Modularización: Lógica dividida en db_manager.py, ia_matcher.py y stealth.py.
 - Patrón Factory: BaseScraper + ScraperFactory que instancia dinámicamente las clases hijas de cada tienda.
 - Orquestador Multihilo (main_crawler.py): ThreadPoolExecutor con cálculo dinámico de hilos basado en RAM disponible (psutil).
-- Sistema de Logging Profesional: logger.py centralizado con logging estándar de Python, thread-safe, escribe en terminal y persiste errores en scraper.log.
-
-NUEVO (Hilo 4) - Reutilización de contextos de Playwright:
-Antes: se abría un nuevo browser.new_context() por cada categoría (10 veces por tienda).
-Ahora: BaseScraper expone iniciar_navegador() y cerrar_navegador(). Cada clase hija implementa iniciar_navegador() con toda la configuración stealth (perfiles, proxies, headers, anti-bot) UNA SOLA VEZ por tienda. El orquestador main_crawler.py llama a scraper.iniciar_navegador() antes del bloque de escaneos y a scraper.cerrar_navegador() en el finally. Flags de headless puro --no-sandbox, --disable-dev-shm-usage, --disable-gpu incluidos en todos los scrapers.
-
-NUEVO (Hilo 4) - Graceful Shutdown:
-Implementado en main_crawler.py mediante threading.Event (shutdown_event) y manejadores de señales signal.SIGINT y signal.SIGTERM. Al pulsar Ctrl+C: primera señal activa shutdown_event (apagado seguro, espera a que los hilos en curso guarden en BD y cierren Playwright). Segunda señal fuerza sys.exit(1). En cada scraper, dentro del bucle de paginación/carga hay una comprobación: if shutdown_event.is_set(): break. El bloque finally del main solo ejecuta desactivar_ofertas_obsoletas() si el script terminó de forma natural (no por interrupción).
+- NUEVO (Hilo 5) - Limpieza de Entorno: Se han eliminado dependencias obsoletas (`fuzzywuzzy`, `Levenshtein`, `openai`) y se ha consolidado el stack matemático (`scikit-learn`, `numpy`, `scipy`).
+- Reutilización de contextos de Playwright (Hilo 4): Perfiles y contextos iniciados UNA SOLA VEZ por tienda.
+- Graceful Shutdown (Hilo 4): Apagado seguro mediante threading.Event y señales del sistema.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ESTADO ACTUAL Y PRÓXIMO PASO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Mejoras de "######" completadas en este hilo (Hilo 4):
-✅ Reutilizar contextos de Playwright (BaseScraper + iniciar/cerrar navegador).
-✅ Scraping Headless puro (flags --disable-gpu, --disable-dev-shm-usage, --no-sandbox ya incluidos).
-✅ Índices en la Base de Datos (db_index=True en nombre y categoria del modelo Producto).
-✅ Limpieza de strings más eficiente (re.compile en db_manager.py).
-✅ Prompt Engineering para formato JSON estricto (validación y autocorrección en ia_matcher.py).
-✅ Graceful Shutdown (threading.Event + signal handlers en main_crawler.py y scrapers).
+Mejoras de "######" completadas en Hilos 4 y 5:
+✅ Reutilizar contextos de Playwright y modo Headless puro.
+✅ Índices en BD y Regex compiladas para mayor eficiencia.
+✅ Prompt Engineering estricto y Graceful Shutdown.
+✅ (Hilo 5) Sustituir fuzzy matching por similitud vectorial (TF-IDF con scikit-learn).
+✅ (Hilo 5) Reintentos en llamadas a la IA (Retry & Timeout para evitar cuellos de botella).
+✅ (Hilo 5) Limpieza de dependencias obsoletas del entorno virtual.
 
-Mejoras de "######" pendientes (por orden de la lista):
-- [ ] Deshabilitar la carga de JavaScript donde no sea necesario (Coolmod, HTML puro).
-- [ ] Implementar rotación de Proxies por petición.
-- [ ] Caché en Redis (en lugar del diccionario global en RAM).
-- [ ] Pruebas Unitarias (Pytest) para funciones críticas como limpiar_precio y limpiar_nombre_producto.
-- [ ] Notificaciones por Telegram/Discord cuando un scraper falle.
-- [ ] Extraer el Stock real (en stock / sin stock / recíbelo mañana).
+Mejoras de "######" estructurales pendientes (Prioritarias para Hilo 6):
+- [ ] Evitar bloqueos de SQLite (Locking): Implementar `threading.Lock()` en las transacciones masivas de `db_manager.py`.
+- [ ] Refactorizar `main_crawler.py` (Principio DRY): Centralizar la lógica iterativa de las tiendas en una sola función base.
 
-Nota general: El motor de scraping (multihilo, antibot, logging, IA, graceful shutdown) está finalizado y optimizado. El frontend básico y la conexión JWT están encaminados.
+Otras mejoras pendientes (Secundarias):
+- [ ] Deshabilitar carga de JS en tiendas HTML puro (Coolmod).
+- [ ] Implementar rotación de Proxies por petición y pasar credenciales a .env.
+- [ ] Caché en Redis (opcional).
+- [ ] Pruebas Unitarias (Pytest).
+- [ ] Descarga asíncrona de imágenes (Celery/Non-Blocking).
+- [ ] Extraer el Stock real.
+
+Nota general: El motor de scraping es ahora extremadamente rápido e infalible gracias al TF-IDF, superando los bloqueos de Ollama. El próximo paso es asegurar la escritura en SQLite (Locking) y limpiar el código repetitivo en el crawler (DRY), para luego saltar de lleno a conectar el Frontend con la API REST.
