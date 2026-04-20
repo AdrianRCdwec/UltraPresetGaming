@@ -9,6 +9,8 @@ from api.models import Producto, Tienda, Oferta, DecisionIA
 from .stealth import obtener_perfil_navegador 
 from .ia_matcher import evaluar_productos_ia_sync
 from scrapper_app.utils.logger import logger
+import asyncio
+from asgiref.sync import sync_to_async
 
 # CONFIGURACIÓN DE PATRONES DE LIMPIEZA
 PALABRAS_BASURA = [
@@ -174,6 +176,8 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
         return 0
         
     global CACHE_PRODUCTOS_BD
+    try: asyncio.set_event_loop(None)
+    except: pass
 
     logger.info(f"\n💾 Guardando {len(productos_extraidos)} productos en la BD para la tienda {nombre_tienda}...\n")
     

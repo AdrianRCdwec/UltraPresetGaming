@@ -1,135 +1,30 @@
-import json, asyncio
-from openai import AsyncOpenAI
+import json, requests
 from scrapper_app.utils.logger import logger
 
 # --- CONFIGURACIÓN DEL AGENTE OLLAMA (LOCAL) ---
-cliente_ia = AsyncOpenAI(
-    base_url='http://localhost:11434/v1',
-    api_key='ollama',
-)
+OLLAMA_URL = 'http://localhost:11434/api/generate'
+MODELO_RAPIDO = "phi3"
+MODELO_PESADO = "llama3"
 
-# --- FUNCIONES DE VALIDACIÓN Y NORMALIZACIÓN DE JSON ---
-def normalizar_valor_json(valor, permitir_duda=True):
-    if isinstance(valor, bool):
-        return valor
-
-    if isinstance(valor, str):
-        valor_normalizado = valor.strip().lower()
-        if valor_normalizado == "true":
-            return True
-        if valor_normalizado == "false":
-            return False
-        if permitir_duda and valor_normalizado == "duda":
-            return "duda"
-
-    return None
-
-
-def validar_json_batch(datos_json, total_candidatos, permitir_duda=True):
-    if not isinstance(datos_json, dict):
-        return False
-
-    claves_esperadas = {str(i) for i in range(total_candidatos)}
-    claves_recibidas = set(datos_json.keys())
-
-    if claves_esperadas != claves_recibidas:
-        return False
-
-    for i in range(total_candidatos):
-        valor = normalizar_valor_json(datos_json.get(str(i)), permitir_duda=permitir_duda)
-        if valor is None:
-            return False
-
-    return True
-
-
-def convertir_json_a_resultados(datos_json, total_candidatos, permitir_duda=True):
-    resultados = []
-    for i in range(total_candidatos):
-        valor = normalizar_valor_json(datos_json.get(str(i)), permitir_duda=permitir_duda)
-        if valor is None:
-            valor = "duda" if permitir_duda else False
-        resultados.append(valor)
-    return resultados
-
-
-async def solicitar_correccion_json(modelo, contenido_invalido, total_candidatos, permitir_duda=True):
-    ejemplo = {str(i): "duda" if permitir_duda else False for i in range(total_candidatos)}
-
-    prompt_correccion = f"""
-Tu respuesta anterior no cumple el formato requerido.
-
-Debes devolver ÚNICAMENTE un JSON válido.
-No añadas explicaciones, texto extra, markdown ni comentarios.
-Las claves deben ser exactamente: {list(str(i) for i in range(total_candidatos))}
-
-Valores permitidos:
-- true
-- false
-{"- \"duda\"" if permitir_duda else ""}
-
-Corrige esta salida inválida:
-{contenido_invalido}
-
-Ejemplo válido:
-{json.dumps(ejemplo, ensure_ascii=False)}
-""".strip()
-
-    respuesta = await cliente_ia.chat.completions.create(
-        model=modelo,
-        messages=[
-            {"role": "system", "content": "Corrige la salida y devuelve solo JSON válido."},
-            {"role": "user", "content": prompt_correccion}
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.0
-    )
-
-    return respuesta.choices[0].message.content
-
-
-async def obtener_json_validado(modelo, prompt_sistema, prompt_usuario, total_candidatos, permitir_duda=True):
-    respuesta = await cliente_ia.chat.completions.create(
-        model=modelo,
-        messages=[
-            {"role": "system", "content": prompt_sistema},
-            {"role": "user", "content": prompt_usuario}
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.0
-    )
-
-    contenido = respuesta.choices[0].message.content
-
+def consultar_ollama_sync(modelo, system_prompt, user_prompt):
+    prompt_completo = f"{system_prompt}\n\n{user_prompt}"
+    payload = {
+        "model": modelo,
+        "prompt": prompt_completo,
+        "stream": False,
+        "format": "json"
+    }
+    
     try:
-        datos_json = json.loads(contenido)
-        if validar_json_batch(datos_json, total_candidatos, permitir_duda=permitir_duda):
-            return datos_json
-    except json.JSONDecodeError:
-        pass
-
-    logger.warning(f"⚠️ [IA {modelo}] JSON inválido o mal estructurado. Intentando autocorrección...")
-
-    try:
-        contenido_corregido = await solicitar_correccion_json(
-            modelo=modelo,
-            contenido_invalido=contenido,
-            total_candidatos=total_candidatos,
-            permitir_duda=permitir_duda
-        )
-        datos_json_corregido = json.loads(contenido_corregido)
-
-        if validar_json_batch(datos_json_corregido, total_candidatos, permitir_duda=permitir_duda):
-            return datos_json_corregido
-
-        logger.warning(f"⚠️ [IA {modelo}] La autocorrección devolvió un JSON aún inválido.")
-    except Exception as e:
-        logger.warning(f"⚠️ [IA {modelo}] Falló la autocorrección del JSON: {e}")
-
-    return None
+        respuesta = requests.post(OLLAMA_URL, json=payload, timeout=300)
+        respuesta.raise_for_status()
+        return respuesta.json().get('response', '{}')
+    except requests.exceptions.RequestException as e:
+        logger.warning(f"⚠️ Error consultando a Ollama ({modelo}): {e}")
+        return "{}"
 
 # COMPARACIÓN DE PRODUCTOS
-async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
+def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
     if not lista_candidatos:
         return []
 
@@ -375,26 +270,13 @@ async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
     candidatos_str = "\n".join([f"[{i}] {nombre}" for i, nombre in enumerate(lista_candidatos)])
     prompt_usuario = f"Producto Base: '{nombre_base}'\na evaluar:\n{candidatos_str}"
 
-    MODELO_RAPIDO = "phi3"
-    MODELO_PESADO = "llama3"
-
     try:
         # --- INTENTO 1: Modelo rápido ---
-        respuesta_rapida = await cliente_ia.chat.completions.create(
-            model=MODELO_RAPIDO,
-            messages=[
-                {"role": "system", "content": prompt_sistema},
-                {"role": "user", "content": prompt_usuario}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.0
-        )
-
-        contenido_rapido = respuesta_rapida.choices[0].message.content
+        contenido_rapido = consultar_ollama_sync(MODELO_RAPIDO, prompt_sistema, prompt_usuario)
         try:
             datos_json_rapido = json.loads(contenido_rapido)
         except json.JSONDecodeError:
-            # Si el modelo pequeño falla al dar un JSON válido, lo enviamos todo al pesado
+            # Si el modelo pequeño falla al dar un JSON válido, marcamos todo como duda
             datos_json_rapido = {str(i): "duda" for i in range(len(lista_candidatos))}
 
         resultados = [False] * len(lista_candidatos)
@@ -414,22 +296,10 @@ async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
             candidatos_duda_str = "\n".join([f"[{i}] {nombre}" for i, nombre in enumerate(candidatos_duda)])
             prompt_usuario_pesado = f"Producto Base: '{nombre_base}'\na evaluar (CASOS DUDOSOS):\n{candidatos_duda_str}"
 
-            # Para Llama 3 forzamos a que no use duda en la respuesta final
             prompt_sistema_llama = prompt_sistema.replace('o "duda" (como cadena de texto)', '')
 
-            respuesta_pesada = await cliente_ia.chat.completions.create(
-                model=MODELO_PESADO,
-                messages=[
-                    {"role": "system", "content": prompt_sistema_llama},
-                    {"role": "user", "content": prompt_usuario_pesado}
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.0
-            )
-
-            contenido_pesado = respuesta_pesada.choices[0].message.content
+            contenido_pesado = consultar_ollama_sync(MODELO_PESADO, prompt_sistema_llama, prompt_usuario_pesado)
             
-            # ✅ CORRECCIÓN: Evitamos que un error de JSON rompa el proceso de Llama 3
             try:
                 datos_json_pesado = json.loads(contenido_pesado)
             except json.JSONDecodeError:
@@ -443,15 +313,9 @@ async def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
         return resultados
 
     except Exception as e:
-        logger.warning(f"⚠️ Aviso: Error consultando a Ollama: {e}. Se asume False para todos.")
+        logger.warning(f"⚠️ Aviso: Error en el flujo de Ollama: {e}. Se asume False para todos.")
         return [False] * len(lista_candidatos)
 
 # EVALUAR PRODUCTOS DE FORMA SÍNCRONA
 def evaluar_productos_ia_sync(nombre_base, lista_candidatos):
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-    return loop.run_until_complete(es_mismo_producto_ia_batch(nombre_base, lista_candidatos))
+    return es_mismo_producto_ia_batch(nombre_base, lista_candidatos)

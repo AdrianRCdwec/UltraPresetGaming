@@ -1,6 +1,6 @@
 import random
 from playwright.sync_api import sync_playwright
-from main_crawler import shutdown_event
+from scrapper_app.utils.events import shutdown_event
 from .base_scraper import BaseScraper
 from .factory import ScraperFactory
 from scrapper_app.utils.stealth import (

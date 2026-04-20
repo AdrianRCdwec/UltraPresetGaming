@@ -1,4 +1,4 @@
-import random, re
+import random, re, time
 from fake_useragent import UserAgent
 from scrapper_app.utils.logger import logger
 
@@ -39,14 +39,14 @@ def bloquear_recursos_innecesarios(route):
     route.continue_()
 
 # Obtener un User-Agent aleatorio
+
+# Instanciamos una sola vez a nivel global para que use su caché interna
+ua = UserAgent(os='windows', browsers=['chrome', 'edge'])
+
 def obtener_perfil_navegador():
-    """
-    Obtiene un User-Agent aleatorio consumiendo un listado vivo,
-    y genera los headers de Client-Hints (Sec-Ch-Ua) obligatorios para Cloudflare.
-    """
-    # 1. Consumimos los datos para obtener un UA muy reciente (Chrome/Edge en Windows/Mac)
-    # min_percentage=1.0 asegura que solo nos dé navegadores muy populares hoy en día
-    ua = UserAgent(os=['windows', 'macos'], browsers=['chrome', 'edge'], min_percentage=1.0)
+    # Pequeño micro-retraso para no saturar la librería en multihilo
+    time.sleep(random.uniform(0.1, 0.5))
+
     random_ua = ua.random
 
     # 2. Extraer el nombre del navegador y la versión mayor (ej: "124" de "Chrome/124.0.0.0")

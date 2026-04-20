@@ -5,7 +5,7 @@ INICIO DEL PROYECTO EN UN NUEVO DISPOSITIVO:
     cd .\backend\
     py -m venv .venv
     .venv\Scripts\activate
-    pip install -r requirements.txt
+    pip install -r dependencies.txt
     playwright install chromium
 
 
@@ -16,7 +16,7 @@ ACTUALIZAR EL PROYECTO AL DÍA:
     git pull
     cd .\backend\
     .venv\Scripts\activate
-    pip install -r requirements.txt
+    pip install -r dependencies.txt
 
 
 --------------------------------------------------------------
@@ -29,16 +29,19 @@ RESET DE LA BASE DE DATOS:
 
 
 --------------------------------------------------------------
-COMANDOS DENTRO DEL ENTORNO:
+COMANDOS DENTRO DEL ENTORNO:    ( .venv\Scripts\activate )
 --------------------------------------------------------------
-    EJECUTAR CRAWLER (ACTUALIZAR/AÑADIR PRODUCTOS):
-        python scrapper_app/main_crawler.py
+    EJECUTAR CRAWLER (DESDE BACKEND) (ACTUALIZAR/AÑADIR PRODUCTOS):
+        python -m scrapper_app.main_crawler
 
     ENCENDER SERVIDOR:
         python manage.py runserver
 
     CREAR/ACTUALIZAR ARCHIVO DEPENDENCIES.TXT:
         pip freeze > dependencies.txt
+
+    INSTALAR TODAS LAS DEPENDENCIAS NECESARIAS:
+        pip install -r dependencies.txt
 
     VACIAR DATOS SIN BORRAR LA ESTRUCTURA:
         python manage.py flush

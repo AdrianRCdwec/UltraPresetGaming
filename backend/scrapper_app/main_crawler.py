@@ -5,12 +5,14 @@ from scrapper_app.utils.logger import logger
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'comparador.settings')
 import django
+os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 django.setup()
 
 # 2. Importar utilidades y modelos
 from api.models import Producto
 from scrapper_app.utils.db_manager import desactivar_ofertas_obsoletas, CACHE_PRODUCTOS_BD
 from scrapper_app.shops.hardware.factory import ScraperFactory
+from scrapper_app.utils.events import shutdown_event
 
 # 3. Importar las tiendas para que se auto-registren en la Fábrica
 import scrapper_app.shops.hardware.pccomponentes
@@ -20,8 +22,6 @@ import scrapper_app.shops.hardware.alternate
 import scrapper_app.shops.hardware.neobyte
 # import scrapper_app.shops.hardware.amazon
 
-# --- VARIABLE GLOBAL PARA GRACEFUL SHUTDOWN ---
-shutdown_event = threading.Event()
 
 # --- MANEJADOR DE SEÑALES (Ctrl+C o SIGTERM) ---
 def signal_handler(sig, frame):
