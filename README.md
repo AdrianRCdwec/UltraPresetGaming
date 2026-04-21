@@ -1,135 +1,182 @@
-# UltraPresetGaming — Comparador de precios (Tipo 2)
+# UltraPresetGaming
 
-Aplicación web que compara precios finales de hardware y videojuegos entre distintas tiendas/plataformas, teniendo en cuenta descuentos y costes extra (p. ej. envío, comisiones), y muestra novedades/actualidad tecnológica y de gaming.
+**UltraPresetGaming** es una aplicación web comparadora de precios de hardware y videojuegos desarrollada como Trabajo de Fin de Ciclo (Tipo 2) del ciclo formativo de 2.º DAW.
+El objetivo es ofrecer a los usuarios una forma sencilla y visual de comparar el precio y la disponibilidad de los mismos productos en distintas tiendas y plataformas online (PcComponentes, Coolmod, Alternate, LifeInformatica, NeoByte, Steam, PlayStation Store, etc.).
 
-> Proyecto académico (Frontend: HTML/CSS/JS) consumiendo una API REST propia (Backend: Django + Django REST Framework).
+> **Tecnologías usadas**  
+> * Front‑end: HTML5 semántico, CSS modular (variables, media‑queries), JavaScript vanilla (puro).  
+> * Back‑end: Django + Django REST Framework, API RESTful.  
+> * Autenticación: JWT.  
+> * Base de datos: SQLite (optimizada para concurrencia en lectura).
 
 ---
 
 ## Índice
-- [Objetivo](#objetivo)
-- [Funcionalidades](#funcionalidades)
-- [Páginas (UI)](#páginas-ui)
-- [Backend (API REST)](#backend-api-rest)
-- [Modelo de datos](#modelo-de-datos)
-- [Estructura del repositorio](#estructura-del-repositorio)
-- [Instalación y ejecución](#instalación-y-ejecución)
-- [Uso rápido](#uso-rápido)
-- [Buenas prácticas y seguridad](#buenas-prácticas-y-seguridad)
-- [Roadmap](#roadmap)
+
+1. [Descripción del proyecto](#descripción-del-proyecto)  
+2. [Arquitectura](#arquitectura)  
+3. [Endpoints de la API](#endpoints)  
+4. [Modelos y relaciones](#modelos-y-relaciones)  
+5. [Instalación y ejecución](#instalación-y-ejecución)  
+6. [Conexión con el front‑end](#conexión-con-el-front‑end)  
+7. [Licencia](#licencia)  
+8. [Contacto](#contacto)
 
 ---
 
-## Objetivo
-Construir una web responsive y accesible que permita:
-- Buscar un producto (juego o componente).
-- Consultar precios por tienda/plataforma.
-- Calcular el **precio final** (precio base - descuento + extras).
-- Determinar automáticamente la opción más barata.
-- Consultar novedades (tecnología y videojuegos) desde la propia aplicación.
+## Descripción del proyecto
+
+UltraPresetGaming permite a los usuarios comparar precios de hardware y videojuegos en tiempo real entre distintas tiendas y plataformas.  
+El usuario puede iniciar sesión con su cuenta (JWT) y usar el comparador, el carrito de compras y el panel de perfil.
+
+El proyecto está pensado para ser usado por gamers, entusiastas de la tecnología y cualquier persona que busque la mejor oferta.
 
 ---
 
-## Funcionalidades
-- Comparación multi-tienda de precios por producto.
-- Cálculo de precio final: incluye descuentos y extras configurables.
-- Filtros y búsqueda (por nombre, categoría, tienda, rango de precio).
-- Página de detalle de producto con historial/variación de precios (si se implementa).
-- Sección de novedades (listado y detalle).
+## Arquitectura
+
+```
+┌───────────────────────────────────────┐
+│               Front‑end               │
+│        (HTML5, CSS, JavaScript)       │
+└─────┬─────────────────────────────┬───┘
+      │                             │
+┌─────▼────────────┐          ┌─────▼─────┐
+│   Header         │          │ API REST  │
+│ (auth_header.js) │          │ (Django)  │
+└─────▲────────────┘          └─────▲─────┘
+      │                      │
+┌─────┴─────┐          ┌─────┴─────┐
+│   Carrito │          │  Modelo   │
+│   (JS)    │          │  (SQLite) │
+└─────▲─────┘          └─────▲─────┘
+      │                      │
+┌─────┴─────┐          ┌─────┴───────┐
+│ Comparador│          │ Serializador│
+│  (HTML)   │          │    (DRF)    │
+└───────────┘          └─────────────┘
+```
+
+- **Front‑end**: páginas semánticas (header, nav, main, aside, footer) con media‑queries para dispositivos móviles, tablet y escritorio.  
+- **Back‑end**: Django 3.x con Django‑REST‑Framework, 5 endpoints CRUD (GET, POST, PUT, PATCH, DELETE).  
+- **JWT**: autenticación con token guardado en `localStorage`.  
+- **Modelo de datos**: `Producto`, `Tienda`, `Usuario`, `Carrito`, con relación N:N entre `Carrito` y `Producto`.  
 
 ---
 
-## Páginas (UI)
-La aplicación incluye al menos 4 páginas (HTML) usando etiquetas semánticas:
-- **Home / Novedades**: listado de noticias/actualizaciones.
-- **Comparador / Buscador**: búsqueda de productos y comparación de precios.
-- **Detalle de producto**: desglose de tiendas, descuentos, extras y precio final.
-- **Favoritos / Seguimiento** (o **Acerca de / Contacto**, según la implementación final).
+## Endpoints
 
-### Accesibilidad y responsive
-- Uso de `<header>`, `<nav>`, `<main>`, `<aside>`, `<footer>`.
-- Diseño responsive con *media queries* (móvil, tablet, escritorio).
-- CSS modular: variables, clases reutilizables y estructura mantenible.
+| Método | Ruta | Parámetros | Acción |
+|--------|------|------------|--------|
+| GET | `/api/productos/` | `?categoria=hardware` | Lista todos los productos. |
+| POST | `/api/carrito/` | `producto_id` en body | Añade un producto al carrito. |
+| PUT | `/api/carrito/<int:pk>/` | `producto_id` en body | Actualiza la cantidad del producto. |
+| PATCH | `/api/carrito/<int:pk>/` | `cantidad=2` en query | Reduce la cantidad en 1. |
+| DELETE | `/api/carrito/<int:pk>/` | | Elimina el carrito. |
 
----
-
-## Backend (API REST)
-Backend implementado con Django + Django REST Framework.
-- Formato de intercambio: **JSON** (request/response).
-
-### Endpoints (mínimos obligatorios)
-> Nota: los nombres finales pueden variar, pero deben existir los verbos y mecanismos.
-
-Ejemplo de endpoints:
-- `GET /api/productos/`  
-  - Soporta filtros mediante **query params** (p. ej. `?search=ryzen&categoria=cpu&tienda=pccomponentes`)
-- `POST /api/productos/`  
-  - Crea producto (parámetros en **cuerpo JSON**)
-- `PUT /api/productos/<id>/`  
-  - Actualización completa (**path param** `id` + cuerpo JSON)
-- `PATCH /api/productos/<id>/`  
-  - Actualización parcial (**path param** `id` + cuerpo JSON)
-- `DELETE /api/productos/<id>/`  
-  - Eliminación (**path param** `id`)
-
-*(Además se pueden añadir endpoints para tiendas, precios, noticias, favoritos, etc.)*
-
-### Parámetros requeridos (al menos una vez en toda la API)
-- **Path params**: `/api/productos/<id>/`
-- **Query params**: `/api/productos/?search=...`
-- **Body params (JSON)**: `POST/PUT/PATCH` con payload JSON
+> Todos los endpoints aceptan/retornan **JSON** y requieren el encabezado `Authorization: Bearer <token>` cuando la operación es privada.
 
 ---
 
-## Modelo de datos
-Mínimo 3 modelos con relación N:N (o ternaria).
+## Modelos y relaciones
 
-Diseño recomendado (ejemplo):
-- `Producto` (hardware o videojuego)
-- `Tienda` (PcComponentes, Amazon, Steam, etc.)
-- `Oferta` (o `Precio`) como entidad intermedia N:N:
-  - `producto` (FK a Producto)
-  - `tienda` (FK a Tienda)
-  - `precio_base`
-  - `descuento` (porcentaje o cantidad)
-  - `extras` (envío/comisión) o campos separados
-  - `updated_at` (fecha/hora de actualización)
+```python
+class Producto(models.Model):
+    nombre = models.CharField(max_length=255, db_index=True)
+    categoria = models.CharField(max_length=255, db_index=True)
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    url_imagen = models.URLField()
+    tienda = models.ForeignKey('Tienda', on_delete=models.CASCADE)
 
-Relaciones:
-- `Producto` N:N `Tienda` a través de `Oferta/Precio`.
+class Tienda(models.Model):
+    nombre = models.CharField(max_length=100, db_index=True)
+    url_base = models.URLField()
 
----
+class Carrito(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    productos = models.ManyToManyField(Producto, through='DetalleCarrito')
+    total = models.DecimalField(max_digits=10, decimal_places=2)
 
-## Estructura del repositorio
-
-[...]
+class DetalleCarrito(models.Model):
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(default=1)
+```
 
 ---
 
 ## Instalación y ejecución
 
-### Requisitos
-- Python 3.10+ (recomendado 3.11)
-- pip
-- (Opcional) Node.js si se usan herramientas de build, si no, no hace falta.
-
-### 1) Backend (Django)
-Desde la carpeta `backend/`:
-
-1. Crear y activar entorno virtual:
-   - Windows (PowerShell):
-     ```bash
-     python -m venv venv
-     .\venv\Scripts\Activate.ps1
-     ```
-   - Windows (CMD):
-     ```bash
-     python -m venv venv
-     .\venv\Scripts\activate.bat
-     ```
-
-2. Instalar dependencias:
+1. **Clonar el repositorio**  
    ```bash
+   git clone https://github.com/tu_usuario/UltraPresetGaming.git
+   cd UltraPresetGaming
+   ```
+
+2. **Crear entorno virtual**  
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
    pip install -r requirements.txt
-   python manage.py makemigrations
+   ```
+
+3. **Migraciones**  
+   ```bash
    python manage.py migrate
+   ```
+
+4. **Iniciar servidor**  
+   ```bash
+   python manage.py runserver
+   ```
+
+5. **Acceder a la aplicación**  
+   Navega a `http://127.0.0.1:8000/` y empieza a usar el comparador.
+
+---
+
+## Conexión con el front‑end
+
+El front‑end consume los endpoints a través de `fetch`:
+
+```js
+fetch('/api/productos/', {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+})
+.then(r => r.json())
+.then(data => { /* renderiza productos */ })
+```
+
+Para crear un carrito nuevo:
+
+```js
+fetch('/api/carrito/', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    },
+    body: JSON.stringify({ usuario: 'juan', productos: [1,2,3] })
+})
+```
+
+---
+
+## Pruebas
+
+> (Pendiente) Se planifica introducir pruebas unitarias con **pytest** para las funciones críticas del back‑end y del motor de scraping.
+
+---
+
+## Licencia
+
+MIT License – Vea el archivo `LICENSE`.
+
+---
+
+## Contacto
+
+- **Autor:** Adrián Rodríguez Campos  
+- **GitHub:** https://github.com/AdrianRCdwec/UltraPresetGaming
+
+---
