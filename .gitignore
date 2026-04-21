@@ -3,4 +3,5 @@ __pycache__/
 *.pyc
 .env
 structure.txt
+backend/media/
 .continue/
