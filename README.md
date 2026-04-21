@@ -45,16 +45,16 @@ El proyecto está pensado para ser usado por gamers, entusiastas de la tecnolog�
 │   Header         │          │ API REST  │
 │ (auth_header.js) │          │ (Django)  │
 └─────▲────────────┘          └─────▲─────┘
-      │                      │
-┌─────┴─────┐          ┌─────┴─────┐
-│   Carrito │          │  Modelo   │
-│   (JS)    │          │  (SQLite) │
-└─────▲─────┘          └─────▲─────┘
-      │                      │
-┌─────┴─────┐          ┌─────┴───────┐
-│ Comparador│          │ Serializador│
-│  (HTML)   │          │    (DRF)    │
-└───────────┘          └─────────────┘
+      │                             │
+┌─────┴─────┐                 ┌─────┴─────┐
+│   Carrito │                 │  Modelo   │
+│   (JS)    │                 │  (SQLite) │
+└─────▲─────┘                 └─────▲─────┘
+      │                             │
+┌─────┴─────┐                 ┌─────┴───────┐
+│ Comparador│                 │ Serializador│
+│  (HTML)   │                 │    (DRF)    │
+└───────────┘                 └─────────────┘
 ```
 
 - **Front‑end**: páginas semánticas (header, nav, main, aside, footer) con media‑queries para dispositivos móviles, tablet y escritorio.  
