@@ -5,3 +5,5 @@ __pycache__/
 structure.txt
 backend/media/
 .continue/
+.vscode/
+docs/extras/
