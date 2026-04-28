@@ -14,6 +14,14 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
+# Umbrales de coincidencia y límite de IA
+REGEX_SIMILARITY_THRESHOLD = 80   # %
+HIGH_SIMILARITY_THRESHOLD = 95    # %
+DUDOSO_LOWER_THRESHOLD = 80      # %
+DUDOSO_UPPER_THRESHOLD = 95      # %
+IA_CALL_LIMIT = 10
+IA_CALL_COUNT = 0
+
 # CONFIGURACIÓN DE PATRONES DE LIMPIEZA
 PALABRAS_BASURA = [
     "procesador", "tarjeta grafica", "tarjeta gráfica", "placa base", "memoria ram",
@@ -178,6 +186,8 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
         return 0
         
     global CACHE_PRODUCTOS_BD
+    global IA_CALL_COUNT
+    IA_CALL_COUNT = 0
     try: asyncio.set_event_loop(None)
     except: pass
 
@@ -254,27 +264,21 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                     prod_bd = productos_existentes[idx]
                     modelo_bd_actual = modelos_bd[idx]
 
-                    # NIVEL 1: Regex Estricto (Match perfecto de modelo)
-                    if modelo_para_comparar and modelo_bd_actual:
-                        if modelo_para_comparar == modelo_bd_actual:
-                            # Tienen la misma Regex. Aseguramos que la similitud de texto también es alta (evitar colisiones raras)
-                            if similitud >= 60:
-                                producto_asociado = prod_bd
-                                break
-                        else:
-                            continue
-
-                    # NIVEL 2: Similitud Vectorial Alta (>88%)
-                    if similitud >= 88:
+                    # NIVEL 1: Coincidencia de modelo + similitud >= REGEX_SIMILARITY_THRESHOLD
+                    if modelo_para_comparar and modelo_bd_actual and modelo_para_comparar == modelo_bd_actual:
+                        if similitud >= REGEX_SIMILARITY_THRESHOLD:
+                            producto_asociado = prod_bd
+                            break
+                    # NIVEL 2: Similitud vectorial alta >= HIGH_SIMILARITY_THRESHOLD
+                    elif similitud >= HIGH_SIMILARITY_THRESHOLD:
                         producto_asociado = prod_bd
                         break
-
-                    # NIVEL 3: Casos Dudosos (Entre 72% y 88%)
-                    elif similitud > 72:
+                    # NIVEL 3: Casos dudosos (entre DUDOSO_LOWER_THRESHOLD y DUDOSO_UPPER_THRESHOLD)
+                    elif DUDOSO_LOWER_THRESHOLD < similitud < DUDOSO_UPPER_THRESHOLD:
                         candidatos_dudosos.append(prod_bd)
 
-            # NIVEL 4: IA Local o Externa (Fallback Marginal)
-            if not producto_asociado and candidatos_dudosos:
+            # NIVEL 4: IA Local o Externa (Fallback Marginal) - limitado a IA_CALL_LIMIT llamadas
+            if not producto_asociado and candidatos_dudosos and IA_CALL_COUNT < IA_CALL_LIMIT:
                 # Tomamos solo los 3 mejores para no saturar a la IA
                 candidatos_top = candidatos_dudosos[:3]
                 nombres_candidatos = [c.nombre for c in candidatos_top]
@@ -301,6 +305,7 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                 # 3. Llamar a Ollama solo para los dudosos nuevos (Serán poquísimos gracias a TF-IDF)
                 if candidatos_para_ia:
                     resultados_ia = evaluar_productos_ia_sync(nombre_original, candidatos_para_ia)
+                    IA_CALL_COUNT += 1
 
                     decisiones_a_guardar = []
                     for i, resultado in enumerate(resultados_ia):

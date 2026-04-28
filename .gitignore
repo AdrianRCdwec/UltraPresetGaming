@@ -4,6 +4,6 @@ __pycache__/
 .env
 structure.txt
 backend/media/
-.continue/
+.clinerules/
 .vscode/
 docs/extras/
