@@ -1,5 +1,4 @@
-import random, re, time
-from fake_useragent import UserAgent
+import random, re, ua_generator
 from scrapper_app.utils.logger import logger
 
 # --- CONFIGURACIÓN DE TRACKERS ---
@@ -40,30 +39,23 @@ def bloquear_recursos_innecesarios(route):
 
 # Obtener un User-Agent aleatorio
 
-# Instanciamos una sola vez a nivel global para que use su caché interna
-ua = UserAgent(os='windows', browsers=['chrome', 'edge'])
-
 def obtener_perfil_navegador():
-    # Pequeño micro-retraso para no saturar la librería en multihilo
-    time.sleep(random.uniform(0.1, 0.5))
+    ua = ua_generator.generate(device='desktop', platform='windows', browser=('chrome', 'edge'))
+    random_ua = ua.text
 
-    random_ua = ua.random
-
-    # 2. Extraer el nombre del navegador y la versión mayor (ej: "124" de "Chrome/124.0.0.0")
     match_version = re.search(r'(Chrome|Edg)/(\d+)\.', random_ua)
-    
+
     if match_version:
         navegador = match_version.group(1)
         version = match_version.group(2)
-        
-        # 3. Construir los Client Hints dinámicos y coherentes
+
         if navegador == 'Chrome':
             sec_ch_ua = f'"Chromium";v="{version}", "Google Chrome";v="{version}", "Not-A.Brand";v="99"'
-        else: # Edge
+        else:
             sec_ch_ua = f'"Chromium";v="{version}", "Microsoft Edge";v="{version}", "Not-A.Brand";v="99"'
-            
+
         plataforma = '"Windows"' if 'Windows' in random_ua else '"macOS"'
-        
+
         headers = {
             "Sec-Ch-Ua": sec_ch_ua,
             "Sec-Ch-Ua-Mobile": "?0",
@@ -71,14 +63,12 @@ def obtener_perfil_navegador():
             "Upgrade-Insecure-Requests": "1"
         }
     else:
-        # Fallback de seguridad ultra-robusto por si toca un string atípico
         headers = {
             "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
             "Sec-Ch-Ua-Mobile": "?0",
             "Sec-Ch-Ua-Platform": '"Windows"',
             "Upgrade-Insecure-Requests": "1"
         }
-        
     return {
         "user_agent": random_ua,
         "headers": headers

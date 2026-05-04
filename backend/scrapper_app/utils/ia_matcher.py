@@ -1,5 +1,6 @@
 import json, requests, time
 from scrapper_app.utils.logger import logger
+from .interactive_prompt import preguntar_usuario
 
 # --- CONFIGURACIÓN DEL AGENTE OLLAMA (LOCAL) ---
 OLLAMA_URL = 'http://localhost:11434/api/generate'
@@ -291,30 +292,43 @@ def es_mismo_producto_ia_batch(nombre_base, lista_candidatos):
             else:
                 resultados[i] = True if str(es_match).lower() == 'true' else False
 
-        # --- INTENTO 2: Llama 3 (Solo para dudas) ---
+        # --- INTERACCIÓN CON EL USUARIO (Fallback para dudas) ---
         if candidatos_duda:
-            candidatos_duda_str = "\n".join([f"[{i}] {nombre}" for i, nombre in enumerate(candidatos_duda)])
-            prompt_usuario_pesado = f"Producto Base: '{nombre_base}'\na evaluar (CASOS DUDOSOS):\n{candidatos_duda_str}"
-
-            prompt_sistema_llama = prompt_sistema.replace('o "duda" (como cadena de texto)', '')
-
-            contenido_pesado = consultar_ollama_sync(MODELO_PESADO, prompt_sistema_llama, prompt_usuario_pesado)
-            
             try:
-                datos_json_pesado = json.loads(contenido_pesado)
-            except json.JSONDecodeError:
-                logger.warning("⚠️ [IA Llama3] Devolvió un formato inválido. Marcando dudas como False.")
-                datos_json_pesado = {}
-
-            for idx_relativo, idx_real in enumerate(indices_duda):
-                es_match_pesado = datos_json_pesado.get(str(idx_relativo), False)
-                resultados[idx_real] = True if str(es_match_pesado).lower() == 'true' else False
+                # Preguntamos al operador por cada candidato que la IA marcó como "duda".
+                respuestas_usuario = preguntar_usuario(nombre_base, candidatos_duda)
+                # Asignamos las respuestas a los índices correspondientes en la lista de resultados.
+                for idx_relativo, idx_real in enumerate(indices_duda):
+                    resultados[idx_real] = respuestas_usuario[idx_relativo]
+            except Exception as e:
+                # En caso de cualquier error inesperado, registramos la advertencia y marcamos los
+                # candidatos dudosos como "False" (no coinciden).
+                logger.warning(f"⚠️ Error en la interacción con el usuario: {e}. Marcando dudas como False.")
+                for idx_real in indices_duda:
+                    resultados[idx_real] = False
 
         return resultados
 
     except Exception as e:
-        logger.warning(f"⚠️ Aviso: Error en el flujo de Ollama: {e}. Se asume False para todos.")
-        return [False] * len(lista_candidatos)
+        # Si ocurre cualquier error inesperado al intentar usar la IA (por ejemplo, timeout,
+        # error de red o respuesta no parseable), delegamos la decisión al operador mediante
+        # la interacción terminal. De esta forma el proceso no se bloquea y el usuario puede
+        # proporcionar manualmente la respuesta para cada candidato.
+        logger.warning(
+            f"⚠️ Aviso: Error en el flujo de Ollama: {e}. Se solicita interacción al usuario."
+        )
+        try:
+            # Preguntamos al usuario por todos los candidatos originales.
+            respuestas_usuario = preguntar_usuario(nombre_base, lista_candidatos)
+            return respuestas_usuario
+        except Exception as e_interactivo:
+            # Si la interacción también falla (por ejemplo, entorno no interactivo),
+            # registramos la advertencia y devolvemos un fallback conservador (False).
+            logger.warning(
+                f"⚠️ Error en la interacción con el usuario tras fallo de IA: {e_interactivo}. "
+                "Marcando todos los candidatos como False."
+            )
+            return [False] * len(lista_candidatos)
 
 # EVALUAR PRODUCTOS DE FORMA SÍNCRONA
 def evaluar_productos_ia_sync(nombre_base, lista_candidatos):
