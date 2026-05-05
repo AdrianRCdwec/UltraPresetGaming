@@ -481,7 +481,7 @@ function pintarResultados(productos, esCargarMas, hayMasPaginas) {
             case 'CPU':  imagenPorDefecto = '../images/procesador.png'; break;
         }
 
-        const imagenProd = producto.imagen || producto.imagen_url || imagenPorDefecto;
+        const imagenProd = producto.imagen_url || imagenPorDefecto;
 
         const card = document.createElement('div');
         card.className = 'component-card';

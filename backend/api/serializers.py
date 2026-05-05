@@ -22,15 +22,24 @@ class OfertaSerializer(serializers.ModelSerializer):
 
 class ProductoSerializer(serializers.ModelSerializer):
     ofertas = serializers.SerializerMethodField()
+    imagen_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Producto
-        fields = ['id', 'nombre', 'tipo', 'categoria', 'descripcion', 'imagen', 'ofertas']
+        fields = ['id', 'nombre', 'tipo', 'categoria', 'descripcion', 'imagen', 'imagen_url', 'ofertas']
 
     def get_ofertas(self, obj):
         # Solo serializa y devuelve al frontend las ofertas que no hayan sufrido Soft Delete
         ofertas_activas = obj.oferta_set.filter(disponible=True)
         return OfertaSerializer(ofertas_activas, many=True).data
+
+    def get_imagen_url(self, obj):
+        if obj.imagen:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.imagen.url)
+            return obj.imagen.url
+        return None
 
 class ItemGuardadoSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.ReadOnlyField(source='producto.nombre')
