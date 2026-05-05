@@ -96,7 +96,7 @@ form.addEventListener('submit', async (e) => {
 
         // Redirigir a inicio tras 1 segundo
         setTimeout(() => {
-            window.location.href = '../Proyecto_5_pagina.html';
+            window.location.href = '../home/index.html';
         }, 1000);
 
     } catch (err) {

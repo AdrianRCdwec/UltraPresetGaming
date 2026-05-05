@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!token) {
         alert("Debes iniciar sesión para ver tu perfil.");
-        window.location.href = "../Login/login.html";
+        window.location.href = "../login/login.html";
         return;
     }
 
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (respuesta.status === 401) {
                 // Token caducado
                 limpiarSesion();
-                window.location.href = "../Login/login.html";
+                window.location.href = "../login/login.html";
             }
         } catch (error) {
             console.error("Error al cargar perfil:", error);
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(btnLogout) {
         btnLogout.addEventListener('click', () => {
             limpiarSesion();
-            window.location.href = "../Login/login.html";
+            window.location.href = "../login/login.html";
         });
     }
 

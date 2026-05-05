@@ -15,11 +15,11 @@
 
             // Calculamos ruta base para enlaces
             const currentPath = window.location.pathname;
-            const isMainPage = currentPath.includes('Proyecto_5_pagina.html') || currentPath.endsWith('Main/') || currentPath.endsWith('/');
-            const baseFolder = isMainPage ? '.' : '..';
+            const isInPagesFolder = currentPath.includes('/pages/');
+            const baseFolder = isInPagesFolder ? '..' : 'pages';
 
             // Comprobamos si estamos dentro de la página del perfil
-            const isProfilePage = currentPath.includes('perfil.html');
+            const isProfilePage = currentPath.includes('profile.html');
 
             // Quitamos el href por defecto
             btnSesion.removeAttribute('href');
@@ -47,7 +47,7 @@
                     e.preventDefault();
                     localStorage.clear();
                     sessionStorage.clear();
-                    window.location.href = `${baseFolder}/Login/login.html`;
+                    window.location.href = `${baseFolder}/login/login.html`;
                 });
 
             } else {
@@ -87,7 +87,7 @@
                 const dropdown = document.createElement('div');
                 dropdown.className = 'user-dropdown';
                 dropdown.innerHTML = `
-                    <a href="${baseFolder}/Perfil/perfil.html">👤 Mi Perfil</a>
+                    <a href="${baseFolder}/profile/profile.html">👤 Mi Perfil</a>
                     <a href="#">⚙️ Ajustes</a>
                     <button class="logout-btn" id="btn-logout-header">🚪 Cerrar Sesión</button>
                 `;
@@ -110,7 +110,7 @@
                 document.getElementById('btn-logout-header').addEventListener('click', () => {
                     localStorage.clear();
                     sessionStorage.clear();
-                    window.location.href = `${baseFolder}/Login/login.html`;
+                    window.location.href = `${baseFolder}/login/login.html`;
                 });
 
                 // G. Traer foto real desde Django

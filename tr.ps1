@@ -1,7 +1,7 @@
 param(
     [string]$Ruta = ".",
     [string]$Salida = $(Join-Path $PSScriptRoot "docs/structure.txt"),
-    [string[]]$ExcluirDirectorios = @(".venv", "__pycache__", ".vscode", ".git"),
+    [string[]]$ExcluirDirectorios = @(".venv", "__pycache__", ".vscode", ".git", ".clinerules"),
     [switch]$f
 )
 
@@ -24,7 +24,7 @@ function Get-TreeAscii {
                 $_.Name -notin $ExcluirDirectorios
             }
             else {
-                (-not $f.IsPresent) -and ($_.Extension -ne ".jpg") -and ($_.Extension -ne ".png") -and ($_.Extension -ne ".webp")
+                (-not $f.IsPresent) -and ($_.Extension -ne ".jpg") -and ($_.Extension -ne ".png") -and ($_.Extension -ne ".webp") -and ($_.Extension -ne ".xhtml")
             }
         } |
         Sort-Object @{ Expression = { -not $_.PSIsContainer } }, Name
