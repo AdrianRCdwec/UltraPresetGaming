@@ -357,6 +357,26 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
                 nuevos_productos_a_crear.append((nuevo_prod, precio_float, item.get('link', '')))
                 productos_existentes.append(nuevo_prod)  # Actualiza la caché en vivo
             else:
+                # --- ACTUALIZAR IMAGEN PARA PRODUCTOS EXISTENTES (SI NO TIENEN O ES MEJOR) ---
+                url_imagen = item.get('imagen')
+                if url_imagen and url_imagen.startswith('http') and not producto_asociado.imagen:
+                    try:
+                        headers_img = obtener_perfil_navegador()['headers']
+                        respuesta_img = requests.get(url_imagen, headers=headers_img, timeout=5)
+                        
+                        if respuesta_img.status_code == 200:
+                            parsed_url = urlparse(url_imagen)
+                            nombre_archivo = os.path.basename(parsed_url.path)
+                            if not nombre_archivo or '.' not in nombre_archivo:
+                                nombre_archivo = f"imagen_producto_{producto_asociado.id}.jpg"
+                                
+                            producto_asociado.imagen.save(nombre_archivo, ContentFile(respuesta_img.content), save=True) # Guardar inmediatamente
+                            logger.info(f"  🖼️ Imagen actualizada para producto existente: {producto_asociado.nombre}")
+                    except Exception as e:
+                        logger.warning(f"    ⚠️ Error al descargar/guardar imagen para producto existente {producto_asociado.nombre}: {e}")
+                        pass
+
+
                 if producto_asociado.id and producto_asociado.id in ofertas_existentes_dict:
                     oferta_existente = ofertas_existentes_dict[producto_asociado.id]
                     if oferta_existente.precio_base != precio_float or oferta_existente.enlace_compra != item.get('link', ''):
@@ -378,7 +398,6 @@ def guardar_productos_en_db(productos_extraidos, nombre_tienda, url_base_tienda,
         except Exception as e:
             logger.warning(f"⚠️ Error procesando item: {e}")
             continue
-
     # 4. TRANSACCIÓN MASIVA FINAL (Sin cambios, tu código exacto)
     with transaction.atomic():
         # A) Crear Productos Nuevos

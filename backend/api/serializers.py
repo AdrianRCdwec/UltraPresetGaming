@@ -38,7 +38,7 @@ class ProductoSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.imagen.url)
-            return obj.imagen.url
+            return f"http://127.0.0.1:8000{obj.imagen.url}"
         return None
 
 class ItemGuardadoSerializer(serializers.ModelSerializer):
@@ -52,6 +52,9 @@ class ItemGuardadoSerializer(serializers.ModelSerializer):
 
     def get_producto_imagen(self, obj):
         if obj.producto.imagen:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.producto.imagen.url)
             return obj.producto.imagen.url
         return None
 

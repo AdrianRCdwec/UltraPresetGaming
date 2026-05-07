@@ -317,17 +317,16 @@ window.eliminarDelCarritoHW = async function(categoriaRanura) {
         // Restauramos el icono original
         const imgDestino = labelDestino.closest('.hw-item').querySelector('.hw-icon');
         if (imgDestino) {
-            let imgOriginal = '../images/placeholder.jpg';
-            if (categoriaRanura === 'panel-procesador') imgOriginal = '../images/procesador.png';
-            if (categoriaRanura === 'panel-placa') imgOriginal = '../images/motherboard.png';
-            if (categoriaRanura === 'panel-ram') imgOriginal = '../images/ram.png';
-            if (categoriaRanura === 'panel-caja') imgOriginal = '../images/caja.png';
-            if (categoriaRanura === 'panel-aire') imgOriginal = '../images/aire.png';
-            if (categoriaRanura === 'panel-liquida') imgOriginal = '../images/liquida.png';
-            if (categoriaRanura === 'panel-gpu') imgOriginal = '../images/gpu.png';
-            if (categoriaRanura === 'panel-psu') imgOriginal = '../images/psu.png';
-            if (categoriaRanura === 'panel-disco') imgOriginal = '../images/almacenamiento.png';
-            if (categoriaRanura === 'panel-monitor') imgOriginal = '../images/monitor.png';
+            if (categoriaRanura === 'panel-procesador') imgOriginal = '../../assets/images/hardware/cpu.png';
+            if (categoriaRanura === 'panel-placa') imgOriginal = '../../assets/images/hardware/motherboard.png';
+            if (categoriaRanura === 'panel-ram') imgOriginal = '../../assets/images/hardware/ram.png';
+            if (categoriaRanura === 'panel-caja') imgOriginal = '../../assets/images/hardware/box.png';
+            if (categoriaRanura === 'panel-aire') imgOriginal = '../../assets/images/hardware/air.png';
+            if (categoriaRanura === 'panel-liquida') imgOriginal = '../../assets/images/hardware/liquid.png';
+            if (categoriaRanura === 'panel-gpu') imgOriginal = '../../assets/images/hardware/gpu.png';
+            if (categoriaRanura === 'panel-psu') imgOriginal = '../../assets/images/hardware/psu.png';
+            if (categoriaRanura === 'panel-disco') imgOriginal = '../../assets/images/hardware/storage.png';
+            if (categoriaRanura === 'panel-monitor') imgOriginal = '../../assets/images/hardware/monitor.png';
             
             imgDestino.src = imgOriginal;
         }
@@ -371,10 +370,11 @@ function actualizarCarritoUI() {
         contHW.innerHTML = '<p class="carrito-vacio">Tu PC está vacío</p>';
     } else {
         contHW.innerHTML = itemsHW.map(item => {
-            sumaHW += item.precio;
-            return `
-                <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7;">
-                    <img src="${item.imagen}" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
+    sumaHW += item.precio;
+    const imagenItem = item.imagen || '../../assets/images/hardware/placeholder.jpg';
+    return `
+        <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7;">
+            <img src="${imagenItem}" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
                     <div style="flex: 1; min-width: 0;">
                         <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Hardware</span>
                         <p style="font-size: 13px; font-weight: 700; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #101828;">${item.nombre}</p>
@@ -398,7 +398,7 @@ function actualizarCarritoUI() {
         contVG.innerHTML = arrayJuegos.map(item => {
             const precio = item.ofertas?.length ? parseFloat(item.ofertas[0].precio_final) : 0;
             sumaVG += precio; 
-            const img = item.imagen || '../images/placeholder.png';
+            const img = item.imagen || '../../assets/images/hardware/placeholder.jpg';
             return `
                 <div class="carrito-item" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7f7f7;">
                     <img src="${img}" style="width: 54px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
@@ -467,22 +467,22 @@ function pintarResultados(productos, esCargarMas, hayMasPaginas) {
         }
 
         // Elegir imagen por defecto según la categoría
-        let imagenPorDefecto = '../images/placeholder.jpg';
+        let imagenPorDefecto = '../../assets/images/hardware/placeholder.jpg';
+
         switch (categoriaActual) {
-            case 'MB':   imagenPorDefecto = '../images/motherboard.png'; break;
-            case 'RAM':  imagenPorDefecto = '../images/ram.png'; break;
-            case 'CASE': imagenPorDefecto = '../images/caja.png'; break;
-            case 'AIR':  imagenPorDefecto = '../images/aire.png'; break;
-            case 'LIQ':  imagenPorDefecto = '../images/liquida.png'; break;
-            case 'GPU':  imagenPorDefecto = '../images/gpu.png'; break;
-            case 'PSU':  imagenPorDefecto = '../images/psu.png'; break;
-            case 'SSD':  imagenPorDefecto = '../images/almacenamiento.png'; break;
-            case 'MON':  imagenPorDefecto = '../images/monitor.png'; break;
-            case 'CPU':  imagenPorDefecto = '../images/procesador.png'; break;
+            case 'CPU':  imagenPorDefecto = '../../assets/images/hardware/cpu.png'; break;
+            case 'MB':   imagenPorDefecto = '../../assets/images/hardware/motherboard.png'; break;
+            case 'RAM':  imagenPorDefecto = '../../assets/images/hardware/ram.png'; break;
+            case 'CASE': imagenPorDefecto = '../../assets/images/hardware/box.png'; break;
+            case 'AIR':  imagenPorDefecto = '../../assets/images/hardware/air.png'; break;
+            case 'LIQ':  imagenPorDefecto = '../../assets/images/hardware/liquid.png'; break;
+            case 'GPU':  imagenPorDefecto = '../../assets/images/hardware/gpu.png'; break;
+            case 'PSU':  imagenPorDefecto = '../../assets/images/hardware/psu.png'; break;
+            case 'SSD':  imagenPorDefecto = '../../assets/images/hardware/storage.png'; break;
+            case 'MON':  imagenPorDefecto = '../../assets/images/hardware/monitor.png'; break;
         }
 
-        const imagenProd = producto.imagen_url || imagenPorDefecto;
-
+        const imagenProd = producto.imagen_url && producto.imagen_url !== 'null' ? producto.imagen_url : imagenPorDefecto;
         const card = document.createElement('div');
         card.className = 'component-card';
         card.style.cursor = 'pointer'; 

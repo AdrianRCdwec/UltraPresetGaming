@@ -16,29 +16,32 @@ class PaginacionProductos(PageNumberPagination):
     max_page_size = 100
 
 class ProductoViewSet(viewsets.ModelViewSet):
+    pagination_class = PaginacionProductos
+    queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
-    pagination_class = PaginacionProductos # Activar paginación
-    
+
     def get_queryset(self):
-        # 1. Filtramos para traer solo productos que tengan alguna oferta DISPONIBLE
         queryset = Producto.objects.filter(oferta__disponible=True).distinct().order_by('id')
-        
+
         search = self.request.query_params.get('search', None)
         categoria = self.request.query_params.get('categoria', None)
         tipo = self.request.query_params.get('tipo', None)
-        
-        # Filtro de texto
+
         if search is not None:
             queryset = queryset.filter(nombre__icontains=search)
-            
-        # Filtro estricto por categoría (ej: Solo placas base)
+
         if categoria is not None:
             queryset = queryset.filter(categoria=categoria)
-            
+
         if tipo is not None:
             queryset = queryset.filter(tipo=tipo)
-            
+
         return queryset
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 class TiendaViewSet(viewsets.ModelViewSet):
     queryset = Tienda.objects.all()
@@ -141,6 +144,11 @@ class ItemGuardadoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 class AlertaPrecioViewSet(viewsets.ModelViewSet):
     serializer_class = AlertaPrecioSerializer
