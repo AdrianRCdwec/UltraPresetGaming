@@ -12,13 +12,32 @@ class OfertaSerializer(serializers.ModelSerializer):
     tienda_nombre = serializers.ReadOnlyField(source='tienda.nombre')
     # Exponemos el campo calculado de precio final
     precio_final = serializers.ReadOnlyField()
+    # Exponemos la URL del logo de la tienda, si existe
+    tienda_logo = serializers.SerializerMethodField()
 
     class Meta:
         model = Oferta
         fields = [
-            'id', 'tienda', 'tienda_nombre', 'precio_base', 'descuento_porcentaje',
-            'gastos_envio', 'precio_final', 'enlace_compra', 'fecha_actualizacion'
-            ]
+            'id',
+            'tienda',
+            'tienda_nombre',
+            'tienda_logo',
+            'precio_base',
+            'descuento_porcentaje',
+            'gastos_envio',
+            'precio_final',
+            'enlace_compra',
+            'fecha_actualizacion',
+        ]
+
+    def get_tienda_logo(self, obj):
+        if not obj.tienda.logo:
+            return None
+
+        request = self.context.get('request')
+        if request is not None:
+            return request.build_absolute_uri(obj.tienda.logo.url)
+        return obj.tienda.logo.url
 
 class ProductoSerializer(serializers.ModelSerializer):
     ofertas = serializers.SerializerMethodField()
@@ -31,7 +50,7 @@ class ProductoSerializer(serializers.ModelSerializer):
     def get_ofertas(self, obj):
         # Solo serializa y devuelve al frontend las ofertas que no hayan sufrido Soft Delete
         ofertas_activas = obj.oferta_set.filter(disponible=True)
-        return OfertaSerializer(ofertas_activas, many=True).data
+        return OfertaSerializer(ofertas_activas, many=True, context=self.context).data
 
     def get_imagen_url(self, obj):
         if obj.imagen:

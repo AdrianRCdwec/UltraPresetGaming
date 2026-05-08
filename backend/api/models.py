@@ -7,6 +7,7 @@ from django.dispatch import receiver
 class Tienda(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     url_base = models.URLField(max_length=255, blank=True, null=True)
+    logo = models.ImageField(upload_to='tienda_logos/', blank=True, null=True)
 
     def __str__(self):
         return self.nombre

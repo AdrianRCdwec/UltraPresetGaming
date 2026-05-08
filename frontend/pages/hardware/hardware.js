@@ -24,7 +24,7 @@ async function cargarCarritoDesdeServidor() {
     const token = obtenerToken();
     if (!token) {
         console.log("Usuario no autenticado. Usando carrito local.");
-        return; 
+        return;
     }
 
     try {
@@ -36,31 +36,61 @@ async function cargarCarritoDesdeServidor() {
             }
         });
 
-        if (respuesta.ok) {
-            const itemsGuardados = await respuesta.json();
-
-            // Si el servidor nos devuelve datos, usamos la DB como fuente de verdad
-            if (itemsGuardados.length > 0) {
-                carritoHardware = {};
-                
-                itemsGuardados.forEach(item => {
-                    carritoHardware[item.ranura] = {
-                        db_id: item.id,
-                        id: item.producto, 
-                        nombre: item.producto_nombre,
-                        precio: 0,
-                        imagen: item.producto_imagen,
-                        ranura: item.ranura
-                    };
-                });
-                
-                guardarCarritoHardware();
-                actualizarCarritoUI();
-                restaurarSeleccionesHardware();
-                gestionarExclusionRefrigeracion();
-                console.log("Carrito sincronizado con la DB:", carritoHardware);
-            }
+        if (!respuesta.ok) {
+            console.error("Error al cargar carrito del servidor:", respuesta.status);
+            return;
         }
+
+        const itemsGuardados = await respuesta.json();
+
+        if (!Array.isArray(itemsGuardados) || itemsGuardados.length === 0) {
+            return;
+        }
+
+        const nuevoCarrito = {};
+
+        // Para cada ItemGuardado, pedimos su producto y calculamos el precio mínimo
+        for (const item of itemsGuardados) {
+            let precioNumero = 0;
+            let imagenProd = item.producto_imagen;
+
+            try {
+                const respProd = await fetch(`${API_URL}${item.producto}/`);
+                if (respProd.ok) {
+                    const prodData = await respProd.json();
+
+                    if (prodData.ofertas && prodData.ofertas.length > 0) {
+                        const ofertaMasBarata = prodData.ofertas.reduce((prev, curr) =>
+                            (parseFloat(prev.precio_final) < parseFloat(curr.precio_final)) ? prev : curr
+                        );
+                        precioNumero = parseFloat(ofertaMasBarata.precio_final);
+                    }
+
+                    if (prodData.imagen_url) {
+                        imagenProd = prodData.imagen_url;
+                    }
+                }
+            } catch (e) {
+                console.error("Error obteniendo datos del producto", item.producto, e);
+            }
+
+            nuevoCarrito[item.ranura] = {
+                db_id: item.id,
+                id: item.producto,
+                nombre: item.producto_nombre,
+                precio: precioNumero,
+                imagen: imagenProd,
+                ranura: item.ranura
+            };
+        }
+
+        carritoHardware = nuevoCarrito;
+        guardarCarritoHardware();
+        actualizarCarritoUI();
+        restaurarSeleccionesHardware();
+        gestionarExclusionRefrigeracion();
+        console.log("Carrito sincronizado con la DB:", carritoHardware);
+
     } catch (error) {
         console.error("Error cargando carrito del servidor:", error);
     }
