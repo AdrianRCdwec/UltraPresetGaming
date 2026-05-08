@@ -12,14 +12,22 @@ notepad $PROFILE
 )
 
 # PONEMOS ESTO:
-function tr {
+function Invoke-RepoScript {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RelativeScriptPath,
+
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [object[]]$ScriptArgs
+    )
+
     $dir = (Get-Location).Path
 
     while ($true) {
-        $scriptPath = Join-Path $dir "tr.ps1"
+        $scriptPath = Join-Path $dir $RelativeScriptPath
 
         if (Test-Path $scriptPath) {
-            & $scriptPath @args
+            & $scriptPath @ScriptArgs
             return
         }
 
@@ -32,10 +40,18 @@ function tr {
         $dir = $parent
     }
 
-    Write-Error "No se encontró tr.ps1 en esta carpeta ni en carpetas padre."
+    Write-Error "No se encontró $RelativeScriptPath en esta carpeta ni en carpetas padre."
 }
 
-# GUARDAMOS EL ARCHIVO!!!
+function tr {
+    Invoke-RepoScript "scripts/tr.ps1" @args
+}
+
+function crawler {
+    Invoke-RepoScript "scripts/run-crawler.ps1" @args
+}
+
+# GUARDAMOS EL ARCHIVO!!! ( CTRL. + G )
 ---------------------------------------------------------------
 
 . $PROFILE

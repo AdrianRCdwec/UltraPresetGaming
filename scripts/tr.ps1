@@ -1,14 +1,10 @@
 param(
-    [string]$Ruta = ".",
-    [string]$Salida = $(Join-Path $PSScriptRoot "docs/structure.txt"),
+    [string]$Salida = $(Join-Path (Join-Path (Split-Path $PSScriptRoot -Parent) "docs") "structure.txt"),
     [string[]]$ExcluirDirectorios = @(".venv", "__pycache__", ".vscode", ".git", ".clinerules"),
     [switch]$f
 )
 
-if ([string]::IsNullOrWhiteSpace($Ruta)) {
-    $Ruta = "."
-}
-$RutaCompleta = (Resolve-Path $Ruta).Path
+$RutaCompleta = (Get-Location).Path
 
 function Get-TreeAscii {
     param(
@@ -24,7 +20,11 @@ function Get-TreeAscii {
                 $_.Name -notin $ExcluirDirectorios
             }
             else {
-                (-not $f.IsPresent) -and ($_.Extension -ne ".jpg") -and ($_.Extension -ne ".png") -and ($_.Extension -ne ".webp") -and ($_.Extension -ne ".xhtml")
+                (-not $f.IsPresent) -and
+                ($_.Extension -ne ".jpg") -and
+                ($_.Extension -ne ".png") -and
+                ($_.Extension -ne ".webp") -and
+                ($_.Extension -ne ".xhtml")
             }
         } |
         Sort-Object @{ Expression = { -not $_.PSIsContainer } }, Name
@@ -41,9 +41,9 @@ function Get-TreeAscii {
             $nuevoPrefijo = if ($esUltimo) { $Prefijo + "    " } else { $Prefijo + "|   " }
 
             Get-TreeAscii -Directorio $item.FullName `
-                          -Prefijo $nuevoPrefijo `
-                          -ExcluirDirectorios $ExcluirDirectorios `
-                          -f:$f.IsPresent
+                            -Prefijo $nuevoPrefijo `
+                            -ExcluirDirectorios $ExcluirDirectorios `
+                            -f:$f.IsPresent
         }
     }
 }

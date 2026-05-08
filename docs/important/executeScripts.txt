@@ -1,0 +1,24 @@
+------------------------------------------
+EJECUCIÓN DE ÁRBOL PERSONALIZADO
+------------------------------------------
+
+---> EJECUCIÓN BÁSICA (INCLUYE ARCHIVOS) <---
+    tr
+
+---> EJECUCIÓN SIN MOSTRAR ARCHIVOS <---
+    tr -f
+
+
+
+------------------------------------------
+EJECUCIÓN DEL CRAWLER (SCRAPPER)
+------------------------------------------
+
+---> EJECUCIÓN NORMAL (MULTIHILO Y HEADLESS) <---
+    crawler
+
+---> EJECUCIÓN SECUENCIAL (MONOHILO Y HEADLESS) <---
+    crawler -s
+
+---> EJECUCIÓN DEBUG (MONOHILO Y NO HEADLESS) <---
+    crawler -d

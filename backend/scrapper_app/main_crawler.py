@@ -22,6 +22,11 @@ import scrapper_app.shops.hardware.alternate
 import scrapper_app.shops.hardware.neobyte
 # import scrapper_app.shops.hardware.amazon
 
+# ==========================================================
+# CONFIGURACIÓN DE EJECUCIÓN
+# ==========================================================
+MODO_DEBUG = os.getenv("SCRAPER_DEBUG", "false").lower() == "true"
+EJECUCION_SECUENCIAL = os.getenv("SCRAPER_SECUENCIAL", "false").lower() == "true"
 
 # --- MANEJADOR DE SEÑALES (Ctrl+C o SIGTERM) ---
 def signal_handler(sig, frame):
@@ -60,7 +65,7 @@ def calcular_hilos_optimos():
 # --- FUNCIONES DE ESCANEO PARA CADA TIENDA ---
 def escanearPcComponentes():
     total_pcc = 0
-    scraper = ScraperFactory.obtener_scraper("pccomponentes", debug=False)
+    scraper = ScraperFactory.obtener_scraper("pccomponentes", debug=MODO_DEBUG)
 
     def escanear(url, cat, tipo, excluir=None):
         if shutdown_event.is_set(): return
@@ -100,7 +105,7 @@ def escanearPcComponentes():
 
 def escanearCoolmod():
     total_coolmod = 0
-    scraper = ScraperFactory.obtener_scraper("coolmod", debug=False)
+    scraper = ScraperFactory.obtener_scraper("coolmod", debug=MODO_DEBUG)
 
     def escanear(url, cat, tipo, excluir=None):
         if shutdown_event.is_set(): return
@@ -144,7 +149,7 @@ def escanearCoolmod():
 
 def escanearLifeInformatica():
     total_life = 0
-    scraper = ScraperFactory.obtener_scraper("lifeinformatica", debug=False)
+    scraper = ScraperFactory.obtener_scraper("lifeinformatica", debug=MODO_DEBUG)
 
     def escanear(url, cat, tipo, excluir=None):
         if shutdown_event.is_set(): return
@@ -188,7 +193,7 @@ def escanearLifeInformatica():
 
 def escanearAlternate():
     total_alternate = 0
-    scraper = ScraperFactory.obtener_scraper("alternate", debug=False)
+    scraper = ScraperFactory.obtener_scraper("alternate", debug=MODO_DEBUG)
 
     def escanear(url, cat, tipo, excluir=None):
         if shutdown_event.is_set(): return
@@ -232,7 +237,7 @@ def escanearAlternate():
 
 def escanearNeoByte():
     total_neobyte = 0
-    scraper = ScraperFactory.obtener_scraper("neobyte", debug=False)
+    scraper = ScraperFactory.obtener_scraper("neobyte", debug=MODO_DEBUG)
 
     def escanear(url, cat, tipo, excluir=None):
         if shutdown_event.is_set(): return
@@ -279,23 +284,17 @@ def escanearNeoByte():
 # INICIO DEL SCRIPT
 # =================================================================
 if __name__ == "__main__":
-    logger.info("🚀 INICIANDO ESCANEO MASIVO EN PARALELO (MULTITHREADING)...")
+    logger.info("🚀 INICIANDO ESCANEO MASIVO...")
     logger.info("ℹ️  Puedes pulsar Ctrl+C en cualquier momento para un apagado seguro (Graceful Shutdown).")
     total_general = 0
 
-    # =============================
-    #      PRECARGA DEL CACHÉ
-    # =============================
-
-    # Estas son todas las categorías_db que usas en tus llamadas a escanear_catalogo_*
     categorias_usadas = ['CPU', 'MB', 'RAM', 'CASE', 'AIR', 'LIQ', 'GPU', 'PSU', 'SSD', 'MON']
-    
+
     logger.info("\n📚 Precargando productos de la BD en la memoria RAM para evitar bloqueos SQLite...")
     for cat in categorias_usadas:
         CACHE_PRODUCTOS_BD[cat] = list(Producto.objects.filter(categoria=cat))
-    logger.info(f"✅ Caché cargada con éxito. Listo para lanzar los hilos.\n")
+    logger.info("✅ Caché cargada con éxito. Listo para lanzar los scrapers.\n")
 
-    # Lista de las funciones que queremos ejecutar al mismo tiempo
     funciones_scrapers = [
         escanearPcComponentes,
         escanearCoolmod,
@@ -304,24 +303,37 @@ if __name__ == "__main__":
         escanearNeoByte
     ]
 
-    # Calculamos los hilos dinámicamente según el hardware
-    hilos_dinamicos = calcular_hilos_optimos()
-    logger.info(f"📊 HARDWARE DETECTADO: {psutil.virtual_memory().available / (1024**3):.1f} GB RAM libre. Asignando {hilos_dinamicos} hilos concurrentes.")
-
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=hilos_dinamicos) as executor:
-            # Iniciamos todas las funciones en paralelo
-            futuros = {executor.submit(func): func.__name__ for func in funciones_scrapers}
-            
-            # A medida que cada tienda va terminando, recogemos su total y lo sumamos
-            for futuro in concurrent.futures.as_completed(futuros):
-                nombre_funcion = futuros[futuro]
+        if EJECUCION_SECUENCIAL:
+            logger.warning("🐞 MODO DEBUG/SECUENCIAL ACTIVADO: las tiendas se ejecutarán una a una.")
+            for func in funciones_scrapers:
+                if shutdown_event.is_set():
+                    break
                 try:
-                    resultado = futuro.result()
+                    resultado = func()
                     total_general += resultado
-                    logger.info(f"✅ {nombre_funcion} ha terminado y sumado {resultado} productos.")
+                    logger.info(f"✅ {func.__name__} ha terminado y sumado {resultado} productos.")
                 except Exception as e:
-                    logger.error(f"❌ Error crítico en {nombre_funcion}: {e}")
+                    logger.error(f"❌ Error crítico en {func.__name__}: {e}")
+        else:
+            hilos_dinamicos = calcular_hilos_optimos()
+            logger.info(
+                f"📊 HARDWARE DETECTADO: {psutil.virtual_memory().available / (1024**3):.1f} GB RAM libre. "
+                f"Asignando {hilos_dinamicos} hilos concurrentes."
+            )
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=hilos_dinamicos) as executor:
+                futuros = {executor.submit(func): func.__name__ for func in funciones_scrapers}
+
+                for futuro in concurrent.futures.as_completed(futuros):
+                    nombre_funcion = futuros[futuro]
+                    try:
+                        resultado = futuro.result()
+                        total_general += resultado
+                        logger.info(f"✅ {nombre_funcion} ha terminado y sumado {resultado} productos.")
+                    except Exception as e:
+                        logger.error(f"❌ Error crítico en {nombre_funcion}: {e}")
+
     except KeyboardInterrupt:
         pass
     finally:
