@@ -170,9 +170,12 @@ function renderCartItem(cartItem, productData) {
             label.htmlFor = inputId;
             label.title = oferta.tienda_nombre;
 
+            const precioNumero = parseFloat(oferta.precio_final) || 0;
+            const precioFormateado = precioNumero.toFixed(2).replace(".", ",");
+
             label.innerHTML = `
                 <img class="offer-logo" src="${shopLogo}" alt="${oferta.tienda_nombre}">
-                <span class="offer-price">${oferta.precio_final} €</span>
+                <span class="offer-price">${precioFormateado} €</span>
             `;
 
             // El click lo conectaremos al checkout en la parte 2
@@ -247,13 +250,15 @@ function renderCheckout() {
 
         const imgSrc = producto.imagen_url || '../../assets/images/hardware/placeholder.jpg';
 
+        const precioFinalNumero = parseFloat(oferta.precio_final) || 0;
+
         itemDiv.innerHTML = `
             <img class="checkout-img" src="${imgSrc}" alt="Producto">
             <div class="checkout-info">
                 <p class="checkout-name">${producto.nombre}</p>
                 <p class="checkout-sub">${oferta.tienda_nombre}</p>
             </div>
-            <p class="checkout-price">${oferta.precio_final} €</p>
+            <p class="checkout-price">${precioFinalNumero.toFixed(2).replace(".", ",")} €</p>
         `;
 
         itemsContainer.appendChild(itemDiv);
@@ -261,19 +266,19 @@ function renderCheckout() {
 
     const ahorroTotal = sumaBase - sumaFinal;
 
-    if (checkoutBase) checkoutBase.textContent = `${sumaBase.toFixed(2)} €`;
+    if (checkoutBase) checkoutBase.textContent = `${sumaBase.toFixed(2).replace(".", ",")} €`;
     if (checkoutAhorro) {
-        checkoutAhorro.textContent = ahorroTotal > 0 ? `- ${ahorroTotal.toFixed(2)} €` : '0,00 €';
+        checkoutAhorro.textContent = ahorroTotal > 0 ? `- ${ahorroTotal.toFixed(2).replace(".", ",")} €` : '0,00 €';
         checkoutAhorro.classList.toggle('positive-ahorro', ahorroTotal > 0);
         checkoutAhorro.classList.toggle('negative-ahorro', ahorroTotal < 0);
     }
 
     const totalConEnvio = sumaFinal + sumaEnvio;
-    if (checkoutTotal) checkoutTotal.textContent = `TOTAL: ${totalConEnvio.toFixed(2)} €`;
+    if (checkoutTotal) checkoutTotal.textContent = `TOTAL: ${totalConEnvio.toFixed(2).replace(".", ",")} €`;
 
     if (checkoutSub) {
         if (sumaEnvio > 0) {
-            checkoutSub.textContent = `Incluye ${sumaEnvio.toFixed(2)} € en gastos de envío`;
+            checkoutSub.textContent = `Incluye ${sumaEnvio.toFixed(2).replace(".", ",")} € en gastos de envío`;
         } else {
             checkoutSub.textContent = 'Envío Gratis';
         }

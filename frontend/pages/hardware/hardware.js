@@ -408,7 +408,7 @@ function actualizarCarritoUI() {
                     <div style="flex: 1; min-width: 0;">
                         <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Hardware</span>
                         <p style="font-size: 13px; font-weight: 700; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #101828;">${item.nombre}</p>
-                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${item.precio.toFixed(2)} €</p>
+                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${item.precio.toFixed(2).replace(".", ",")} €</p>
                     </div>
                     <button class="btn-eliminar" onclick="window.eliminarDelCarritoHW('${item.ranura}')" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #bbb; padding: 4px;">✕</button>
                 </div>`;
@@ -435,7 +435,7 @@ function actualizarCarritoUI() {
                     <div style="flex: 1; min-width: 0;">
                         <span style="font-size: 10px; color: #888; text-transform: uppercase; font-weight: 800;">Videojuego</span>
                         <p style="font-size: 13px; font-weight: 700; margin: 0 0 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #101828;">${item.nombre}</p>
-                        <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${precio.toFixed(2)} €</p>
+            <p style="font-size: 14px; font-weight: 800; color: #6a2fd8; margin: 0;">${precio.toFixed(2).replace(".", ",")} €</p>
                     </div>
                     <button class="btn-eliminar" onclick="window.eliminarDelCarritoVG(${item.id})" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #bbb; padding: 4px;">✕</button>
                 </div>`;
@@ -443,8 +443,8 @@ function actualizarCarritoUI() {
     }
 
     // -- TOTALES Y BADGE GLOBAL --
-    document.getElementById('gran-total-header').textContent = (sumaHW + sumaVG).toFixed(2) + ' €';
-    document.getElementById('carrito-total-seccion').textContent = (tabActual === 'hw' ? sumaHW : sumaVG).toFixed(2) + ' €';
+    document.getElementById('gran-total-header').textContent = (sumaHW + sumaVG).toFixed(2).replace(".", ",") + ' €';
+    document.getElementById('carrito-total-seccion').textContent = (tabActual === 'hw' ? sumaHW : sumaVG).toFixed(2).replace(".", ",") + ' €';
     
     const badgeFlotante = document.getElementById('carrito-badge');
     if (badgeFlotante) badgeFlotante.textContent = itemsHW.length + totalItemsVG;
@@ -492,8 +492,10 @@ function pintarResultados(productos, esCargarMas, hayMasPaginas) {
             const ofertaMasBarata = producto.ofertas.reduce((prev, curr) => 
                 (parseFloat(prev.precio_final) < parseFloat(curr.precio_final)) ? prev : curr
             );
-            precioNumero = parseFloat(ofertaMasBarata.precio_final);
-            precioInfo = `Desde ${ofertaMasBarata.precio_final}€`;
+            precioNumero = parseFloat(ofertaMasBarata.precio_final) || 0;
+
+            const precioFormateado = precioNumero.toFixed(2).replace(".", ",");
+            precioInfo = `Desde ${precioFormateado} €`;
         }
 
         // Elegir imagen por defecto según la categoría
@@ -580,9 +582,9 @@ function seleccionarComponente(id, nombre, imagen, precioInfo) {
                 ${nombre}
             </p>
             
-            <span style="font-size: 16px; font-weight: bold; flex: 1; text-align: center;">
-                ${precioInfo}
-            </span>
+                <span style="font-size: 16px; font-weight: bold; flex: 1; text-align: center;">
+                    ${precioInfo.replace(".", ",")}
+                </span>
             
             <div style="flex: 1; text-align: right;">
                 <a class="hw-btn" href="../Comparador de precios/comparador.html?id=${id}" 
@@ -632,7 +634,7 @@ function restaurarSeleccionesHardware() {
                 </p>
                 
                 <span style="font-size: 16px; font-weight: bold; flex: 1; text-align: center;">
-                    ${item.precio.toFixed(2)} €
+                    ${item.precio.toFixed(2).replace(".", ",")} €
                 </span>
                 
                 <div style="flex: 1; text-align: right;">
