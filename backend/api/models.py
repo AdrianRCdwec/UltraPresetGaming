@@ -42,6 +42,7 @@ class Producto(models.Model):
     categoria   = models.CharField(max_length=7, choices=CATEGORIA_CHOICES, default='NONE', db_index=True)
     descripcion = models.TextField(blank=True, null=True)
     imagen      = models.ImageField(upload_to='productos/', blank=True, null=True)
+    imagen_url  = models.URLField(max_length=500, blank=True, null=True)
     tiendas     = models.ManyToManyField(Tienda, through='Oferta')
 
     def __str__(self):

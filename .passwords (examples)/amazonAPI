@@ -1,0 +1,12 @@
+# .passwords (examples)/amazon.env.example
+
+AMAZON_ENABLED=false
+
+AMAZON_ACCESS_KEY=pon_aqui_tu_access_key
+AMAZON_SECRET_KEY=pon_aqui_tu_secret_key
+AMAZON_ASSOCIATE_TAG=pon_aqui_tu_associate_tag
+
+AMAZON_PARTNER_TYPE=Associates
+AMAZON_MARKETPLACE=www.amazon.es
+AMAZON_REGION=eu-west-1
+AMAZON_HOST=webservices.amazon.es
