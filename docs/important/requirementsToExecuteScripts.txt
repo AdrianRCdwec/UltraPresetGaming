@@ -44,11 +44,55 @@ function Invoke-RepoScript {
 }
 
 function tr {
-    Invoke-RepoScript "scripts/tr.ps1" @args
+    param(
+        [switch]$f
+    )
+
+    $dir = (Get-Location).Path
+
+    while ($true) {
+        $scriptPath = Join-Path $dir "scripts/tr.ps1"
+
+        if (Test-Path $scriptPath) {
+            $params = @{}
+            if ($f.IsPresent) { $params["f"] = $true }
+            & $scriptPath @params
+            return
+        }
+
+        $parent = Split-Path -Path $dir -Parent
+        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $dir) { break }
+        $dir = $parent
+    }
+
+    Write-Error "No se encontró scripts/tr.ps1 en esta carpeta ni en carpetas padre."
 }
 
 function crawler {
-    Invoke-RepoScript "scripts/run-crawler.ps1" @args
+    param(
+        [switch]$s,
+        [switch]$d
+    )
+
+    $dir = (Get-Location).Path
+
+    while ($true) {
+        $scriptPath = Join-Path $dir "scripts/run-crawler.ps1"
+
+        if (Test-Path $scriptPath) {
+            $params = @{}
+            if ($d.IsPresent) { $params["d"] = $true }
+            if ($s.IsPresent) { $params["s"] = $true }
+            & $scriptPath @params
+            return
+        }
+
+        $parent = Split-Path -Path $dir -Parent
+        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $dir) { break }
+        $dir = $parent
+    }
+
+    Write-Error "No se encontró scripts/run-crawler.ps1 en esta carpeta ni en carpetas padre."
 }
 
 # GUARDAMOS EL ARCHIVO!!! ( CTRL. + G )

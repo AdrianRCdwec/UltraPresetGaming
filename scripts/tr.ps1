@@ -1,8 +1,14 @@
 param(
-    [string]$Salida = $(Join-Path (Join-Path (Split-Path $PSScriptRoot -Parent) "docs") "structure.txt"),
+    [string]$Salida = "",
     [string[]]$ExcluirDirectorios = @(".venv", "__pycache__", ".vscode", ".git", ".clinerules"),
     [switch]$f
 )
+
+if ([string]::IsNullOrWhiteSpace($Salida)) {
+    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $raiz      = Split-Path -Parent $scriptDir
+    $Salida    = Join-Path (Join-Path $raiz "docs") "structure.txt"
+}
 
 $RutaCompleta = (Get-Location).Path
 
