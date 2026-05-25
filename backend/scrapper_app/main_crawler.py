@@ -12,7 +12,10 @@ django.setup()
 from api.models import Producto
 from scrapper_app.utils.db_manager import desactivar_ofertas_obsoletas, CACHE_PRODUCTOS_BD
 from scrapper_app.shops.hardware.factory import ScraperFactory
+from scrapper_app.shops.videogames.factory import GameScraperFactory
 from scrapper_app.utils.events import shutdown_event
+from scrapper_app.utils.db_manager import guardar_productos_en_db
+from collections import defaultdict
 
 # 3. Importar las tiendas para que se auto-registren en la Fábrica
 import scrapper_app.shops.hardware.pccomponentes
@@ -21,6 +24,7 @@ import scrapper_app.shops.hardware.lifeinformatica
 import scrapper_app.shops.hardware.alternate
 import scrapper_app.shops.hardware.neobyte
 # import scrapper_app.shops.hardware.amazon
+import scrapper_app.shops.videogames.steam
 
 # ==========================================================
 # CONFIGURACIÓN DE EJECUCIÓN
@@ -280,6 +284,38 @@ def escanearNeoByte():
 
 # def escanearAmazon():
 
+def escanearSteam():
+    if shutdown_event.is_set():
+        return 0
+
+    logger.info("\n🎮 Iniciando escaneo de Steam...")
+    scraper = GameScraperFactory.obtener_scraper("steam")
+    juegos  = scraper.scrape()
+
+    if not juegos:
+        logger.warning("⚠️ [Steam] No se obtuvieron juegos.")
+        return 0
+
+    # Agrupamos por categoría y guardamos cada grupo
+    por_categoria = defaultdict(list)
+    for juego in juegos:
+        por_categoria[juego["categoria"]].append(juego)
+
+    total = 0
+    for categoria, items in por_categoria.items():
+        guardados = guardar_productos_en_db(
+            productos_extraidos=items,
+            nombre_tienda="Steam",
+            url_base_tienda="https://store.steampowered.com",
+            categoria_db=categoria,
+            tipo_db="VG",
+        )
+        total += guardados
+        logger.info(f"  ✅ [{categoria}] {guardados} juegos guardados.")
+
+    logger.info(f"\n✅ [Steam FIN] Se han guardado un total de {total} juegos.")
+    return total
+
 # =================================================================
 # INICIO DEL SCRIPT
 # =================================================================
@@ -288,7 +324,10 @@ if __name__ == "__main__":
     logger.info("ℹ️  Puedes pulsar Ctrl+C en cualquier momento para un apagado seguro (Graceful Shutdown).")
     total_general = 0
 
-    categorias_usadas = ['CPU', 'MB', 'RAM', 'CASE', 'AIR', 'LIQ', 'GPU', 'PSU', 'SSD', 'MON']
+    categorias_usadas = [
+        'CPU', 'MB', 'RAM', 'CASE', 'AIR', 'LIQ', 'GPU', 'PSU', 'SSD', 'MON',
+        'VG_ACC', 'VG_AVE', 'VG_RPG', 'VG_EST', 'VG_DEP', 'VG_SIM', 'VG_TER', 'VG_IND',
+    ]
 
     logger.info("\n📚 Precargando productos de la BD en la memoria RAM para evitar bloqueos SQLite...")
     for cat in categorias_usadas:
@@ -296,11 +335,13 @@ if __name__ == "__main__":
     logger.info("✅ Caché cargada con éxito. Listo para lanzar los scrapers.\n")
 
     funciones_scrapers = [
-        escanearPcComponentes,
-        escanearCoolmod,
-        escanearLifeInformatica,
-        escanearAlternate,
-        escanearNeoByte
+        # escanearPcComponentes,
+        # escanearCoolmod,
+        # escanearLifeInformatica,
+        # escanearAlternate,
+        # escanearNeoByte,
+        # escanearAmazon,
+        escanearSteam 
     ]
 
     try:

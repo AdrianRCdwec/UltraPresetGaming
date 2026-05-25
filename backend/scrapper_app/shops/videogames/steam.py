@@ -1,119 +1,156 @@
-import os
-import json
+import time
 import requests
-from datetime import date
-from backend.scrapper_app.shops.videogames.base_scraper import BaseGameScraper
-from backend.scrapper_app.shops.videogames.factory import GameScraperFactory
 
-LIMITE_DIARIO = 100_000
-CONTADOR_PATH = os.path.join(os.path.dirname(__file__), "steam_request_counter.json")
+from scrapper_app.shops.videogames.base_scraper import BaseGameScraper
+from scrapper_app.shops.videogames.factory import GameScraperFactory
+from scrapper_app.utils.events import shutdown_event
+from scrapper_app.utils.logger import logger
 
-# Ruta al archivo de contraseñas desde la raíz del proyecto
-_PASSWORDS_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "..", "..", "..", ".passwords", "steamAPI"
-)
+STORE_API = "https://store.steampowered.com/api"
+SEARCH_API = "https://store.steampowered.com/api/storesearch"
+STEAM_URL_BASE = "https://store.steampowered.com"
+
+BUSQUEDAS = [
+    ("accion", "VG_ACC"),
+    ("aventura", "VG_AVE"),
+    ("rpg", "VG_RPG"),
+    ("estrategia", "VG_EST"),
+    ("deportes", "VG_DEP"),
+    ("simulacion", "VG_SIM"),
+    ("terror", "VG_TER"),
+    ("indie", "VG_IND"),
+]
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "es-ES,es;q=0.9",
+    "Accept": "application/json, text/plain, */*",
+}
 
 
-def _leer_api_key() -> str:
-    with open(_PASSWORDS_PATH, "r") as f:
-        for line in f:
-            if line.startswith("STEAM_API_KEY"):
-                return line.split("=", 1)[1].strip()
-    raise ValueError("No se encontró STEAM_API_KEY en .passwords/steamAPI")
+def _hacer_get(url: str, params: dict, timeout: int = 15):
+    return requests.get(url, params=params, headers=HEADERS, timeout=timeout)
 
 
-def _leer_contador() -> dict:
-    if os.path.exists(CONTADOR_PATH):
-        with open(CONTADOR_PATH, "r") as f:
-            return json.load(f)
-    return {"fecha": str(date.today()), "contador": 0}
+def _buscar_appids_por_termino(termino: str, max_resultados: int = 20) -> list[int]:
+    try:
+        resp = _hacer_get(
+            SEARCH_API,
+            {
+                "term": termino,
+                "l": "spanish",
+                "cc": "ES",
+                "count": max_resultados,
+            },
+        )
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+        return [item["id"] for item in items if item.get("id")]
+    except Exception as e:
+        logger.warning(f"⚠️ [Steam] Error buscando '{termino}': {e}")
+        return []
 
 
-def _guardar_contador(data: dict):
-    with open(CONTADOR_PATH, "w") as f:
-        json.dump(data, f)
+def _obtener_detalle(appid: int) -> dict | None:
+    try:
+        resp = _hacer_get(
+            f"{STORE_API}/appdetails",
+            {
+                "appids": appid,
+                "cc": "es",
+                "l": "spanish",
+            },
+        )
+        resp.raise_for_status()
 
+        bloque = resp.json().get(str(appid), {})
+        if not bloque.get("success"):
+            return None
 
-def _registrar_peticion() -> bool:
-    data = _leer_contador()
-    hoy = str(date.today())
+        game = bloque.get("data", {})
+        if not game:
+            return None
 
-    if data["fecha"] != hoy:
-        data = {"fecha": hoy, "contador": 0}
+        if game.get("type") != "game":
+            return None
 
-    if data["contador"] >= LIMITE_DIARIO:
-        return False
+        nombre = (game.get("name") or "").strip()
+        if not nombre:
+            return None
 
-    data["contador"] += 1
-    _guardar_contador(data)
-    return True
+        price_overview = game.get("price_overview")
+        if price_overview and price_overview.get("final") is not None:
+            precio = price_overview["final"] / 100
+        elif game.get("is_free"):
+            precio = 0.0
+        else:
+            return None
+
+        return {
+            "nombre": nombre,
+            "precio": str(precio),
+            "imagen": game.get("header_image", "") or "",
+            "link": f"{STEAM_URL_BASE}/app/{appid}",
+        }
+
+    except Exception as e:
+        logger.warning(f"⚠️ [Steam] Error obteniendo detalle de appid {appid}: {e}")
+        return None
 
 
 class SteamScraper(BaseGameScraper):
-    BASE_URL = "https://store.steampowered.com/api/"
-    API_KEY = _leer_api_key()
-
     def scrape(self) -> list[dict]:
-        scraped_games = []
-        categories = {
-            "featured": "VG_TEND",
-            "coming_soon": "VG_RES",
-            "specials": "VG_REC"
-        }
+        logger.info("🎮 [Steam] Iniciando recolección de videojuegos...")
+        juegos = []
+        appids_vistos = set()
 
-        for category_name, category_type in categories.items():
-            if not _registrar_peticion():
-                print("Límite diario de peticiones a Steam alcanzado.")
-                return scraped_games
+        for termino, categoria in BUSQUEDAS:
+            if shutdown_event.is_set():
+                logger.warning("🛑 [Steam] Apagado seguro detectado antes de una nueva categoría.")
+                break
 
-            url = f"{self.BASE_URL}featuredcategories/?l=es&key={self.API_KEY}"
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
-                data = response.json()
+            logger.info(f"🔎 [Steam] Buscando juegos para '{termino}' ({categoria})...")
+            appids = _buscar_appids_por_termino(termino, max_resultados=20)
 
-                if category_name in data and "items" in data[category_name]:
-                    for item in data[category_name]["items"]:
-                        app_id = item.get("id")
-                        if not app_id:
-                            continue
+            if not appids:
+                logger.warning(f"⚠️ [Steam] Sin resultados para '{termino}'.")
+                continue
 
-                        if not _registrar_peticion():
-                            print("Límite diario de peticiones a Steam alcanzado.")
-                            return scraped_games
+            añadidos_categoria = 0
 
-                        app_details_url = f"{self.BASE_URL}appdetails?appids={app_id}&cc=es&l=es&key={self.API_KEY}"
-                        try:
-                            app_response = requests.get(app_details_url)
-                            app_response.raise_for_status()
-                            app_data = app_response.json()
+            for appid in appids:
+                if shutdown_event.is_set():
+                    logger.warning("🛑 [Steam] Apagado seguro detectado durante la obtención de detalles.")
+                    return juegos
 
-                            if app_data and str(app_id) in app_data and app_data[str(app_id)]["success"]:
-                                game_data = app_data[str(app_id)]["data"]
-                                price_overview = game_data.get("price_overview")
+                if appid in appids_vistos:
+                    continue
 
-                                price = "N/A"
-                                if price_overview and "final_formatted" in price_overview:
-                                    price = price_overview["final_formatted"]
-                                elif game_data.get("is_free"):
-                                    price = "Gratis"
-                                elif price_overview and "initial_formatted" in price_overview:
-                                    price = price_overview["initial_formatted"]
+                appids_vistos.add(appid)
 
-                                scraped_games.append({
-                                    "nombre": game_data.get("name"),
-                                    "imagen": game_data.get("header_image"),
-                                    "precio": price,
-                                    "link": f"https://store.steampowered.com/app/{app_id}",
-                                    "categoria": category_type
-                                })
-                        except requests.exceptions.RequestException as e:
-                            print(f"Error al obtener detalles del juego {app_id}: {e}")
+                detalle = _obtener_detalle(appid)
+                if not detalle:
+                    time.sleep(0.7)
+                    continue
 
-            except requests.exceptions.RequestException as e:
-                print(f"Error al obtener categorías de Steam para {category_name}: {e}")
+                detalle["categoria"] = categoria
+                juegos.append(detalle)
+                añadidos_categoria += 1
 
-        return scraped_games
+                logger.info(
+                    f"✅ [Steam] Juego obtenido: {detalle['nombre']} | {detalle['precio']}€ | {categoria}"
+                )
+
+                time.sleep(0.7)
+
+            logger.info(f"📦 [Steam] Categoría {categoria}: {añadidos_categoria} juegos preparados.")
+
+        logger.info(f"💾 [Steam] Total de juegos obtenidos: {len(juegos)}")
+        return juegos
 
 
 GameScraperFactory.registrar_scraper("steam", SteamScraper)
