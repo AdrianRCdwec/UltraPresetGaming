@@ -20,6 +20,7 @@ class Producto(models.Model):
     ]
 
     CATEGORIA_CHOICES = [
+        # Hardware
         ('CPU',    'Procesador'),
         ('MB',     'Placa Base'),
         ('RAM',    'Memoria RAM'),
@@ -31,10 +32,16 @@ class Producto(models.Model):
         ('SSD',    'Almacenamiento'),
         ('MON',    'Monitor'),
         ('NONE',   'Otro'),
+
         # Videojuegos
-        ('VG_TEND', 'VG - Tendencia'),
-        ('VG_RES',  'VG - Reserva'),
-        ('VG_REC',  'VG - Recomendación'),
+        ('VG_ACC', 'VG - Acción'),
+        ('VG_AVE', 'VG - Aventura'),
+        ('VG_RPG', 'VG - RPG'),
+        ('VG_EST', 'VG - Estrategia'),
+        ('VG_DEP', 'VG - Deportes'),
+        ('VG_SIM', 'VG - Simulación'),
+        ('VG_TER', 'VG - Terror'),
+        ('VG_IND', 'VG - Indie'),
     ]
 
     nombre      = models.CharField(max_length=200, db_index=True)

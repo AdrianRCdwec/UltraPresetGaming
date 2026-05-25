@@ -48,16 +48,20 @@ class ProductoSerializer(serializers.ModelSerializer):
         fields = ['id', 'nombre', 'tipo', 'categoria', 'descripcion', 'imagen', 'imagen_url', 'ofertas']
 
     def get_ofertas(self, obj):
-        # Solo serializa y devuelve al frontend las ofertas que no hayan sufrido Soft Delete
         ofertas_activas = obj.oferta_set.filter(disponible=True)
         return OfertaSerializer(ofertas_activas, many=True, context=self.context).data
 
     def get_imagen_url(self, obj):
+        request = self.context.get('request')
+
         if obj.imagen:
-            request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.imagen.url)
             return f"http://127.0.0.1:8000{obj.imagen.url}"
+
+        if obj.imagen_url:
+            return obj.imagen_url
+
         return None
 
 class ItemGuardadoSerializer(serializers.ModelSerializer):
