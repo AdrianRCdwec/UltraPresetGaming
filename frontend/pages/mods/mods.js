@@ -1,5 +1,5 @@
-import { obtenerToken } from '../../shared/js/auth-header.js';
-import { API_CONFIG_URL } from '../../shared/js/api-config.js';
+import { obtenerToken } from '../../shared/js/carrito.js';
+import { API_CONFIGURACION_URL } from '../../shared/js/api-config.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const modsGrid = document.querySelector('.mods-grid');
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (token) {
             try {
-                const response = await fetch(API_CONFIG_URL, {
+                const response = await fetch(API_CONFIGURACION_URL, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -54,12 +54,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function obtenerPlataformasMods(juego) {
-        const nombre = (juego.nombre || '').toLowerCase();
+        // Normalizar: minúsculas, sin espacios extremos, sin acentos
+        const nombre = (juego.nombre || '').toLowerCase().trim();
         const plataformas = [];
 
+        // Siempre incluir Nexus Mods y ModDB (para ejemplo hasta método profesional)
         plataformas.push({
             nombre: 'Nexus Mods',
-            descripcion: 'Catálogo grande y comunidad.',
+            descripcion: 'Catálogo grande y comunidad activa.',
             url: 'https://www.nexusmods.com'
         });
 
@@ -68,6 +70,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             descripcion: 'Base de datos de mods creada por la comunidad.',
             url: 'https://www.moddb.com'
         });
+
+        // --- Bloques por juego específico ---
 
         if (
             nombre.includes('fifa') ||
@@ -81,6 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 descripcion: 'Mods de comunidad para FIFA/FC.',
                 url: 'https://dl.fifa-infinity.com'
             });
+
         } else if (
             nombre.includes('skyrim') ||
             nombre.includes('fallout') ||
@@ -91,6 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 descripcion: 'Contenido creado por usuarios en Steam.',
                 url: 'https://steamcommunity.com/workshop/'
             });
+
         } else if (
             nombre.includes('sackboy') ||
             nombre.includes('super indie karts')
@@ -99,6 +105,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 nombre: 'GameBanana',
                 descripcion: 'Comunidad con mods y contenido de juegos concretos.',
                 url: 'https://gamebanana.com'
+            });
+
+        } else if (nombre.includes('rpg maker')) {
+            plataformas.push({
+                nombre: 'RPG Maker Web',
+                descripcion: 'Recursos, plugins y mods oficiales de la comunidad RPG Maker.',
+                url: 'https://www.rpgmakerweb.com/'
             });
         }
 
@@ -110,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         gameArticle.classList.add('game');
         gameArticle.dataset.id = juego.id;
 
-        const imagen = juego.imagen || '../../assets/images/misc/placeholderHardware.jpg';
+        const imagen = juego.imagen || '../../assets/images/misc/placeholderItem.jpg';
         const plataformas = obtenerPlataformasMods(juego);
 
         const plataformasHTML = plataformas.map((plataforma, index) => `
@@ -126,9 +139,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         gameArticle.innerHTML = `
             <div class="game-top">
                 <div class="game-img">
-                    <img src="${imagen}" alt="Portada de ${juego.nombre}">
+                    <img 
+                        src="${imagen}" 
+                        alt="Portada de ${juego.nombre}"
+                        onerror="this.src='../../assets/images/misc/placeholderItem.jpg'"
+                    >
                 </div>
-
                 <div class="game-title">
                     <h2>${juego.nombre}</h2>
                     <p>Modders recomendados</p>
@@ -138,7 +154,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
             </div>
-
             <ul class="launchers">
                 ${plataformasHTML}
             </ul>
