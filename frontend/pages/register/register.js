@@ -1,5 +1,5 @@
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-const API = 'http://localhost:8000/api';
+import { API_BASE_URL } from '../../shared/js/api-config.js';
 
 // ─── ELEMENTOS ───────────────────────────────────────────────────────────────
 const form      = document.querySelector('.register-form');
@@ -73,7 +73,7 @@ form.addEventListener('submit', async (e) => {
     btnReg.textContent = 'Creando cuenta...';
 
     try {
-        const res = await fetch(`${API}/auth/register/`, {
+        const res = await fetch(`${API_BASE_URL}/auth/register/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, email, password, password2 }),

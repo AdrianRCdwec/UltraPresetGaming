@@ -1,5 +1,4 @@
-const API_PERFIL = 'http://127.0.0.1:8000/api/auth/perfil/';
-const MEDIA_BASE = 'http://127.0.0.1:8000'; 
+import { API_PERFIL_URL, MEDIA_BASE_URL } from '../../shared/js/api-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. SOLUCIÓN BUG: Buscamos en ambos storages
@@ -27,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function cargarPerfil() {
         try {
-            const respuesta = await fetch(API_PERFIL, {
+            const respuesta = await fetch(API_PERFIL_URL, {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -42,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.foto_perfil) {
                     imgPreview.src = data.foto_perfil.startsWith('http') 
                         ? data.foto_perfil 
-                        : `${MEDIA_BASE}${data.foto_perfil}`;
+                        : `${MEDIA_BASE_URL}${data.foto_perfil}`;
                 }
             } else if (respuesta.status === 401) {
                 // Token caducado
@@ -80,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const respuesta = await fetch(API_PERFIL, {
+            const respuesta = await fetch(API_PERFIL_URL, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData

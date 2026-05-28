@@ -1,5 +1,6 @@
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
-const API = 'http://localhost:8000/api';
+import { API_BASE_URL } from '../../shared/js/api-config.js';
+import { sincronizarCarritoTrasLogin } from '../../shared/js/carrito.js';
 
 // ─── ELEMENTOS ───────────────────────────────────────────────────────────────
 const form     = document.querySelector('.login-form');
@@ -63,7 +64,7 @@ form.addEventListener('submit', async (e) => {
     btnLogin.textContent = 'Entrando...';
 
     try {
-        const res = await fetch(`${API}/auth/login/`, {
+        const res = await fetch(`${API_BASE_URL}/auth/login/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
@@ -91,6 +92,8 @@ form.addEventListener('submit', async (e) => {
         storage.setItem('refresh',  data.refresh);
         storage.setItem('username', data.username);
         storage.setItem('email',    data.email);
+
+        await sincronizarCarritoTrasLogin();
 
         mostrarMensaje(`¡Bienvenido, ${data.username}!`, 'ok');
 

@@ -341,7 +341,7 @@ if __name__ == "__main__":
         # escanearAlternate,
         # escanearNeoByte,
         # escanearAmazon,
-        escanearSteam 
+        # escanearSteam 
     ]
 
     try:
@@ -383,5 +383,5 @@ if __name__ == "__main__":
         else:
             logger.info(f"\n🎉 ¡TODAS LAS TIENDAS ESCANEADAS! UN TOTAL DE {total_general} PRODUCTOS GUARDADOS/ACTUALIZADOS.")
 
-    if not shutdown_event.is_set():
-        desactivar_ofertas_obsoletas()
+    # if not shutdown_event.is_set():
+    #     desactivar_ofertas_obsoletas()

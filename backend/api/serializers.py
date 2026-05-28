@@ -67,10 +67,21 @@ class ProductoSerializer(serializers.ModelSerializer):
 class ItemGuardadoSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.ReadOnlyField(source='producto.nombre')
     producto_imagen = serializers.SerializerMethodField()
+    producto_ofertas = serializers.SerializerMethodField()
+    producto_precio_minimo = serializers.SerializerMethodField()
 
     class Meta:
         model = ItemGuardado
-        fields = ['id', 'producto', 'producto_nombre', 'producto_imagen', 'ranura', 'fecha_agregado']
+        fields = [
+            'id',
+            'producto',
+            'producto_nombre',
+            'producto_imagen',
+            'producto_ofertas',
+            'producto_precio_minimo',
+            'ranura',
+            'fecha_agregado'
+        ]
         read_only_fields = ['id', 'fecha_agregado']
 
     def get_producto_imagen(self, obj):
@@ -79,7 +90,19 @@ class ItemGuardadoSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.producto.imagen.url)
             return obj.producto.imagen.url
+        if obj.producto.imagen_url:
+            return obj.producto.imagen_url
         return None
+
+    def get_producto_ofertas(self, obj):
+        ofertas = obj.producto.oferta_set.filter(disponible=True)
+        return OfertaSerializer(ofertas, many=True, context=self.context).data
+
+    def get_producto_precio_minimo(self, obj):
+        ofertas = obj.producto.oferta_set.filter(disponible=True)
+        if not ofertas.exists():
+            return 0
+        return float(min(o.precio_final for o in ofertas))
 
 class PerfilSerializer(serializers.ModelSerializer):
     # Traemos campos del modelo User

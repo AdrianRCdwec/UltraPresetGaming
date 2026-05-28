@@ -1,7 +1,8 @@
-const API_CONFIGURACION_URL = 'http://127.0.0.1:8000/api/configuracion/';
-const API_PRODUCTOS_URL = 'http://127.0.0.1:8000/api/productos/';
+import { API_CONFIGURACION_URL, API_PRODUCTOS_URL } from '../../shared/js/api-config.js';
+import { obtenerToken } from '../../shared/js/carrito.js';
+
 const PLACEHOLDER_SHOP_LOGO = '../../assets/images/misc/placeholderShop.jpg';
-const seleccionesCheckout = {}; // clave: productId → { producto, oferta }
+let seleccionesCheckout = {}; // clave: ranura o videojuego_ID → { producto, oferta }
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarProductosDelCarrito();
@@ -12,21 +13,19 @@ async function cargarProductosDelCarrito() {
     const loadingMessage = document.getElementById('loading-message');
     const emptyCartMessage = document.getElementById('empty-cart-message');
 
-    // Mostrar mensaje de carga y ocultar el de vacío
     if (loadingMessage) loadingMessage.style.display = 'block';
     if (emptyCartMessage) emptyCartMessage.style.display = 'none';
-    if (cartItemsContainer) cartItemsContainer.innerHTML = ''; // Limpiar cualquier contenido previo
+    if (cartItemsContainer) cartItemsContainer.innerHTML = '';
 
     const token = obtenerToken();
 
-    // CASO 1: Sin token → tirar del carrito local
     if (!token) {
         console.log('Sin token, cargando carrito desde localStorage...');
         await cargarDesdeLocalStorage(cartItemsContainer, loadingMessage, emptyCartMessage);
+        renderCheckout();
         return;
     }
 
-    // CASO 2: Con token → intentar servidor, y si falla, fallback a local
     try {
         const configResponse = await fetch(API_CONFIGURACION_URL, {
             headers: {
@@ -40,18 +39,16 @@ async function cargarProductosDelCarrito() {
         }
 
         const configData = await configResponse.json();
-        const cartItems = configData.results ? configData.results : configData; // Manejar paginación o array directo
+        const cartItems = configData.results ? configData.results : configData;
 
-        if (cartItems.length === 0) {
-            // Si el servidor no tiene nada, probamos a mostrar el carrito local (por si hay desincronización)
+        if (!cartItems.length) {
             await cargarDesdeLocalStorage(cartItemsContainer, loadingMessage, emptyCartMessage);
+            renderCheckout();
             return;
         }
 
-        // Ocultar mensaje de vacío si hay productos
         if (emptyCartMessage) emptyCartMessage.style.display = 'none';
 
-        // Llamada 2 (por cada producto): Obtener detalles y ofertas
         for (const cartItem of cartItems) {
             const productResponse = await fetch(`${API_PRODUCTOS_URL}${cartItem.producto}/`);
 
@@ -61,24 +58,30 @@ async function cargarProductosDelCarrito() {
             }
 
             const productData = await productResponse.json();
-            renderCartItem(cartItem, productData);
+            const esVideojuego = cartItem.ranura?.startsWith('videojuego_');
+            renderCartItem(cartItem, productData, esVideojuego);
         }
 
     } catch (error) {
         console.error('Error al cargar productos del carrito desde servidor:', error);
-        // Fallback a carrito local
         await cargarDesdeLocalStorage(cartItemsContainer, loadingMessage, emptyCartMessage);
     } finally {
         if (loadingMessage) loadingMessage.style.display = 'none';
+        renderCheckout();
     }
 }
 
 async function cargarDesdeLocalStorage(cartItemsContainer, loadingMessage, emptyCartMessage) {
-    const raw = localStorage.getItem('carrito_hardware');
-    const carritoLocal = raw ? JSON.parse(raw) : {};
-    const items = Object.values(carritoLocal);
+    const rawHardware = localStorage.getItem('carrito_hardware');
+    const carritoHardware = rawHardware ? JSON.parse(rawHardware) : {};
+    const itemsHardware = Object.values(carritoHardware);
 
-    if (!items.length) {
+    const rawVideojuegos = localStorage.getItem('carrito_videojuegos');
+    const carritoVideojuegos = rawVideojuegos ? JSON.parse(rawVideojuegos) : [];
+
+    const hayItems = itemsHardware.length > 0 || carritoVideojuegos.length > 0;
+
+    if (!hayItems) {
         if (loadingMessage) loadingMessage.style.display = 'none';
         if (emptyCartMessage) emptyCartMessage.style.display = 'block';
         return;
@@ -86,38 +89,53 @@ async function cargarDesdeLocalStorage(cartItemsContainer, loadingMessage, empty
 
     if (emptyCartMessage) emptyCartMessage.style.display = 'none';
 
-    for (const item of items) {
+    // Hardware
+    for (const item of itemsHardware) {
         try {
             const productResponse = await fetch(`${API_PRODUCTOS_URL}${item.id}/`);
             if (!productResponse.ok) {
                 console.error(`Error al obtener detalles del producto ${item.id}: ${productResponse.statusText}`);
                 continue;
             }
+
             const productData = await productResponse.json();
-            renderCartItem(item, productData);
+            renderCartItem(item, productData, false);
         } catch (error) {
-            console.error('Error al obtener producto desde localStorage:', error);
+            console.error('Error al obtener producto hardware desde localStorage:', error);
+        }
+    }
+
+    // Videojuegos
+    for (const juego of carritoVideojuegos) {
+        try {
+            const productResponse = await fetch(`${API_PRODUCTOS_URL}${juego.id}/`);
+            if (!productResponse.ok) {
+                console.error(`Error al obtener detalles del videojuego ${juego.id}: ${productResponse.statusText}`);
+                continue;
+            }
+
+            const productData = await productResponse.json();
+            renderCartItem(juego, productData, true);
+        } catch (error) {
+            console.error('Error al obtener videojuego desde localStorage:', error);
         }
     }
 
     if (loadingMessage) loadingMessage.style.display = 'none';
 }
 
-function renderCartItem(cartItem, productData) {
+function renderCartItem(cartItem, productData, esVideojuego = false) {
     const cartItemsContainer = document.getElementById('cart-items-container');
     if (!cartItemsContainer) return;
 
-    // Normalizar campos para que funcione tanto con items de la API como con los de localStorage
     const productId = cartItem.producto || cartItem.id;
-    const productName = cartItem.producto_nombre || cartItem.nombre;
-    const productImage = cartItem.producto_imagen || cartItem.imagen;
+    const productName = cartItem.producto_nombre || cartItem.nombre || productData.nombre;
+    const productImage = cartItem.producto_imagen || cartItem.imagen || productData.imagen_url;
 
-    // Cada producto será un <section class="hw-item">
     const productSection = document.createElement('section');
     productSection.className = 'hw-item';
     productSection.id = `product-${productId}`;
 
-    // ===== Lado izquierdo: .hw-media (icono + nombre) =====
     const media = document.createElement('div');
     media.className = 'hw-media';
 
@@ -138,7 +156,6 @@ function renderCartItem(cartItem, productData) {
     media.appendChild(iconWrap);
     media.appendChild(nameLabel);
 
-    // ===== Lado derecho: .offers-grid (radios + labels) =====
     const offersGrid = document.createElement('div');
     offersGrid.className = 'offers-grid';
     offersGrid.setAttribute('aria-label', 'Tiendas y precios');
@@ -178,9 +195,21 @@ function renderCartItem(cartItem, productData) {
                 <span class="offer-price">${precioFormateado} €</span>
             `;
 
-            // El click lo conectaremos al checkout en la parte 2
             label.addEventListener('click', () => {
-                registrarSeleccion(productData, oferta);
+                const claveSeleccion = esVideojuego
+                    ? `videojuego_${productId}`
+                    : (cartItem.ranura ? cartItem.ranura : `hardware_${productId}`);
+            
+                registrarSeleccion(
+                    {
+                        id: productId,
+                        nombre: productName,
+                        imagen_url: productData.imagen_url || productImage || '../../assets/images/misc/placeholderHardware.jpg',
+                    },
+                    oferta,
+                    esVideojuego,
+                    claveSeleccion
+                );
             });
 
             offersGrid.appendChild(radioInput);
@@ -193,16 +222,71 @@ function renderCartItem(cartItem, productData) {
     cartItemsContainer.appendChild(productSection);
 }
 
-// Función que rellena el carrito inferior
-function registrarSeleccion(producto, oferta) {
+function registrarSeleccion(producto, oferta, esVideojuego = false, claveOriginal = null) {
     if (!producto || !oferta) return;
 
-    // Guardamos la selección por ID de producto
-    seleccionesCheckout[producto.id] = { producto, oferta };
+    const clave = claveOriginal || (esVideojuego ? `videojuego_${producto.id}` : `hardware_${producto.id}`);
+    seleccionesCheckout[clave] = { producto, oferta };
     renderCheckout();
 }
 
+function reconstruirSeleccionesCheckoutDesdeCarritos() {
+    const carritoHW = JSON.parse(localStorage.getItem('carrito_hardware')) || {};
+    const carritoVG = JSON.parse(localStorage.getItem('carrito_videojuegos')) || [];
+
+    const nuevasSelecciones = {};
+
+    // Hardware
+    Object.entries(carritoHW).forEach(([ranura, item]) => {
+        nuevasSelecciones[ranura] = {
+            producto: {
+                id: item.id,
+                nombre: item.nombre,
+                imagen_url: item.imagen || '../../assets/images/hardware/placeholder.jpg',
+            },
+            oferta: {
+                tienda_nombre: item.tienda_nombre || '—',
+                precio_base: item.precio || 0,
+                precio_final: item.precio || 0,
+                gastos_envio: item.gastos_envio || 0,
+                enlace_compra: item.enlace_compra || '#',
+            },
+        };
+    });
+
+    // Videojuegos
+    carritoVG.forEach((juego, index) => {
+        const oferta = (juego.ofertas && juego.ofertas.length > 0)
+            ? juego.ofertas[0]
+            : {
+                tienda_nombre: 'Steam',
+                precio_base: 0,
+                precio_final: 0,
+                gastos_envio: 0,
+                enlace_compra: juego.link || '#',
+            };
+
+        nuevasSelecciones[`videojuego_${juego.id || index}`] = {
+            producto: {
+                id: juego.id,
+                nombre: juego.nombre,
+                imagen_url: juego.imagen || '../../assets/images/hardware/placeholder.jpg',
+            },
+            oferta: {
+                tienda_nombre: oferta.tienda_nombre || 'Steam',
+                precio_base: oferta.precio_base || oferta.precio_final || 0,
+                precio_final: oferta.precio_final || 0,
+                gastos_envio: oferta.gastos_envio || 0,
+                enlace_compra: oferta.enlace_compra || juego.link || '#',
+            },
+        };
+    });
+
+    seleccionesCheckout = nuevasSelecciones;
+}
+
 function renderCheckout() {
+    const checkoutSection = document.getElementById('checkout-summary');
     const itemsContainer = document.getElementById('checkout-items-container');
     const checkoutBase = document.getElementById('checkout-base');
     const checkoutAhorro = document.getElementById('checkout-ahorro');
@@ -216,80 +300,81 @@ function renderCheckout() {
 
     const selecciones = Object.values(seleccionesCheckout);
 
-    // Si no hay nada seleccionado, reseteamos totales
     if (selecciones.length === 0) {
-        itemsContainer.innerHTML = '<p class="checkout-empty">No hay productos seleccionados todavía.</p>';
+        if (checkoutSection) checkoutSection.style.display = 'none';
 
-        if (checkoutBase) checkoutBase.textContent = '0,00 €';
-        if (checkoutAhorro) checkoutAhorro.textContent = '0,00 €';
-        if (checkoutTotal) checkoutTotal.textContent = 'TOTAL: 0,00 €';
-        if (checkoutSub) checkoutSub.textContent = 'Selecciona productos para ver el desglose de envío';
+        if (checkoutBase) checkoutBase.textContent = '';
+        if (checkoutAhorro) checkoutAhorro.textContent = '';
+        if (checkoutTotal) checkoutTotal.textContent = '';
+        if (checkoutSub) checkoutSub.textContent = '';
         if (btnComprar) btnComprar.href = '#';
 
         return;
     }
 
+    if (checkoutSection) checkoutSection.style.display = 'block';
+
     let sumaBase = 0;
     let sumaFinal = 0;
     let sumaEnvio = 0;
-    let ultimaOferta = null;
 
     selecciones.forEach(({ producto, oferta }) => {
-        const base = parseFloat(oferta.precio_base) || 0;
+        const base = parseFloat(oferta.precio_base) || parseFloat(oferta.precio_final) || 0;
         const final = parseFloat(oferta.precio_final) || 0;
         const envio = parseFloat(oferta.gastos_envio) || 0;
 
         sumaBase += base;
         sumaFinal += final;
         sumaEnvio += envio;
-        ultimaOferta = oferta;
 
-        // Crear la línea de checkout para este producto
         const itemDiv = document.createElement('div');
         itemDiv.className = 'checkout-item';
 
         const imgSrc = producto.imagen_url || '../../assets/images/hardware/placeholder.jpg';
 
-        const precioFinalNumero = parseFloat(oferta.precio_final) || 0;
-
         itemDiv.innerHTML = `
-            <img class="checkout-img" src="${imgSrc}" alt="Producto">
+            <img class="checkout-img" src="${imgSrc}" alt="${producto.nombre}">
             <div class="checkout-info">
                 <p class="checkout-name">${producto.nombre}</p>
-                <p class="checkout-sub">${oferta.tienda_nombre}</p>
+                <p class="checkout-sub">${oferta.tienda_nombre || 'Tienda no disponible'}</p>
             </div>
-            <p class="checkout-price">${precioFinalNumero.toFixed(2).replace(".", ",")} €</p>
+            <p class="checkout-price">${final.toFixed(2).replace('.', ',')} €</p>
         `;
 
         itemsContainer.appendChild(itemDiv);
     });
 
     const ahorroTotal = sumaBase - sumaFinal;
+    const totalConEnvio = sumaFinal + sumaEnvio;
 
-    if (checkoutBase) checkoutBase.textContent = `${sumaBase.toFixed(2).replace(".", ",")} €`;
+    if (checkoutBase) {
+        checkoutBase.textContent = `${sumaBase.toFixed(2).replace('.', ',')} €`;
+    }
+
     if (checkoutAhorro) {
-        checkoutAhorro.textContent = ahorroTotal > 0 ? `- ${ahorroTotal.toFixed(2).replace(".", ",")} €` : '0,00 €';
+        checkoutAhorro.textContent = ahorroTotal > 0
+            ? `- ${ahorroTotal.toFixed(2).replace('.', ',')} €`
+            : '0,00 €';
+
         checkoutAhorro.classList.toggle('positive-ahorro', ahorroTotal > 0);
         checkoutAhorro.classList.toggle('negative-ahorro', ahorroTotal < 0);
     }
 
-    const totalConEnvio = sumaFinal + sumaEnvio;
-    if (checkoutTotal) checkoutTotal.textContent = `TOTAL: ${totalConEnvio.toFixed(2).replace(".", ",")} €`;
+    if (checkoutTotal) {
+        checkoutTotal.textContent = `TOTAL: ${totalConEnvio.toFixed(2).replace('.', ',')} €`;
+    }
 
     if (checkoutSub) {
-        if (sumaEnvio > 0) {
-            checkoutSub.textContent = `Incluye ${sumaEnvio.toFixed(2).replace(".", ",")} € en gastos de envío`;
-        } else {
-            checkoutSub.textContent = 'Envío Gratis';
-        }
+        checkoutSub.textContent = sumaEnvio > 0
+            ? `Incluye ${sumaEnvio.toFixed(2).replace('.', ',')} € en gastos de envío`
+            : 'Envío gratis';
     }
 
-    // Mantenemos el comportamiento de "IR A LA TIENDA": último producto seleccionado
-    if (btnComprar && ultimaOferta) {
-        btnComprar.href = ultimaOferta.enlace_compra || '#';
-    }
-}
+    if (btnComprar) {
+        const enlaces = selecciones
+            .map(({ oferta }) => oferta.enlace_compra)
+            .filter(Boolean);
 
-function obtenerToken() {
-    return sessionStorage.getItem('access');
+        btnComprar.href = enlaces[0] || '#';
+    }
 }
