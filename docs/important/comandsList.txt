@@ -39,9 +39,13 @@ COMANDOS DENTRO DEL ENTORNO:    ( .venv\Scripts\activate )
 
     ACTUALIZAR DE FORMA INTERACTIVA (PREGUNTA EN CADA DEPENDENCIA)
         pip-review --interactive
+        cd backend
+        pip freeze > ../docs/important/dependencies.txt
 
     ACTUALIZAR TODAS LAS DEPENDENCIAS:
         pip-review --auto
+        cd backend
+        pip freeze > ../docs/important/dependencies.txt
 
     --- DESDE DIRECTORIO RAÍZ ---
         CREAR/ACTUALIZAR ARCHIVO DEPENDENCIES.TXT:
