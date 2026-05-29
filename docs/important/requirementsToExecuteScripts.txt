@@ -100,4 +100,5 @@ function crawler {
 
 . $PROFILE
 
-# Y YA ESTÁ, AHORA PODEMOS EJECUTAR EL COMANDO "tr" EN CUALQUIER CARPETA PARA EJECUTAR EL SCRIPT.
+# Y YA ESTÁ, AHORA PODEMOS EJECUTAR EL COMANDO "tr" Y "crawler" EN CUALQUIER CARPETA PARA EJECUTAR EL SCRIPT.
+# Podemos ver para que sirven y cuales existen en `executeScripts.txt`.
