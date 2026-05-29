@@ -16,7 +16,7 @@ ACTUALIZAR EL PROYECTO AL DÍA:
     git pull
     cd .\backend\
     .venv\Scripts\activate
-    pip install -r ./docs/important/dependencies.txt
+    pip install -r ../docs/important/dependencies.txt
 
 
 --------------------------------------------------------------
